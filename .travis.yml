@@ -1,0 +1,10 @@
+rvm:
+- 2.0.0
+notifications:
+  irc:
+    channels:
+      - "irc.freenode.net#theodi"
+    template:
+      - "%{repository} %{branch} - %{message} %{build_url}"
+    on_success: change
+    on_failure: always
