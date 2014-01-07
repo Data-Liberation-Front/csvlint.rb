@@ -15,3 +15,7 @@ end
 Then(/^I should get the value of true$/) do
   expect( @valid ).to be(true)
 end
+
+Then(/^I should get the value of false$/) do
+  expect( @valid ).to be(false)
+end

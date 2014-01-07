@@ -12,9 +12,12 @@ module Csvlint
     
     def valid?
       begin
+        expected_columns = 0
         open(@stream) do |s|
           s.each_line do |line|
-            row = CSV.parse( line )
+            row = CSV.parse( line )[0]
+            expected_columns = row.count unless expected_columns != 0
+            return false if row.count != expected_columns
           end
         end
         true
