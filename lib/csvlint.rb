@@ -75,6 +75,9 @@ module Csvlint
       ERROR_MATCHERS.fetch(e[1], :unknown_error)
     end
     
+    def encoding
+      @encoding
+    end
     
   end
 end
