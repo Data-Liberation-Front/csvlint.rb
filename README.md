@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/theodi/csvlint.rb/badge.png)](https://coveralls.io/r/theodi/csvlint.rb) [![Build Status](https://travis-ci.org/theodi/csvlint.rb.png)](https://travis-ci.org/theodi/csvlint.rb)
+
 # Csvlint.rb
 
 TODO: Write a gem description
