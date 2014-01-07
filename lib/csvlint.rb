@@ -5,6 +5,12 @@ require 'open-uri'
 module Csvlint
   
   class Validator
+    
+    ERROR_MATCHERS = {
+      "Missing or stray quote" => :quoting,
+      "Illegal quoting" => :whitespace,
+      "Unclosed quoted field" => :quoting,
+    }
        
     def initialize(stream)
       @errors = []
@@ -32,8 +38,9 @@ module Csvlint
             if row.count != expected_columns
               build_errors(:ragged_rows, current_line)
             end
-          rescue CSV::MalformedCSVError
-            false
+          rescue CSV::MalformedCSVError => e
+            type = fetch_error(e)
+            build_errors(type, current_line)
           end
         end
       end
@@ -47,12 +54,10 @@ module Csvlint
       }
     end
     
-    # [
-    #   {  
-    #     :type => :ragged_rows 
-    #     :position => 1
-    #   }
-    # ]
+    def fetch_error(error)
+      e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.$/i)
+      ERROR_MATCHERS.fetch(e[1], :unknown_error)
+    end
     
   end
 end
