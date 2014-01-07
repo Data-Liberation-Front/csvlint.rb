@@ -6,6 +6,8 @@ module Csvlint
   
   class Validator
     
+    attr_reader :errors, :warnings, :encoding
+    
     ERROR_MATCHERS = {
       "Missing or stray quote" => :quoting,
       "Illegal quoting" => :whitespace,
@@ -21,14 +23,6 @@ module Csvlint
     
     def valid?
       errors.empty?
-    end
-    
-    def errors
-      @errors
-    end
-    
-    def warnings
-      @warnings
     end
     
     def validate
@@ -73,10 +67,6 @@ module Csvlint
     def fetch_error(error)
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.$/i)
       ERROR_MATCHERS.fetch(e[1], :unknown_error)
-    end
-    
-    def encoding
-      @encoding
     end
     
   end
