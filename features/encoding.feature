@@ -20,4 +20,4 @@ Feature: CSV Encoding
     And it is encoded as "iso-8859-1"    
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if there are warnings
-    Then there should be 1 warnings       
+    Then there should be 1 warnings   
