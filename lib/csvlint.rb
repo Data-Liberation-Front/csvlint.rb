@@ -36,10 +36,9 @@ module Csvlint
       expected_columns = 0
       current_line = 0
       open(@stream) do |s|
-        if s.respond_to?(:charset)
-          if s.charset != "utf-8"
-            build_warnings(:encoding, nil)
-          end
+        @encoding = s.charset rescue nil
+        if @encoding != "utf-8"
+          build_warnings(:encoding, nil)
         end
         s.each_line do |line|
           begin
