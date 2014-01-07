@@ -46,4 +46,5 @@ Feature: Parse CSV
     """
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if the CSV is valid
-    Then I should get the value of false           
+    Then I should get the value of false
+
