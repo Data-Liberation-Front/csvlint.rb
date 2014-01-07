@@ -6,6 +6,7 @@ require 'rubygems'
 require 'cucumber'
 require 'cucumber/rake/task'
 require 'coveralls/rake/task'
+Coveralls::RakeTask.new
 
 Cucumber::Rake::Task.new(:features) do |t|
   t.cucumber_opts = "features --format pretty"
