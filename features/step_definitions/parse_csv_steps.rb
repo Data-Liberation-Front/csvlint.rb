@@ -4,8 +4,9 @@ end
 
 Given(/^it is stored at the url "(.*?)"$/) do |url|
   @url = url
+  content_type = @content_type || "text/csv"
   charset = @encoding || "UTF-8"
-  stub_request(:get, url).to_return(:status => 200, :body => @csv, :headers => {"Content-Type" => "text/csv; charset=#{charset}"})
+  stub_request(:get, url).to_return(:status => 200, :body => @csv, :headers => {"Content-Type" => "#{content_type}; charset=#{charset}"})
 end
 
 When(/^I ask if the CSV is valid$/) do
