@@ -44,7 +44,6 @@ module Csvlint
         s.each_line do |line|
           begin
             current_line = current_line + 1
-            #check_encoding(line, current_line)
             row = CSV.parse( line )[0]
             expected_columns = row.count unless expected_columns != 0
             if row.count != expected_columns
