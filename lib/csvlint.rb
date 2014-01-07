@@ -6,7 +6,7 @@ module Csvlint
   
   class Validator
     
-    attr_reader :errors, :warnings, :encoding
+    attr_reader :errors, :warnings, :encoding, :content_type
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :quoting,
@@ -30,6 +30,7 @@ module Csvlint
       current_line = 0
       open(@stream) do |s|
         @encoding = s.charset rescue nil
+        @content_type = s.content_type rescue nil
         build_warnings(:encoding, nil) if @encoding != "utf-8"
         s.each_line do |line|
           begin
