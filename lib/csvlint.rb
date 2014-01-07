@@ -16,6 +16,7 @@ module Csvlint
       @errors = []
       @warnings = []
       @stream = stream
+      validate
     end
     
     def valid?
@@ -23,12 +24,10 @@ module Csvlint
     end
     
     def errors
-      validate
       @errors
     end
     
     def warnings
-      validate
       @warnings
     end
     
