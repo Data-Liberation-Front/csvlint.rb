@@ -1,12 +1,15 @@
 require "csvlint/version"
 require 'csv'
 require 'open-uri'
+require 'charlock_holmes'
 
 module Csvlint
   
   class Validator
     
-    attr_reader :errors, :warnings, :encoding, :content_type
+    attr_reader :errors, :warnings, :encoding, :content_type, :guessed_encoding
+    
+    ENCODING_SAMPLE_SIZE=10
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :quoting,
@@ -18,6 +21,7 @@ module Csvlint
       @errors = []
       @warnings = []
       @stream = stream
+      @encoding_sample = []
       validate
     end
     
@@ -36,6 +40,7 @@ module Csvlint
         s.each_line do |line|
           begin
             current_line = current_line + 1
+            @encoding_sample << line if current_line <= ENCODING_SAMPLE_SIZE
             row = CSV.parse( line )[0]
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
@@ -45,6 +50,7 @@ module Csvlint
           end
         end
       end
+      guess_encoding()
       true
     end
     
@@ -65,6 +71,19 @@ module Csvlint
     def fetch_error(error)
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.$/i)
       ERROR_MATCHERS.fetch(e[1], :unknown_error)
+    end
+    
+    def guess_encoding()      
+      contents = @encoding_sample.join()
+      puts contents
+      begin
+        detection = CharlockHolmes::EncodingDetector.detect(contents)
+        @guessed_encoding = {
+          :encoding => detection[:encoding],
+          :confidence => detection[:confidence]
+        }
+      rescue
+      end
     end
     
   end
