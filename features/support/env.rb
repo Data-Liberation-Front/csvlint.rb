@@ -4,6 +4,9 @@ require 'simplecov'
 require 'simplecov-rcov'
 require 'rspec/expectations'
 require 'csvlint'
+require 'coveralls'
+
+Coveralls.wear!
 
 SimpleCov.formatter = SimpleCov::Formatter::RcovFormatter
 SimpleCov.start
