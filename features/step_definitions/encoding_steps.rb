@@ -11,11 +11,3 @@ end
 Then(/^there should be (\d+) warnings$/) do |count|
   @warnings.count.should == count.to_i
 end
-
-When(/^I ask for the encoding$/) do
-  @validator = Csvlint::Validator.new( @url ) 
-end
-
-Then(/^I should get "(.*?)"$/) do |encoding|
-  @validator.encoding.should == encoding
-end
