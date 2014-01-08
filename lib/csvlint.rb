@@ -38,7 +38,7 @@ module Csvlint
           build_warnings(:extension, nil)
         end
         build_warnings(:encoding, nil) if @encoding != "utf-8"
-        build_warnings(:content_type, nil) unless @content_type =~ /text\/csv|application\/csv|text\/comma-separated-values/
+        build_warnings(:content_type, nil) unless @content_type =~ /text\/csv/
         s.each_line do |line|
           begin
             current_line = current_line + 1
