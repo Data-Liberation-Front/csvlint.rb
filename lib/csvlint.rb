@@ -18,6 +18,7 @@ module Csvlint
       @errors = []
       @warnings = []
       @stream = stream
+      @extension = File.extname(@stream)
       validate
     end
     
@@ -28,6 +29,7 @@ module Csvlint
     def validate
       expected_columns = 0
       current_line = 0
+      build_warnings(:extension, nil) unless @extension == ".csv"
       open(@stream) do |s|
         @encoding = s.charset rescue nil
         @content_type = s.content_type rescue nil
