@@ -15,3 +15,5 @@ Feature: Return information
   Scenario: Return content type
     Then the "content_type" should be "text/csv"
 
+  Scenario: Return extension
+    Then the "extension" should be ".csv"
