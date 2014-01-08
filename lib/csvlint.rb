@@ -30,6 +30,7 @@ module Csvlint
     def validate
       expected_columns = 0
       current_line = 0
+      single_col = false
       build_warnings(:extension, nil) unless @extension == ".csv"
       open(@stream) do |s|
         @encoding = s.charset rescue nil
@@ -40,6 +41,7 @@ module Csvlint
           begin
             current_line = current_line + 1
             row = CSV.parse(line, @csv_options)[0]
+            single_col = true if row.count == 1
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
             build_errors(:blank_rows, current_line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
@@ -49,7 +51,7 @@ module Csvlint
           end
         end
       end
-      true
+      build_warnings(:check_options, nil) if single_col == true
     end
     
     def build_errors(type, position)
