@@ -1,5 +1,8 @@
 rvm:
 - 2.0.0
+before_script:
+  - sudo apt-get update
+  - sudo apt-get install libicu-dev
 notifications:
   irc:
     channels:
