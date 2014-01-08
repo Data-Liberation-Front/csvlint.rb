@@ -10,7 +10,7 @@ Given(/^it is stored at the url "(.*?)"$/) do |url|
 end
 
 When(/^I ask if the CSV is valid$/) do
-  @validator = Csvlint::Validator.new( @url ) 
+  @validator = Csvlint::Validator.new( @url, @csv_options ) 
   @valid = @validator.valid?
 end
 

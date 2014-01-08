@@ -14,11 +14,12 @@ module Csvlint
       "Unclosed quoted field" => :quoting,
     }
        
-    def initialize(stream)
+    def initialize(stream, dialect = nil)
       @errors = []
       @warnings = []
       @stream = stream
       @extension = File.extname(@stream)
+      @csv_options = dialect_to_csv_options(dialect)
       validate
     end
     
@@ -38,7 +39,7 @@ module Csvlint
         s.each_line do |line|
           begin
             current_line = current_line + 1
-            row = CSV.parse( line )[0]
+            row = CSV.parse(line, @csv_options)[0]
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
             build_errors(:blank_rows, current_line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
@@ -68,6 +69,18 @@ module Csvlint
     def fetch_error(error)
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.$/i)
       ERROR_MATCHERS.fetch(e[1], :unknown_error)
+    end
+    
+    def dialect_to_csv_options(dialect)
+        return {} unless dialect
+        #supplying defaults here just in case the dialect is invalid
+        delimiter = dialect["delimiter"] || ","
+        delimiter = delimiter + " " if !dialect["skipinitialspace"]  
+        return {
+            :col_sep => delimiter,
+            :row_sep => ( dialect["lineterminator"] || :auto ),
+            :quote_char => ( dialect["quotechar"] || '"')
+        }
     end
     
   end
