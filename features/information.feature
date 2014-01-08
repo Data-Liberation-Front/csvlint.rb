@@ -10,7 +10,10 @@ Feature: Return information
     And it is stored at the url "http://example.com/example1.csv"
 
   Scenario: Return encoding
-    Then the encoding should be "utf-8"
+    Then the "encoding" should be "utf-8"
     
-  Scenario: Return content tye
-    Then the content type should be "text/csv"
+  Scenario: Return content type
+    Then the "content_type" should be "text/csv"
+
+  Scenario: Return extension
+    Then the "extension" should be ".csv"

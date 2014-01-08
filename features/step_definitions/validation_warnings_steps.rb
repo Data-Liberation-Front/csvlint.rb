@@ -11,3 +11,7 @@ end
 Then(/^there should be (\d+) warnings$/) do |count|
   @warnings.count.should == count.to_i
 end
+
+Given(/^the content type is set to "(.*?)"$/) do |type|
+  @content_type = type
+end

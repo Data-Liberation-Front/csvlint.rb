@@ -2,12 +2,7 @@ Given(/^the content type is "(.*?)"$/) do |arg1|
   @content_type = "text/csv"
 end
 
-Then(/^the encoding should be "(.*?)"$/) do |encoding|
+Then(/^the "(.*?)" should be "(.*?)"$/) do |type, encoding|
   validator = Csvlint::Validator.new( @url ) 
-  validator.encoding.should == encoding
-end
-
-Then(/^the content type should be "(.*?)"$/) do |content_type|
-  validator = Csvlint::Validator.new( @url ) 
-  validator.content_type.should == content_type
+  validator.send(type.to_sym).should == encoding
 end
