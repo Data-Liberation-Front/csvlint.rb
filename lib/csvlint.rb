@@ -78,7 +78,8 @@ module Csvlint
         return {} unless dialect
         #supplying defaults here just in case the dialect is invalid
         delimiter = dialect["delimiter"] || ","
-        delimiter = delimiter + " " if !dialect["skipinitialspace"]  
+        skipinitialspace = dialect["skipinitialspace"] || true
+        delimiter = delimiter + " " if !skipinitialspace
         return {
             :col_sep => delimiter,
             :row_sep => ( dialect["lineterminator"] || nil ),
