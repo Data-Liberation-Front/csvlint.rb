@@ -20,6 +20,7 @@ module Csvlint
       @stream = stream
       @extension = File.extname(@stream)
       @csv_options = dialect_to_csv_options(dialect)
+      @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
       validate
     end
     
@@ -37,7 +38,7 @@ module Csvlint
         @content_type = s.content_type rescue nil
         build_warnings(:encoding, nil) if @encoding != "utf-8"
         build_warnings(:content_type, nil) unless @content_type =~ /text\/csv|application\/csv|text\/comma-separated-values/
-        s.each_line do |line|
+        s.each_line(@line_terminator) do |line|
           begin
             current_line = current_line + 1
             row = CSV.parse(line, @csv_options)[0]
@@ -80,7 +81,7 @@ module Csvlint
         delimiter = delimiter + " " if !dialect["skipinitialspace"]  
         return {
             :col_sep => delimiter,
-            :row_sep => ( dialect["lineterminator"] || :auto ),
+            :row_sep => ( dialect["lineterminator"] || nil ),
             :quote_char => ( dialect["quotechar"] || '"')
         }
     end
