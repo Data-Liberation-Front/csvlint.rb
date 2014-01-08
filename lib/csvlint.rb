@@ -41,7 +41,7 @@ module Csvlint
         s.each_line(@line_terminator) do |line|
           begin
             current_line = current_line + 1
-            row = CSV.parse(line, @csv_options)[0]
+            row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
             single_col = true if row.count == 1
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
