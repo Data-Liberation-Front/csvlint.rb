@@ -39,6 +39,7 @@ module Csvlint
             row = CSV.parse( line )[0]
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
+            build_errors(:blank_rows, current_line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
           rescue CSV::MalformedCSVError => e
             type = fetch_error(e)
             build_errors(type, current_line)
@@ -68,4 +69,5 @@ module Csvlint
     end
     
   end
+
 end
