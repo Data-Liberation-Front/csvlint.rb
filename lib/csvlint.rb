@@ -34,9 +34,13 @@ module Csvlint
       single_col = false
       build_warnings(:extension, nil) unless @extension == ".csv"
       open(@stream) do |s|
-        @encoding = s.charset rescue nil
-        @content_type = s.content_type rescue nil
-        build_warnings(:encoding, nil) if @encoding != "utf-8"
+        @encoding = s.charset
+        @content_type = s.content_type
+        if s.meta["content-type"] !~ /charset/
+          build_warnings(:encoding_not_set, nil) 
+        else
+          build_warnings(:encoding, nil) if @encoding != "utf-8"
+        end
         build_warnings(:content_type, nil) unless @content_type =~ /text\/csv|application\/csv|text\/comma-separated-values/
         s.each_line(@line_terminator) do |line|
           begin
