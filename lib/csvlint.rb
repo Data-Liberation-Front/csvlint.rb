@@ -15,11 +15,13 @@ module Csvlint
       "Unclosed quoted field" => :quoting,
     }
        
-    def initialize(stream)
+    def initialize(stream, dialect = nil)
       @errors = []
       @warnings = []
       @stream = stream
       @extension = File.extname(@stream)
+      @csv_options = dialect_to_csv_options(dialect)
+      @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
       validate
     end
     
@@ -30,6 +32,7 @@ module Csvlint
     def validate
       expected_columns = 0
       current_line = 0
+      single_col = false
       open(@stream) do |s|
         @encoding = s.charset rescue nil
         @content_type = s.content_type rescue nil
@@ -39,10 +42,11 @@ module Csvlint
         end
         build_warnings(:encoding, nil) if @encoding != "utf-8"
         build_warnings(:content_type, nil) unless @content_type =~ /text\/csv/
-        s.each_line do |line|
+        s.each_line(@line_terminator) do |line|
           begin
             current_line = current_line + 1
-            row = CSV.parse( line )[0]
+            row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
+            single_col = true if row.count == 1
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
             build_errors(:blank_rows, current_line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
@@ -52,7 +56,7 @@ module Csvlint
           end
         end
       end
-      true
+      build_warnings(:check_options, nil) if single_col == true
     end
     
     def build_errors(type, position)
@@ -72,6 +76,19 @@ module Csvlint
     def fetch_error(error)
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.$/i)
       ERROR_MATCHERS.fetch(e[1], :unknown_error)
+    end
+    
+    def dialect_to_csv_options(dialect)
+        return {} unless dialect
+        #supplying defaults here just in case the dialect is invalid
+        delimiter = dialect["delimiter"] || ","
+        skipinitialspace = dialect["skipinitialspace"] || true
+        delimiter = delimiter + " " if !skipinitialspace
+        return {
+            :col_sep => delimiter,
+            :row_sep => ( dialect["lineterminator"] || nil ),
+            :quote_char => ( dialect["quotechar"] || '"')
+        }
     end
     
   end
