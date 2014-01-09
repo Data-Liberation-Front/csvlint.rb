@@ -15,3 +15,11 @@ end
 Given(/^the content type is set to "(.*?)"$/) do |type|
   @content_type = type
 end
+
+Then(/^that warning should have the position "(.*?)"$/) do |position|
+  @warnings.first[:position].should == position.to_i
+end
+
+Then(/^that warning should have the type "(.*?)"$/) do |type|
+  @warnings.first[:type].should == type.to_sym
+end

@@ -21,6 +21,7 @@ module Csvlint
       @extension = File.extname(@stream)
       @csv_options = dialect_to_csv_options(dialect)
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
+      @formats = {}
       validate
     end
     
@@ -42,6 +43,7 @@ module Csvlint
           begin
             current_line = current_line + 1
             row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
+            check_format(row, current_line)
             single_col = true if row.count == 1
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
@@ -83,8 +85,21 @@ module Csvlint
         return {
             :col_sep => delimiter,
             :row_sep => ( dialect["lineterminator"] || nil ),
-            :quote_char => ( dialect["quotechar"] || '"')
+            :quote_char => ( dialect["quotechar"] || '"'),
         }
+    end
+    
+    def check_format(row, line)
+      f = {}
+      row.each do |col, i|
+        f[i] = "numeric" if col =~ /[0-9]+/
+        
+        unless @formats[i].nil?
+          build_warnings(:inconsistent_values, line) if @formats[i] != f[i]
+        else
+          @formats[i] = f[i]
+        end
+      end
     end
     
   end
