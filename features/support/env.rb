@@ -5,6 +5,7 @@ require 'simplecov-rcov'
 require 'rspec/expectations'
 require 'csvlint'
 require 'coveralls'
+require 'pry'
 
 Coveralls.wear!
 
