@@ -91,9 +91,10 @@ module Csvlint
     
     def check_format(row, line)
       f = {}
-        f[i] = "numeric" if col =~ /[0-9]+/
-        
       row.each_with_index do |col, i|
+        f[i] = "numeric" if col =~ /^[0-9]+$/
+        f[i] = "alpha" if col =~ /^[a-z *]+$/i     
+           
         unless @formats[i].nil?
           build_warnings(:inconsistent_values, line) if @formats[i] != f[i]
         else
