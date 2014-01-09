@@ -9,6 +9,12 @@ Given(/^it is stored at the url "(.*?)"$/) do |url|
   stub_request(:get, url).to_return(:status => 200, :body => @csv, :headers => {"Content-Type" => "#{content_type}; charset=#{charset}"})
 end
 
+Given(/^it is stored at the url "(.*?)" with no character set header$/) do |url|
+  @url = url
+  content_type = @content_type || "text/csv"
+  stub_request(:get, url).to_return(:status => 200, :body => @csv, :headers => {"Content-Type" => "#{content_type}"})
+end
+
 When(/^I ask if the CSV is valid$/) do
   @validator = Csvlint::Validator.new( @url, @csv_options ) 
   @valid = @validator.valid?
