@@ -1,6 +1,11 @@
+require 'simplecov'
+require 'simplecov-rcov'
 require 'csvlint'
 require 'pry'
 require 'webmock/rspec'
+require 'coveralls'
+
+Coveralls.wear_merged!
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
