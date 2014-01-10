@@ -82,7 +82,7 @@ describe Csvlint::Validator do
         
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       validator.instance_variable_set("@formats", formats)
-      validator.check_consistency(3)
+      validator.check_consistency
           
       warnings = validator.instance_variable_get("@warnings") 
       warnings.delete_if { |h| h[:type] != :inconsistent_values }
