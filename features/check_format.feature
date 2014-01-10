@@ -6,6 +6,7 @@ Feature: Check inconsistent formatting
 "1","2","3"
 "Foo","5","6"
 "3","2","1"
+"3","2","1"
     """
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are warnings
@@ -17,6 +18,7 @@ Feature: Check inconsistent formatting
     """
 "Foo","Bar","Baz"
 "Biz","1","Baff"
+"Boff","Giff","Goff"
 "Boff","Giff","Goff"
     """
     And it is stored at the url "http://example.com/example1.csv"
