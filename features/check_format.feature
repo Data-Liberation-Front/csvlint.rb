@@ -11,7 +11,6 @@ Feature: Check inconsistent formatting
     And I ask if there are warnings
     Then there should be 1 warnings
     And that warning should have the type "inconsistent_values"
-    And that warning should have the position "2"
     
   Scenario: Inconsistent formatting for alpha fields
     Given I have a CSV with the following content:
@@ -24,4 +23,3 @@ Feature: Check inconsistent formatting
     And I ask if there are warnings
     Then there should be 1 warnings
     And that warning should have the type "inconsistent_values"
-    And that warning should have the position "2"
