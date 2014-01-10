@@ -13,6 +13,11 @@ module Csvlint
       "Illegal quoting" => :whitespace,
       "Unclosed quoted field" => :quoting,
     }
+    
+    FORMATS = {
+      "numeric" => Regexp.new("^[0-9]+$"),
+      "alpha" => Regexp.new("^[a-z *]+$", "i")
+    }
        
     def initialize(stream, dialect = nil)
       @errors = []
@@ -43,7 +48,7 @@ module Csvlint
           begin
             current_line = current_line + 1
             row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
-            check_format(row, current_line)
+            build_formats(row, current_line)
             single_col = true if row.count == 1
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
@@ -54,6 +59,7 @@ module Csvlint
           end
         end
       end
+      check_consistency(current_line)      
       build_warnings(:check_options, nil) if single_col == true
     end
     
@@ -89,17 +95,27 @@ module Csvlint
         }
     end
     
-    def check_format(row, line)
-      f = {}
+    def build_formats(row, line)
       row.each_with_index do |col, i|
-        f[i] = "numeric" if col =~ /^[0-9]+$/
-        f[i] = "alpha" if col =~ /^[a-z *]+$/i     
-           
-        unless @formats[i].nil?
-          build_warnings(:inconsistent_values, line) if @formats[i] != f[i]
-        else
-          @formats[i] = f[i]
+        @formats[i] ||= []
+        FORMATS.each do |type, regex|
+          @formats[i] << type if col =~ regex
         end
+      end
+    end
+    
+    def check_consistency(lines)
+      percentages = []
+      
+      FORMATS.each do |type, regex|
+        lines.times do |i|
+          percentages[i] ||= {}
+          percentages[i][type] = @formats[i].grep(/#{type}/).count.to_f / @formats[i].count.to_f
+        end
+      end
+      
+      percentages.each do |col|
+        build_warnings(:inconsistent_values, nil) if col.values.max < 0.9
       end
     end
     
