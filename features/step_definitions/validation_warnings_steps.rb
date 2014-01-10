@@ -4,7 +4,7 @@ Given(/^it is encoded as "(.*?)"$/) do |encoding|
 end
 
 When(/^I ask if there are warnings$/) do
-  @validator = Csvlint::Validator.new( @url ) 
+  @validator = Csvlint::Validator.new( @url, @csv_options ) 
   @warnings = @validator.warnings
 end
 
