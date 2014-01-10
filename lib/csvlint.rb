@@ -26,7 +26,7 @@ module Csvlint
       @extension = File.extname(@stream)
       @csv_options = dialect_to_csv_options(dialect)
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
-      @formats = {}
+      @formats = []
       validate
     end
     
