@@ -93,11 +93,14 @@ module Csvlint
     def build_formats(row, line) 
       row.each_with_index do |col, i|
         @formats[i] ||= []
+        
         case col
           when /^[0-9]+$/
             @formats[i] << :numeric
           when /^[a-z *]+$/i
             @formats[i] << :alpha
+          when /^[a-z0-9 *]+$/i
+            @formats[i] << :alphanumeric
           else
             @formats[i] << :unknown
           end
@@ -106,14 +109,14 @@ module Csvlint
     
     def check_consistency
       percentages = []
-            
-      formats = [:numeric, :alpha, :unknown]
+                
+      formats = [:numeric, :alpha, :unknown, :alphanumeric]
             
       formats.each do |type, regex|
         @formats.count.times do |i|
           percentages[i] ||= {}
           unless @formats[i].nil?
-            percentages[i][type] = @formats[i].grep(/#{type}/).count.to_f / @formats[i].count.to_f
+            percentages[i][type] = @formats[i].grep(/^#{type}$/).count.to_f / @formats[i].count.to_f
           end
         end
       end

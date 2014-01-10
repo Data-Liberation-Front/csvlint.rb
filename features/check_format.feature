@@ -25,3 +25,19 @@ Feature: Check inconsistent formatting
     And I ask if there are warnings
     Then there should be 1 warnings
     And that warning should have the type "inconsistent_values"
+
+  Scenario: Inconsistent formatting for alphanumeric fields
+    Given I have a CSV with the following content:
+    """
+"Foo 123","Bar","Baz"
+"1","Bar","Baff"
+"Boff 432423","Giff","Goff"
+"Boff444","Giff","Goff"
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    And I ask if there are warnings
+    Then there should be 1 warnings
+    And that warning should have the type "inconsistent_values"
+
+
+    
