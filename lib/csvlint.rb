@@ -54,7 +54,7 @@ module Csvlint
           end
         end
       end
-      check_consistency(current_line)      
+      check_consistency      
       build_warnings(:check_options, nil) if single_col == true
     end
     
@@ -104,13 +104,13 @@ module Csvlint
       end
     end
     
-    def check_consistency(lines)
+    def check_consistency
       percentages = []
             
       formats = [:numeric, :alpha, :unknown]
             
       formats.each do |type, regex|
-        lines.times do |i|
+        @formats.count.times do |i|
           percentages[i] ||= {}
           unless @formats[i].nil?
             percentages[i][type] = @formats[i].grep(/#{type}/).count.to_f / @formats[i].count.to_f
