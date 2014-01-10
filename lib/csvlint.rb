@@ -13,13 +13,8 @@ module Csvlint
       "Illegal quoting" => :whitespace,
       "Unclosed quoted field" => :quoting,
     }
-    
-    FORMATS = {
-      "numeric" => Regexp.new("^[0-9]+$"),
-      "alpha" => Regexp.new("^[a-z *]+$", "i")
-    }
        
-    def initialize(stream, dialect = nil)
+    def initialize(stream, dialect = nil)      
       @errors = []
       @warnings = []
       @stream = stream
@@ -95,22 +90,31 @@ module Csvlint
         }
     end
     
-    def build_formats(row, line)
+    def build_formats(row, line) 
       row.each_with_index do |col, i|
         @formats[i] ||= []
-        FORMATS.each do |type, regex|
-          @formats[i] << type if col =~ regex
-        end
+        case col
+          when /^[0-9]+$/
+            @formats[i] << :numeric
+          when /^[a-z *]+$/i
+            @formats[i] << :alpha
+          else
+            @formats[i] << :unknown
+          end
       end
     end
     
     def check_consistency(lines)
       percentages = []
-      
-      FORMATS.each do |type, regex|
+            
+      formats = [:numeric, :alpha, :unknown]
+            
+      formats.each do |type, regex|
         lines.times do |i|
           percentages[i] ||= {}
-          percentages[i][type] = @formats[i].grep(/#{type}/).count.to_f / @formats[i].count.to_f
+          unless @formats[i].nil?
+            percentages[i][type] = @formats[i].grep(/#{type}/).count.to_f / @formats[i].count.to_f
+          end
         end
       end
       
