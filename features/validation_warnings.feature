@@ -73,6 +73,16 @@ Feature: Validation warnings
     And I ask if there are warnings
     Then there should be 0 warnings
     
+  Scenario: Allow query params after extension
+    Given I have a CSV with the following content:
+    """
+"abc","2","3"
+    """
+    And the content type is set to "text/csv"
+    And it is stored at the url "http://example.com/example1.csv?query=param"
+    And I ask if there are warnings
+    Then there should be 0 warnings
+    
   Scenario: User doesn't supply encoding
     Given I have a CSV with the following content:
     """
