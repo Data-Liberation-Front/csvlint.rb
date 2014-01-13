@@ -22,3 +22,8 @@ end
 Then(/^that error should have no content$/) do
   @errors.first.content.should == nil
 end
+
+Given(/^I have a CSV that doesn't exist$/) do
+  @url = "http//www.example.com/fake-csv.csv"
+  stub_request(:get, @url).to_return(:status => 404)
+end

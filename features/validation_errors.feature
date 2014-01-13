@@ -111,4 +111,8 @@ Feature: Get validation errors
     Then there should be 1 error
     And that error should have the type "wrong_content_type"
     
-    
+  Scenario: Handles urls that 404
+    Given I have a CSV that doesn't exist
+    When I ask if there are errors
+    Then there should be 1 error
+    And that error should have the type "not_found"
