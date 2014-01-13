@@ -50,6 +50,22 @@ Feature: Get validation errors
     And that error should have the type "blank_rows"
     And that error should have the row "2"
     And that error should have the content ""","","
+
+  Scenario: Successfully report a CSV with trailing empty row
+    Given I have a CSV with the following content:
+    """
+"Foo","Bar","Baz"
+"Foo","Bar","Baz"
+
+
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    When I ask if there are errors
+    Then there should be 1 error
+    And that error should have the type "blank_rows"
+    And that error should have the row "3"
+    And that error should have no content
+
     
    Scenario: Report invalid Encoding
     Given I have a CSV file called "invalid-byte-sequence.csv"

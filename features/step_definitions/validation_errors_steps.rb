@@ -18,3 +18,7 @@ end
 Then(/^that error should have the content "(.*)"$/) do |content|
   @errors.first.content.chomp.should == content.chomp
 end
+
+Then(/^that error should have no content$/) do
+  @errors.first.content.should == nil
+end

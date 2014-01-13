@@ -47,13 +47,17 @@ module Csvlint
         s.each_line(@line_terminator) do |line|
           begin
             current_line = current_line + 1
-            @csv_options[:encoding] = @encoding
+            @csv_options[:encoding] = @encoding            
             row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
-            build_formats(row, current_line)
-            single_col = true if row.count == 1
-            expected_columns = row.count unless expected_columns != 0
-            build_errors(:ragged_rows, current_line, line) if row.count != expected_columns
-            build_errors(:blank_rows, current_line, line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+            if row
+              build_formats(row, current_line)
+              single_col = true if row.count == 1
+              expected_columns = row.count unless expected_columns != 0
+              build_errors(:ragged_rows, current_line, line) if row.count != expected_columns
+              build_errors(:blank_rows, current_line, line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+            else
+              build_errors(:blank_rows, current_line, nil)
+            end
           rescue CSV::MalformedCSVError => e
             type = fetch_error(e)
             build_errors(type, current_line, line)
