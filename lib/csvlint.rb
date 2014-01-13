@@ -73,11 +73,11 @@ module Csvlint
     end
     
     def build_message(type, row, content)
-      {
-        :type => type,
-        :row => row,
-        :content => content
-      }
+      Csvlint::ErrorMessage.new({
+                                  :type => type,
+                                  :row => row,
+                                  :content => content
+                                })
     end
     
     def build_errors(type, row = nil, content = nil)
