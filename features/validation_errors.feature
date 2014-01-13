@@ -11,6 +11,7 @@ Feature: Get validation errors
     Then there should be 1 error
     And that error should have the type "ragged_rows"
     And that error should have the row "2"
+    And that error should have the content ""4","5""
 
   Scenario: CSV with incorrect quoting
     Given I have a CSV with the following content:
@@ -22,6 +23,7 @@ Feature: Get validation errors
     Then there should be 1 error
     And that error should have the type "quoting"
     And that error should have the row "1"
+    And that error should have the content ""Foo","Bar","Baz"
     
    Scenario: Successfully report a CSV with incorrect whitespace
     Given I have a CSV with the following content:
@@ -33,6 +35,7 @@ Feature: Get validation errors
     Then there should be 1 error
     And that error should have the type "whitespace"
     And that error should have the row "1"
+    And that error should have the content ""Foo","Bar",   "Baz""
     
   Scenario: Successfully report a CSV with blank rows
     Given I have a CSV with the following content:
@@ -46,6 +49,7 @@ Feature: Get validation errors
     Then there should be 1 error
     And that error should have the type "blank_rows"
     And that error should have the row "2"
+    And that error should have the content ""","","
     
    Scenario: Report invalid Encoding
     Given I have a CSV file called "invalid-byte-sequence.csv"

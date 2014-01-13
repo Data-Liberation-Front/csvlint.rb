@@ -14,3 +14,7 @@ end
 Then(/^that error should have the row "(.*?)"$/) do |row|
   @errors.first[:row].should == row.to_i
 end
+
+Then(/^that error should have the content "(.*)"$/) do |content|
+  @errors.first[:content].chomp.should == content.chomp
+end
