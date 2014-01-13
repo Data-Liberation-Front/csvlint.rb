@@ -3,6 +3,14 @@ Given(/^it is encoded as "(.*?)"$/) do |encoding|
   @encoding = encoding
 end
 
+Given(/^I set an encoding header of "(.*?)"$/) do |encoding|
+  @encoding = encoding
+end
+
+Given(/^I have a CSV file called "(.*?)"$/) do |filename|
+  @csv = File.read( File.join( File.dirname(__FILE__), "..", "fixtures", filename ) )
+end
+
 When(/^I ask if there are warnings$/) do
   @validator = Csvlint::Validator.new( @url, @csv_options ) 
   @warnings = @validator.warnings
