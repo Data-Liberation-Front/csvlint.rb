@@ -72,18 +72,19 @@ module Csvlint
       build_warnings(:check_options, nil) if single_col == true
     end
     
-    def build_errors(type, row)
-      @errors << {
+    def build_message(type, row)
+      {
         :type => type,
         :row => row
       }
     end
     
+    def build_errors(type, row)
+      @errors << build_message(type, row)
+    end
+    
     def build_warnings(type, row)
-      @warnings << {
-        :type => type,
-        :row => row
-      }
+      @warnings << build_message(type, row)
     end
     
     def fetch_error(error)
