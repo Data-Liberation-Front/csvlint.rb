@@ -14,7 +14,3 @@ end
 Then(/^that error should have the position "(.*?)"$/) do |position|
   @errors.first[:position].should == position.to_i
 end
-
-Then(/^that warning should have the type "(.*?)"$/) do |type|
-  @warnings.first[:type].should == type.to_sym
-end
