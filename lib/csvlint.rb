@@ -7,7 +7,7 @@ module Csvlint
   
   class Validator
     
-    attr_reader :errors, :warnings, :encoding, :content_type, :extension
+    attr_reader :errors, :warnings, :encoding, :content_type, :extension, :headers
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :quoting,
