@@ -30,43 +30,47 @@ module Csvlint
       current_line = 0
       single_col = false
       reported_invalid_encoding = false
-      open(@url) do |s|
-        @encoding = s.charset rescue nil
-        @content_type = s.content_type rescue nil
-        @headers = s.meta        
-        if @headers["content-type"] !~ /charset=/
-          build_warnings(:no_encoding, nil) 
-        else
-          build_warnings(:encoding, nil) if @encoding != "utf-8"
-        end
-        build_warnings(:no_content_type, nil) if @content_type == nil
-        build_warnings(:excel, nil) if @content_type == nil && @extension =~ /.xls(x)?/
-        build_errors(:wrong_content_type, nil) unless (@content_type && @content_type =~ /text\/csv/)
-        s.each_line(@line_terminator) do |line|
-          begin
-            current_line = current_line + 1
-            @csv_options[:encoding] = @encoding            
-            row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
-            if row
-              build_formats(row, current_line)
-              single_col = true if row.count == 1
-              expected_columns = row.count unless expected_columns != 0
-              build_errors(:ragged_rows, current_line, line) if row.count != expected_columns
-              build_errors(:blank_rows, current_line, line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
-            else
-              build_errors(:blank_rows, current_line, nil)
+      begin
+        open(@url) do |s|
+          @encoding = s.charset rescue nil
+          @content_type = s.content_type rescue nil
+          @headers = s.meta        
+          if @headers["content-type"] !~ /charset=/
+            build_warnings(:no_encoding, nil) 
+          else
+            build_warnings(:encoding, nil) if @encoding != "utf-8"
+          end
+          build_warnings(:no_content_type, nil) if @content_type == nil
+          build_warnings(:excel, nil) if @content_type == nil && @extension =~ /.xls(x)?/
+          build_errors(:wrong_content_type, nil) unless (@content_type && @content_type =~ /text\/csv/)
+          s.each_line(@line_terminator) do |line|
+            begin
+              current_line = current_line + 1
+              @csv_options[:encoding] = @encoding            
+              row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
+              if row
+                build_formats(row, current_line)
+                single_col = true if row.count == 1
+                expected_columns = row.count unless expected_columns != 0
+                build_errors(:ragged_rows, current_line, line) if row.count != expected_columns
+                build_errors(:blank_rows, current_line, line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+              else
+                build_errors(:blank_rows, current_line, nil)
+              end
+            rescue CSV::MalformedCSVError => e
+              type = fetch_error(e)
+              build_errors(type, current_line, line)
+            rescue ArgumentError => ae
+              build_errors(:invalid_encoding, current_line, line) unless reported_invalid_encoding
+              reported_invalid_encoding = true
             end
-          rescue CSV::MalformedCSVError => e
-            type = fetch_error(e)
-            build_errors(type, current_line, line)
-          rescue ArgumentError => ae
-            build_errors(:invalid_encoding, current_line, line) unless reported_invalid_encoding
-            reported_invalid_encoding = true
           end
         end
+        check_consistency      
+        build_warnings(:check_options, nil) if single_col == true
+      rescue OpenURI::HTTPError, Errno::ENOENT
+        build_errors(:not_found, nil)
       end
-      check_consistency      
-      build_warnings(:check_options, nil) if single_col == true
     end
     
     def build_message(type, row, content)
