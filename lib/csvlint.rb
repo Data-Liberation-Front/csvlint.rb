@@ -15,11 +15,11 @@ module Csvlint
       "Unclosed quoted field" => :quoting,
     }
        
-    def initialize(stream, dialect = nil)      
+    def initialize(url, dialect = nil)      
       @errors = []
       @warnings = []
-      @stream = stream
-      @extension = File.extname(@stream)
+      @url = url
+      @extension = parse_extension(url)
       @csv_options = dialect_to_csv_options(dialect)
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
       @formats = []
@@ -34,10 +34,10 @@ module Csvlint
       expected_columns = 0
       current_line = 0
       single_col = false
-      open(@stream) do |s|
+      open(@url) do |s|
         @encoding = s.charset rescue nil
         @content_type = s.content_type rescue nil
-        mime_types = MIME::Types.type_for(@stream)
+        mime_types = MIME::Types.type_for(@url)
         if mime_types.count > 0 && mime_types.select { |m| @content_type == m.content_type }.count == 0
           build_warnings(:extension, nil)
         end
@@ -128,6 +128,13 @@ module Csvlint
       percentages.each do |col|
         build_warnings(:inconsistent_values, nil) if col.values.max < 0.9
       end
+    end
+    
+    private
+    
+    def parse_extension(url)
+      parsed = URI.parse(url)
+      File.extname(parsed.path)
     end
     
   end

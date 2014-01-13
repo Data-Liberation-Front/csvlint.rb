@@ -7,7 +7,7 @@ Feature: Return information
     """
     And it is encoded as "utf-8"
     And the content type is "text/csv"
-    And it is stored at the url "http://example.com/example1.csv"
+    And it is stored at the url "http://example.com/example1.csv?query=true"
 
   Scenario: Return encoding
     Then the "encoding" should be "utf-8"
