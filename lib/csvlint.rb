@@ -57,13 +57,13 @@ module Csvlint
             build_formats(row, current_line)
             single_col = true if row.count == 1
             expected_columns = row.count unless expected_columns != 0
-            build_errors(:ragged_rows, current_line) if row.count != expected_columns
-            build_errors(:blank_rows, current_line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+            build_errors(:ragged_rows, current_line, line) if row.count != expected_columns
+            build_errors(:blank_rows, current_line, line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
           rescue CSV::MalformedCSVError => e
             type = fetch_error(e)
-            build_errors(type, current_line)
+            build_errors(type, current_line, line)
           rescue ArgumentError => ae
-            build_errors(:invalid_encoding, current_line) unless reported_invalid_encoding
+            build_errors(:invalid_encoding, current_line, line) unless reported_invalid_encoding
             reported_invalid_encoding = true
           end
         end
@@ -72,18 +72,20 @@ module Csvlint
       build_warnings(:check_options, nil) if single_col == true
     end
     
-    def build_errors(type, position)
-      @errors << {
+    def build_message(type, row, content)
+      {
         :type => type,
-        :position => position
+        :row => row,
+        :content => content
       }
     end
     
-    def build_warnings(type, position)
-      @warnings << {
-        :type => type,
-        :position => position
-      }
+    def build_errors(type, row = nil, content = nil)
+      @errors << build_message(type, row, content)
+    end
+    
+    def build_warnings(type, row = nil, content = nil)
+      @warnings << build_message(type, row, content)
     end
     
     def fetch_error(error)
