@@ -72,3 +72,13 @@ Feature: Validation warnings
     And it is stored at the url "http://example.com/example1"
     And I ask if there are warnings
     Then there should be 0 warnings
+    
+  Scenario: User doesn't supply encoding
+    Given I have a CSV with the following content:
+    """
+"abc","2","3"
+    """
+    And it is stored at the url "http://example.com/example1.csv" with no character set
+    When I ask if there are warnings
+    Then there should be 1 warnings
+    And that warning should have the type "no_encoding"
