@@ -29,9 +29,9 @@ Given(/^the content type is set to "(.*?)"$/) do |type|
 end
 
 Then(/^that warning should have the row "(.*?)"$/) do |row|
-  @warnings.first[:row].should == row.to_i
+  @warnings.first.row.should == row.to_i
 end
 
 Then(/^that warning should have the type "(.*?)"$/) do |type|
-  @warnings.first[:type].should == type.to_sym
+  @warnings.first.type.should == type.to_sym
 end
