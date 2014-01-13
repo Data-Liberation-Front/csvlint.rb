@@ -85,7 +85,7 @@ describe Csvlint::Validator do
       validator.check_consistency
           
       warnings = validator.instance_variable_get("@warnings") 
-      warnings.delete_if { |h| h[:type] != :inconsistent_values }
+      warnings.delete_if { |h| h.type != :inconsistent_values }
       
       warnings.count.should == 1
     end
