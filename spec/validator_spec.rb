@@ -14,9 +14,9 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       validator.build_formats(row, 1)
       formats = validator.instance_variable_get("@formats") 
-      formats[0].first.should == :alpha
+      formats[0].first.should == :alphanumeric
       formats[1].first.should == :numeric
-      formats[2].first.should == :unknown
+      formats[2].first.should == :alphanumeric
     end
   
     it "should ignore blank arrays" do
@@ -44,7 +44,7 @@ describe Csvlint::Validator do
       formats = validator.instance_variable_get("@formats")
       
       formats.should == [
-        [:alpha, :alpha, :alpha],
+        [:alphanumeric, :alphanumeric, :alphanumeric],
       ]
     end
   
@@ -63,9 +63,9 @@ describe Csvlint::Validator do
       formats = validator.instance_variable_get("@formats") 
             
       formats.should == [
-        [:alpha],
+        [:alphanumeric],
         [:numeric],
-        [:unknown]
+        [:alphanumeric]
       ]
     end
     
@@ -75,9 +75,9 @@ describe Csvlint::Validator do
     
     it "should return a warning if columns have inconsistent values" do
       formats = [
-          [:alpha, :alpha, :alpha],
-          [:alpha, :numeric, :alpha],
-          [:unknown, :unknown, :unknown],
+          [:alphanumeric, :alphanumeric, :alphanumeric],
+          [:alphanumeric, :numeric, :alphanumeric],
+          [:numeric, :numeric, :numeric],
         ]
         
       validator = Csvlint::Validator.new("http://example.com/example.csv")

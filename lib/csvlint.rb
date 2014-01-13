@@ -113,9 +113,7 @@ module Csvlint
         case col
           when /^[0-9]+$/
             @formats[i] << :numeric
-          when /^[a-z *]+$/i
-            @formats[i] << :alpha
-          when /^[a-z0-9 *]+$/i
+          when /^[a-z0-9 *[\]\[!"#\$%&'()*+,.\/:;<=>?@\^_`{|}~-]]+$/i
             @formats[i] << :alphanumeric
           else
             @formats[i] << :unknown
