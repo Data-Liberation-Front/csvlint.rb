@@ -8,13 +8,13 @@ Then(/^there should be (\d+) error$/) do |count|
 end
 
 Then(/^that error should have the type "(.*?)"$/) do |type|
-  @errors.first[:type].should == type.to_sym
+  @errors.first.type.should == type.to_sym
 end
 
 Then(/^that error should have the row "(.*?)"$/) do |row|
-  @errors.first[:row].should == row.to_i
+  @errors.first.row.should == row.to_i
 end
 
 Then(/^that error should have the content "(.*)"$/) do |content|
-  @errors.first[:content].chomp.should == content.chomp
+  @errors.first.content.chomp.should == content.chomp
 end
