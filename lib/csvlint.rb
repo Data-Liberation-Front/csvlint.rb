@@ -7,7 +7,7 @@ module Csvlint
   
   class Validator
     
-    attr_reader :errors, :warnings, :encoding, :content_type, :extension
+    attr_reader :errors, :warnings, :encoding, :content_type, :extension, :headers
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :quoting,
@@ -38,11 +38,16 @@ module Csvlint
       open(@url) do |s|
         @encoding = s.charset rescue nil
         @content_type = s.content_type rescue nil
+        @headers = s.meta        
         mime_types = MIME::Types.type_for(@url)
         if mime_types.count > 0 && mime_types.select { |m| @content_type == m.content_type }.count == 0
           build_warnings(:extension, nil)
         end
-        build_warnings(:encoding, nil) if @encoding != "utf-8"
+        if @headers["content-type"] !~ /charset=/
+          build_warnings(:no_encoding, nil) 
+        else
+          build_warnings(:encoding, nil) if @encoding != "utf-8"
+        end
         build_warnings(:content_type, nil) unless @content_type =~ /text\/csv/
         s.each_line(@line_terminator) do |line|
           begin

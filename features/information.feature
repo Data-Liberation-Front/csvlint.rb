@@ -17,3 +17,6 @@ Feature: Return information
 
   Scenario: Return extension
     Then the "extension" should be ".csv"
+    
+  Scenario: Return meta
+    Then the metadata content type should be "text/csv; charset=utf-8"
