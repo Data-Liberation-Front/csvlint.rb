@@ -34,6 +34,7 @@ module Csvlint
       expected_columns = 0
       current_line = 0
       single_col = false
+      reported_invalid_encoding = false
       open(@stream) do |s|
         @encoding = s.charset rescue nil
         @content_type = s.content_type rescue nil
@@ -46,6 +47,7 @@ module Csvlint
         s.each_line(@line_terminator) do |line|
           begin
             current_line = current_line + 1
+            @csv_options[:encoding] = @encoding
             row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
             build_formats(row, current_line)
             single_col = true if row.count == 1
@@ -55,6 +57,9 @@ module Csvlint
           rescue CSV::MalformedCSVError => e
             type = fetch_error(e)
             build_errors(type, current_line)
+          rescue ArgumentError => ae
+            build_errors(:invalid_encoding, current_line) unless reported_invalid_encoding
+            reported_invalid_encoding = true
           end
         end
       end
