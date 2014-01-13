@@ -34,16 +34,14 @@ module Csvlint
         @encoding = s.charset rescue nil
         @content_type = s.content_type rescue nil
         @headers = s.meta        
-        mime_types = MIME::Types.type_for(@url)
-        if mime_types.count > 0 && mime_types.select { |m| @content_type == m.content_type }.count == 0
-          build_warnings(:extension, nil)
-        end
         if @headers["content-type"] !~ /charset=/
           build_warnings(:no_encoding, nil) 
         else
           build_warnings(:encoding, nil) if @encoding != "utf-8"
         end
-        build_warnings(:content_type, nil) unless @content_type =~ /text\/csv/
+        build_warnings(:no_content_type, nil) if @content_type == nil
+        build_warnings(:excel, nil) if @content_type == nil && @extension =~ /.xls(x)?/
+        build_errors(:wrong_content_type, nil) unless (@content_type && @content_type =~ /text\/csv/)
         s.each_line(@line_terminator) do |line|
           begin
             current_line = current_line + 1
