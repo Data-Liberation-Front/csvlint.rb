@@ -65,3 +65,34 @@ Feature: Get validation errors
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if there are errors
     Then there should be 0 error  
+    
+   Scenario: Report invalid file
+    Given I have a CSV file called "spreadsheet.xls"
+    And it is stored at the url "http://example.com/example1.csv"
+    When I ask if there are errors
+    Then there should be 1 error    
+    And that error should have the type "invalid_encoding"
+    
+  Scenario: Incorrect content type
+    Given I have a CSV with the following content:
+    """
+"abc","2","3"
+    """
+    And the content type is set to "application/excel"
+    And it is stored at the url "http://example.com/example1.xls"
+    And I ask if there are errors
+    Then there should be 1 error
+    And that error should have the type "wrong_content_type"
+
+  Scenario: Incorrect extension
+    Given I have a CSV with the following content:
+    """
+"abc","2","3"
+    """
+    And the content type is set to "application/excel"
+    And it is stored at the url "http://example.com/example1.csv"
+    And I ask if there are errors
+    Then there should be 1 error
+    And that error should have the type "wrong_content_type"
+    
+    
