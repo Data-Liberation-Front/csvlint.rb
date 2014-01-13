@@ -11,6 +11,6 @@ Then(/^that error should have the type "(.*?)"$/) do |type|
   @errors.first[:type].should == type.to_sym
 end
 
-Then(/^that error should have the position "(.*?)"$/) do |position|
-  @errors.first[:position].should == position.to_i
+Then(/^that error should have the row "(.*?)"$/) do |row|
+  @errors.first[:row].should == row.to_i
 end
