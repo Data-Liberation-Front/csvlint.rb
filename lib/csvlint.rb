@@ -14,13 +14,14 @@ module Csvlint
       "Unclosed quoted field" => :quoting,
     }
        
-    def initialize(stream, dialect = nil)
+    def initialize(stream, dialect = nil)      
       @errors = []
       @warnings = []
       @stream = stream
       @extension = File.extname(@stream)
       @csv_options = dialect_to_csv_options(dialect)
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
+      @formats = []
       validate
     end
     
@@ -42,6 +43,7 @@ module Csvlint
           begin
             current_line = current_line + 1
             row = CSV.parse(line.chomp(@line_terminator), @csv_options)[0]
+            build_formats(row, current_line)
             single_col = true if row.count == 1
             expected_columns = row.count unless expected_columns != 0
             build_errors(:ragged_rows, current_line) if row.count != expected_columns
@@ -52,6 +54,7 @@ module Csvlint
           end
         end
       end
+      check_consistency      
       build_warnings(:check_options, nil) if single_col == true
     end
     
@@ -83,8 +86,44 @@ module Csvlint
         return {
             :col_sep => delimiter,
             :row_sep => ( dialect["lineterminator"] || nil ),
-            :quote_char => ( dialect["quotechar"] || '"')
+            :quote_char => ( dialect["quotechar"] || '"'),
         }
+    end
+    
+    def build_formats(row, line) 
+      row.each_with_index do |col, i|
+        @formats[i] ||= []
+        
+        case col
+          when /^[0-9]+$/
+            @formats[i] << :numeric
+          when /^[a-z *]+$/i
+            @formats[i] << :alpha
+          when /^[a-z0-9 *]+$/i
+            @formats[i] << :alphanumeric
+          else
+            @formats[i] << :unknown
+          end
+      end
+    end
+    
+    def check_consistency
+      percentages = []
+                
+      formats = [:numeric, :alpha, :unknown, :alphanumeric]
+            
+      formats.each do |type, regex|
+        @formats.count.times do |i|
+          percentages[i] ||= {}
+          unless @formats[i].nil?
+            percentages[i][type] = @formats[i].grep(/^#{type}$/).count.to_f / @formats[i].count.to_f
+          end
+        end
+      end
+      
+      percentages.each do |col|
+        build_warnings(:inconsistent_values, nil) if col.values.max < 0.9
+      end
     end
     
   end
