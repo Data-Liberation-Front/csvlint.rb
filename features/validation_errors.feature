@@ -46,3 +46,18 @@ Feature: Get validation errors
     Then there should be 1 error
     And that error should have the type "blank_rows"
     And that error should have the position "2"
+    
+   Scenario: Report invalid Encoding
+    Given I have a CSV file called "invalid-byte-sequence.csv"
+    And I set an encoding header of "UTF-8"
+    And it is stored at the url "http://example.com/example1.csv"
+    When I ask if there are errors
+    Then there should be 1 error    
+    And that error should have the type "invalid_encoding"
+    
+    Scenario: Correctly handle different encodings
+    Given I have a CSV file called "invalid-byte-sequence.csv"
+    And I set an encoding header of "ISO-8859-1"    
+    And it is stored at the url "http://example.com/example1.csv"
+    When I ask if there are errors
+    Then there should be 0 error  
