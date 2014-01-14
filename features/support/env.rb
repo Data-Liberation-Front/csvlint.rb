@@ -17,3 +17,15 @@ require 'spork'
 Spork.each_run do
   require 'csvlint'
 end
+
+class CustomWorld
+  def default_csv_options
+    return {
+      "lineterminator" => "\n"
+    }
+  end
+end
+
+World do
+  CustomWorld.new
+end

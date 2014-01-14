@@ -37,6 +37,7 @@ module Csvlint
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found, nil)
       end
+      #binding.pry
     end
     
     def validate_metadata(io)
@@ -59,7 +60,7 @@ module Csvlint
       reported_invalid_encoding = false
       
       @csv_options[:encoding] = @encoding  
-        
+  
       wrapper = WrappedIO.new( io )        
       csv = CSV.new( wrapper , @csv_options )
       row = nil
@@ -120,7 +121,7 @@ module Csvlint
         delimiter = delimiter + " " if !skipinitialspace
         return {
             :col_sep => delimiter,
-            :row_sep => ( dialect["lineterminator"] || "\n" ),
+            :row_sep => ( dialect["lineterminator"] || "\r\n" ),
             :quote_char => ( dialect["quotechar"] || '"'),
             :skip_blanks => false
         }

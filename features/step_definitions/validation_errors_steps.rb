@@ -1,5 +1,6 @@
 When(/^I ask if there are errors$/) do
-  @validator = Csvlint::Validator.new( @url ) 
+  @csv_options ||= default_csv_options
+  @validator = Csvlint::Validator.new( @url, @csv_options ) 
   @errors = @validator.errors
 end
 
