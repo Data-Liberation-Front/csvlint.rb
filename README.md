@@ -1,14 +1,14 @@
 [![Coverage Status](https://coveralls.io/repos/theodi/csvlint.rb/badge.png)](https://coveralls.io/r/theodi/csvlint.rb) [![Build Status](https://travis-ci.org/theodi/csvlint.rb.png)](https://travis-ci.org/theodi/csvlint.rb)
 
-# Csvlint.rb
+# CSV Lint
 
-TODO: Write a gem description
+A ruby gem to support validating CSV files to check their syntax and contents.
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
-    gem 'csvlint.rb'
+    gem 'csvlint'
 
 And then execute:
 
@@ -16,11 +16,62 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install csvlint.rb
+    $ gem install csvlint
 
 ## Usage
 
-TODO: Write usage instructions here
+Currently the gem supports retrieving a CSV accessible from a URL
+
+	require 'csvlint'
+	
+	validator = Csvlint::Validator.new( "http://example.org/data.csv" )
+	
+	#invoke the validation	
+	validator.validate
+	
+	#check validation status
+	validator.valid?
+	
+	#access array of errors, each is an Csvlint::ErrorMessage object
+	validator.errors
+	
+	#access array of warnings
+	validator.warnings
+	
+	#get some information about the CSV file that was validated
+	validator.encoding
+	validator.content_type
+	validator.extension
+	
+	#retrieve HTTP headers from request
+	validator.headers
+
+## Error Reporting
+
+Errors and warnings returned by the validator are instances of `Csvlint::ErrorMessage`:
+
+* `content` holds the contents of the row that generated the error or warning
+* `row` holds the line number of the problem
+* `type` has a symbol that indicates the type of error or warning being reported
+
+The following types of error can be reported:
+
+* `:wrong_content_type` -- content type is not `text/csv`
+* `:ragged_rows` -- row has a different number of columns (than the first row in the file)
+* `:blank_rows` -- completely empty row, e.g. blank line or a line where all column values are empty
+* `:invalid_encoding` -- encoding error when parsing row, e.g. because of invalid characters 
+* `:not_found` -- HTTP 404 error when retrieving the data
+* `:quoting` -- problem with quoting, e.g. missing or stray quote, unclosed quoted field
+* `:whitespace` -- a quoted column has leading or trailing whitespace
+
+The following types of warning can be reported:
+
+* `:no_encoding` -- the `Content-Type` header returned in the HTTP request does not have a `charset` parameter
+* `:encoding` -- the character set is not UTF-8
+* `:no_content_type` -- file is being served without a `Content-Type` header
+* `:excel` -- no `Content-Type` header and the file extension is `.xls`
+* `:check_options` -- CSV file appears to contain only a single column
+* `:inconsistent_values` -- inconsistent values in the same column. Reported if <90% of values seem to have same data type (either numeric or alphanumeric including punctuation)
 
 ## Contributing
 
