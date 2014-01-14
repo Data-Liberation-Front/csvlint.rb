@@ -28,11 +28,8 @@ Feature: CSV options
     And that warning should have the type "check_options"
 
   Scenario: Use esoteric line endings
-    Given I have a CSV with the following content:
-    """
-"Foo","Bar","Baz"|"1","2","3"|"3","2","1"
-    """
-    And I set the line endings to "|"
+    Given I have a CSV file called "windows-line-endings.csv"
+    And I set the line endings to windows
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if the CSV is valid
     Then I should get the value of true

@@ -27,3 +27,7 @@ Given(/^I have a CSV that doesn't exist$/) do
   @url = "http//www.example.com/fake-csv.csv"
   stub_request(:get, @url).to_return(:status => 404)
 end
+
+Then(/^there should be no "(.*?)" errors$/) do |type|
+  @errors.each do |error| error.type.should_not == type.to_sym end
+end
