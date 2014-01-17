@@ -16,6 +16,7 @@ Given(/^I have a CSV file called "(.*?)"$/) do |filename|
 end
 
 When(/^I ask if there are warnings$/) do
+  @csv_options ||= default_csv_options
   @validator = Csvlint::Validator.new( @url, @csv_options ) 
   @warnings = @validator.warnings
 end

@@ -16,6 +16,7 @@ Given(/^it is stored at the url "(.*?)" with no character set$/) do |url|
 end
 
 When(/^I ask if the CSV is valid$/) do
+  @csv_options ||= default_csv_options
   @validator = Csvlint::Validator.new( @url, @csv_options ) 
   @valid = @validator.valid?
 end

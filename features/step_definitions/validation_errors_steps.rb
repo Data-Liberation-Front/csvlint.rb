@@ -1,5 +1,6 @@
 When(/^I ask if there are errors$/) do
-  @validator = Csvlint::Validator.new( @url ) 
+  @csv_options ||= default_csv_options
+  @validator = Csvlint::Validator.new( @url, @csv_options ) 
   @errors = @validator.errors
 end
 
@@ -26,4 +27,8 @@ end
 Given(/^I have a CSV that doesn't exist$/) do
   @url = "http//www.example.com/fake-csv.csv"
   stub_request(:get, @url).to_return(:status => 404)
+end
+
+Then(/^there should be no "(.*?)" errors$/) do |type|
+  @errors.each do |error| error.type.should_not == type.to_sym end
 end
