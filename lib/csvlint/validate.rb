@@ -37,7 +37,6 @@ module Csvlint
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found, nil)
       end
-      #binding.pry
     end
     
     def validate_metadata(io)
