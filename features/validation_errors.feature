@@ -83,7 +83,7 @@ Feature: Get validation errors
     And I set an encoding header of "UTF-8"
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if there are errors
-    Then there should be 4 error    
+    Then there should be 1 error    
     And that error should have the type "invalid_encoding"
     
   Scenario: Correctly handle different encodings
