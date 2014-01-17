@@ -129,12 +129,19 @@ Feature: Get validation errors
     Then there should be 1 error
     And that error should have the type "not_found"
     
-  Scenario: Incorrect line endings
+  Scenario: Incorrect line endings specified in settings
     Given I have a CSV with the following content:
     """
 "abc","2","3"
     """
-    And I set the line endings to "\n"
+    And I set the line endings to linefeed
+    And it is stored at the url "http://example.com/example1.csv"
+    And I ask if there are errors
+    Then there should be 1 error
+    And that error should have the type "line_breaks"
+  
+  Scenario: Incorrect line endings in file
+    Given I have a CSV file called "incorrect-line-endings.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are errors
     Then there should be 1 error

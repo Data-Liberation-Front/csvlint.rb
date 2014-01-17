@@ -80,7 +80,11 @@ module Csvlint
          rescue CSV::MalformedCSVError => e
            wrapper.finished
            type = fetch_error(e)
-           build_errors(type, current_line, wrapper.line)
+           if type == :quoting && wrapper.line.match(/[^\r]\n/)
+             build_errors(:line_breaks, nil)
+           else
+             build_errors(type, current_line, wrapper.line)
+           end
          rescue ArgumentError => ae
            wrapper.finished           
            build_errors(:invalid_encoding, current_line, wrapper.line) unless reported_invalid_encoding
