@@ -128,3 +128,14 @@ Feature: Get validation errors
     When I ask if there are errors
     Then there should be 1 error
     And that error should have the type "not_found"
+    
+  Scenario: Incorrect line endings
+    Given I have a CSV with the following content:
+    """
+"abc","2","3"
+    """
+    And I set the line endings to "\n"
+    And it is stored at the url "http://example.com/example1.csv"
+    And I ask if there are errors
+    Then there should be 1 error
+    And that error should have the type "line_breaks"

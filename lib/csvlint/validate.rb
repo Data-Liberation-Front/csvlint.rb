@@ -52,6 +52,7 @@ module Csvlint
       build_warnings(:no_content_type, nil) if @content_type == nil
       build_warnings(:excel, nil) if @content_type == nil && @extension =~ /.xls(x)?/
       build_errors(:wrong_content_type, nil) unless (@content_type && @content_type =~ /text\/csv/)
+      build_errors(:line_breaks, nil) unless @line_terminator == "\r\n"
     end
     
     def parse_csv(io)

@@ -21,7 +21,7 @@ end
 class CustomWorld
   def default_csv_options
     return {
-      "lineterminator" => "\n"
+      "lineterminator" => "\r\n"
     }
   end
 end

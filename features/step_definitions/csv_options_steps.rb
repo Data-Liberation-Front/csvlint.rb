@@ -8,7 +8,7 @@ Given(/^I set quotechar to "(.*?)"$/) do |doublequote|
   @csv_options["quotechar"] = doublequote
 end
 
-Given(/^I set the line endings to windows$/) do
+Given(/^I set the line endings to "(.*?)"$/) do |endings|
   @csv_options ||= default_csv_options
-  @csv_options["lineterminator"] = "\r\n"
+  @csv_options["lineterminator"] = endings
 end
