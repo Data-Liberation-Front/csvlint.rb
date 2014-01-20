@@ -33,6 +33,10 @@ Then(/^that warning should have the row "(.*?)"$/) do |row|
   @warnings.first.row.should == row.to_i
 end
 
+Then(/^that warning should have the column "(.*?)"$/) do |column|
+  @warnings.first.column.should == column.to_i
+end
+
 Then(/^that warning should have the type "(.*?)"$/) do |type|
   @warnings.first.type.should == type.to_sym
 end
