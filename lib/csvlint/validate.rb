@@ -35,7 +35,7 @@ module Csvlint
         end
         check_consistency      
       rescue OpenURI::HTTPError, Errno::ENOENT
-        build_errors(:not_found, nil)
+        build_errors(:not_found)
       end
     end
     
@@ -44,14 +44,14 @@ module Csvlint
       @content_type = io.content_type rescue nil
       @headers = io.meta        
       if @headers["content-type"] !~ /charset=/
-        build_warnings(:no_encoding, nil) 
+        build_warnings(:no_encoding) 
       else
-        build_warnings(:encoding, nil) if @encoding != "utf-8"
+        build_warnings(:encoding) if @encoding != "utf-8"
       end
-      build_warnings(:no_content_type, nil) if @content_type == nil
-      build_warnings(:excel, nil) if @content_type == nil && @extension =~ /.xls(x)?/
-      build_errors(:wrong_content_type, nil) unless (@content_type && @content_type =~ /text\/csv/)
-      build_errors(:line_breaks, nil) unless @line_terminator == "\r\n"
+      build_warnings(:no_content_type) if @content_type == nil
+      build_warnings(:excel) if @content_type == nil && @extension =~ /.xls(x)?/
+      build_errors(:wrong_content_type) unless (@content_type && @content_type =~ /text\/csv/)
+      build_errors(:line_breaks) unless @line_terminator == "\r\n"
     end
     
     def parse_csv(io)
@@ -72,8 +72,8 @@ module Csvlint
            if row
              build_formats(row, current_line)
              expected_columns = row.count unless expected_columns != 0
-             build_errors(:ragged_rows, current_line, wrapper.line) if !row.empty? && row.count != expected_columns
-             build_errors(:blank_rows, current_line, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+             build_errors(:ragged_rows, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
+             build_errors(:blank_rows, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
            else             
              break
            end         
@@ -81,9 +81,9 @@ module Csvlint
            wrapper.finished
            type = fetch_error(e)
            if type == :quoting && wrapper.line.match(/[^\r]\n/)
-             build_errors(:line_breaks, nil)
+             build_errors(:line_breaks)
            else
-             build_errors(type, current_line, wrapper.line)
+             build_errors(type, current_line, nil, wrapper.line)
            end
          rescue ArgumentError => ae
            wrapper.finished           
@@ -95,20 +95,21 @@ module Csvlint
     end          
     
     
-    def build_message(type, row, content)
+    def build_message(type, row, column, content)
       Csvlint::ErrorMessage.new({
                                   :type => type,
                                   :row => row,
+                                  :column => column,
                                   :content => content
                                 })
     end
     
-    def build_errors(type, row = nil, content = nil)
-      @errors << build_message(type, row, content)
+    def build_errors(type, row = nil, column = nil, content = nil)
+      @errors << build_message(type, row, column, content)
     end
     
-    def build_warnings(type, row = nil, content = nil)
-      @warnings << build_message(type, row, content)
+    def build_warnings(type, row = nil, column = nil, content = nil)
+      @warnings << build_message(type, row, column, content)
     end
     
     def fetch_error(error)
@@ -160,8 +161,8 @@ module Csvlint
         end
       end
       
-      percentages.each do |col|
-        build_warnings(:inconsistent_values, nil) if col.values.max < 0.9
+      percentages.each_with_index do |col, i|
+        build_warnings(:inconsistent_values, nil, i+1) if col.values.max < 0.9
       end
     end
     
