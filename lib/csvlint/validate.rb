@@ -37,7 +37,6 @@ module Csvlint
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found, nil)
       end
-      #binding.pry
     end
     
     def validate_metadata(io)
@@ -52,6 +51,7 @@ module Csvlint
       build_warnings(:no_content_type, nil) if @content_type == nil
       build_warnings(:excel, nil) if @content_type == nil && @extension =~ /.xls(x)?/
       build_errors(:wrong_content_type, nil) unless (@content_type && @content_type =~ /text\/csv/)
+      build_errors(:line_breaks, nil) unless @line_terminator == "\r\n"
     end
     
     def parse_csv(io)
@@ -80,7 +80,11 @@ module Csvlint
          rescue CSV::MalformedCSVError => e
            wrapper.finished
            type = fetch_error(e)
-           build_errors(type, current_line, wrapper.line)
+           if type == :quoting && wrapper.line.match(/[^\r]\n/)
+             build_errors(:line_breaks, nil)
+           else
+             build_errors(type, current_line, wrapper.line)
+           end
          rescue ArgumentError => ae
            wrapper.finished           
            build_errors(:invalid_encoding, current_line, wrapper.line) unless reported_invalid_encoding
@@ -168,35 +172,5 @@ module Csvlint
       File.extname(parsed.path)
     end
     
-  end
-  
-  
-  class WrappedIO
-    def initialize(io)
-      @io = io
-      @line = ""
-    end
-    
-    def gets(delim)
-      @line = "" if @new_line
-      s = @io.gets(delim)
-      if s != nil
-        @line << s 
-      end
-      return s
-    end
-    
-    def eof?
-      @io.eof?
-    end
-    
-    def finished
-      @new_line = true
-    end
-    
-    def line
-      @line
-    end
-      
   end
 end
