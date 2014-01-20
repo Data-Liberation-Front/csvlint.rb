@@ -117,12 +117,12 @@ module Csvlint
         dialect ||= {}
         #supplying defaults here just in case the dialect is invalid        
         delimiter = dialect["delimiter"] || ","
-        skipinitialspace = dialect["skipinitialspace"] || true
+        skipinitialspace = dialect["skipInitialSpace"] || true
         delimiter = delimiter + " " if !skipinitialspace
         return {
             :col_sep => delimiter,
-            :row_sep => ( dialect["lineterminator"] || "\r\n" ),
-            :quote_char => ( dialect["quotechar"] || '"'),
+            :row_sep => ( dialect["lineTerminator"] || "\r\n" ),
+            :quote_char => ( dialect["quoteChar"] || '"'),
             :skip_blanks => false
         }
     end

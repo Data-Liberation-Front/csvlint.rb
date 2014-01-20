@@ -6,6 +6,35 @@ describe Csvlint::Validator do
     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :body => "")
   end
   
+  context "csv dialect" do
+    it "should provide sensible defaults for CSV parsing" do
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      opts = validator.dialect_to_csv_options( nil )
+      opts.should == {
+        :col_sep => ",",
+        :row_sep => "\r\n",
+        :quote_char => '"',
+        :skip_blanks => false  
+      }       
+    end
+    
+    it "should map CSV DDF to correct values" do
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      opts = validator.dialect_to_csv_options( {
+        "lineTerminator" => "\n",
+        "delimiter" => "\t",
+        "quoteChar" => "'"
+      })
+      opts.should == {
+        :col_sep => "\t",
+        :row_sep => "\n",
+        :quote_char => "'",
+        :skip_blanks => false  
+      }       
+    end
+    
+  end
+  
   context "build_formats" do
   
     it "should return the format of each column correctly" do    

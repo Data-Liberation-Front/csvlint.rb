@@ -5,10 +5,10 @@ end
 
 Given(/^I set quotechar to "(.*?)"$/) do |doublequote|
   @csv_options ||= default_csv_options
-  @csv_options["quotechar"] = doublequote
+  @csv_options["quoteChar"] = doublequote
 end
 
 Given(/^I set the line endings to windows$/) do
   @csv_options ||= default_csv_options
-  @csv_options["lineterminator"] = "\r\n"
+  @csv_options["lineTerminator"] = "\r\n"
 end
