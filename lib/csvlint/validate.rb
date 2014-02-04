@@ -174,16 +174,16 @@ module Csvlint
     
     private
     
-    def parse_extension(url)
-      case url
+    def parse_extension(source)
+      case source
       when File
-        return File.extname( url.path )
+        return File.extname( source.path )
       when IO
         return ""
       when StringIO
         return ""
       else
-        parsed = URI.parse(url)
+        parsed = URI.parse(source)
         File.extname(parsed.path)
       end
     end
