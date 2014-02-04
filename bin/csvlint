@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+$:.unshift File.join( File.dirname(__FILE__), "..", "lib")
+
+require 'csvlint'
+require 'colorize'
+
+def print_error(index, error, color=:red)
+  location = ""
+  location += error.row.to_s if error.row
+  location += "#{error.row ? "," : ""}#{error.column.to_s}" if error.column
+  if error.row || error.column
+    location = "#{error.row ? "Row" : "Column"}: #{location}"
+  end
+  puts "#{index+1}. #{error.type}. #{location}".colorize(color)
+end
+
+if ARGV.length == 0
+  puts "Usage: csvlint <filename|url>"
+  exit 1
+end
+
+source = ARGV[0]
+source = File.new( source ) unless source =~ /^http(s)?/
+
+validator = Csvlint::Validator.new( source )
+
+puts "#{ARGV[0]} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+
+if validator.errors.size > 0
+  validator.errors.each_with_index do |error, i|
+    print_error(i, error)
+  end
+end
+
+if validator.warnings.size > 0
+  validator.warnings.each_with_index do |error, i|
+    print_error(i, error, :yellow)
+  end
+end
