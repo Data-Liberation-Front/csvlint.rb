@@ -10,16 +10,16 @@ module Csvlint
       "Unclosed quoted field" => :quoting,
     }
        
-    def initialize(url, dialect = nil)      
+    def initialize(source, dialect = nil)      
       @errors = []
       @warnings = []
-      @url = url
+      @source = source
       @formats = []
         
       @csv_options = dialect_to_csv_options(dialect)
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
         
-      @extension = parse_extension(url)
+      @extension = parse_extension(source)
       validate
     end
     
@@ -28,18 +28,18 @@ module Csvlint
     end
     
     def validate
-      single_col = false      
+      single_col = false   
+      io = nil   
       begin
-        io = @url.respond_to?(:gets) ? @url : open(@url)
+        io = @source.respond_to?(:gets) ? @source : open(@source)
         validate_metadata(io)
         columns = parse_csv(io)
-        build_warnings(:check_options, nil) if columns == 1
-        
-        io.close if io.respond_to?(:close)
-        
+        build_warnings(:check_options, nil) if columns == 1        
         check_consistency      
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
+      ensure
+        io.close if io && io.respond_to?(:close)
       end
     end
     
