@@ -14,10 +14,12 @@ module Csvlint
       @errors = []
       @warnings = []
       @url = url
-      @extension = parse_extension(url)
+      @formats = []
+        
       @csv_options = dialect_to_csv_options(dialect)
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
-      @formats = []
+        
+      @extension = parse_extension(url)
       validate
     end
     
@@ -28,11 +30,13 @@ module Csvlint
     def validate
       single_col = false      
       begin
-        open(@url) do |io|
-          validate_metadata(io)
-          columns = parse_csv(io)
-          build_warnings(:check_options, nil) if columns == 1
-        end
+        io = @url.respond_to?(:gets) ? @url : open(@url)
+        validate_metadata(io)
+        columns = parse_csv(io)
+        build_warnings(:check_options, nil) if columns == 1
+        
+        io.close if io.respond_to?(:close)
+        
         check_consistency      
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
@@ -42,15 +46,17 @@ module Csvlint
     def validate_metadata(io)
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
-      @headers = io.meta        
-      if @headers["content-type"] !~ /charset=/
-        build_warnings(:no_encoding) 
-      else
-        build_warnings(:encoding) if @encoding != "utf-8"
+      @headers = io.meta rescue nil    
+      if @headers 
+        if @headers["content-type"] !~ /charset=/
+          build_warnings(:no_encoding) 
+        else
+          build_warnings(:encoding) if @encoding != "utf-8"
+        end
+        build_warnings(:no_content_type) if @content_type == nil
+        build_warnings(:excel) if @content_type == nil && @extension =~ /.xls(x)?/
+        build_errors(:wrong_content_type) unless (@content_type && @content_type =~ /text\/csv/)
       end
-      build_warnings(:no_content_type) if @content_type == nil
-      build_warnings(:excel) if @content_type == nil && @extension =~ /.xls(x)?/
-      build_errors(:wrong_content_type) unless (@content_type && @content_type =~ /text\/csv/)
       build_errors(:line_breaks) unless @line_terminator == "\r\n"
     end
     
@@ -169,8 +175,17 @@ module Csvlint
     private
     
     def parse_extension(url)
-      parsed = URI.parse(url)
-      File.extname(parsed.path)
+      case url
+      when File
+        return File.extname( url.path )
+      when IO
+        return ""
+      when StringIO
+        return ""
+      else
+        parsed = URI.parse(url)
+        File.extname(parsed.path)
+      end
     end
     
   end
