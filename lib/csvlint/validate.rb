@@ -10,14 +10,16 @@ module Csvlint
       "Unclosed quoted field" => :quoting,
     }
        
-    def initialize(url, dialect = nil)      
+    def initialize(source, dialect = nil)      
       @errors = []
       @warnings = []
-      @url = url
-      @extension = parse_extension(url)
+      @source = source
+      @formats = []
+        
       @csv_options = dialect_to_csv_options(dialect)
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
-      @formats = []
+        
+      @extension = parse_extension(source)
       validate
     end
     
@@ -26,31 +28,35 @@ module Csvlint
     end
     
     def validate
-      single_col = false      
+      single_col = false   
+      io = nil   
       begin
-        open(@url) do |io|
-          validate_metadata(io)
-          columns = parse_csv(io)
-          build_warnings(:check_options, nil) if columns == 1
-        end
+        io = @source.respond_to?(:gets) ? @source : open(@source)
+        validate_metadata(io)
+        columns = parse_csv(io)
+        build_warnings(:check_options, nil) if columns == 1        
         check_consistency      
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
+      ensure
+        io.close if io && io.respond_to?(:close)
       end
     end
     
     def validate_metadata(io)
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
-      @headers = io.meta        
-      if @headers["content-type"] !~ /charset=/
-        build_warnings(:no_encoding) 
-      else
-        build_warnings(:encoding) if @encoding != "utf-8"
+      @headers = io.meta rescue nil    
+      if @headers 
+        if @headers["content-type"] !~ /charset=/
+          build_warnings(:no_encoding) 
+        else
+          build_warnings(:encoding) if @encoding != "utf-8"
+        end
+        build_warnings(:no_content_type) if @content_type == nil
+        build_warnings(:excel) if @content_type == nil && @extension =~ /.xls(x)?/
+        build_errors(:wrong_content_type) unless (@content_type && @content_type =~ /text\/csv/)
       end
-      build_warnings(:no_content_type) if @content_type == nil
-      build_warnings(:excel) if @content_type == nil && @extension =~ /.xls(x)?/
-      build_errors(:wrong_content_type) unless (@content_type && @content_type =~ /text\/csv/)
       build_errors(:line_breaks) unless @line_terminator == "\r\n"
     end
     
@@ -168,9 +174,18 @@ module Csvlint
     
     private
     
-    def parse_extension(url)
-      parsed = URI.parse(url)
-      File.extname(parsed.path)
+    def parse_extension(source)
+      case source
+      when File
+        return File.extname( source.path )
+      when IO
+        return ""
+      when StringIO
+        return ""
+      else
+        parsed = URI.parse(source)
+        File.extname(parsed.path)
+      end
     end
     
   end
