@@ -2,7 +2,9 @@ module Csvlint
   
   class Validator
     
-    attr_reader :errors, :warnings, :encoding, :content_type, :extension, :headers
+    include Csvlint::ErrorCollector
+    
+    attr_reader :encoding, :content_type, :extension, :headers
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :quoting,
@@ -11,8 +13,6 @@ module Csvlint
     }
        
     def initialize(source, dialect = nil)      
-      @errors = []
-      @warnings = []
       @source = source
       @formats = []
         
@@ -20,13 +20,10 @@ module Csvlint
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
         
       @extension = parse_extension(source)
+      reset
       validate
     end
-    
-    def valid?
-      errors.empty?
-    end
-    
+        
     def validate
       single_col = false   
       io = nil   
@@ -100,23 +97,6 @@ module Csvlint
       return expected_columns        
     end          
     
-    
-    def build_message(type, row, column, content)
-      Csvlint::ErrorMessage.new({
-                                  :type => type,
-                                  :row => row,
-                                  :column => column,
-                                  :content => content
-                                })
-    end
-    
-    def build_errors(type, row = nil, column = nil, content = nil)
-      @errors << build_message(type, row, column, content)
-    end
-    
-    def build_warnings(type, row = nil, column = nil, content = nil)
-      @warnings << build_message(type, row, column, content)
-    end
     
     def fetch_error(error)
       return :quoting if error.message.start_with?("Unquoted fields do not allow")
