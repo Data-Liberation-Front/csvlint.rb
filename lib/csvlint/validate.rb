@@ -12,10 +12,10 @@ module Csvlint
       "Unclosed quoted field" => :quoting,
     }
        
-    def initialize(source, dialect = nil)      
+    def initialize(source, dialect = nil, schema = nil)      
       @source = source
       @formats = []
-        
+      @schema = schema  
       @csv_options = dialect_to_csv_options(dialect)
       @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
         
@@ -77,6 +77,13 @@ module Csvlint
              expected_columns = row.count unless expected_columns != 0
              build_errors(:ragged_rows, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
              build_errors(:blank_rows, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+             
+             if @schema
+               @schema.validate_row(row, current_line)
+               @errors += @schema.errors
+               @warnings += @schema.warnings
+             end
+               
            else             
              break
            end         

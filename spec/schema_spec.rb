@@ -3,8 +3,8 @@ require 'spec_helper'
 describe Csvlint::Schema do
   
   it "should validate against the schema" do
-    field = Csvlint::Field.new("test", { :required => true } )
-    field2 = Csvlint::Field.new("test", { :minLength => 3 } )
+    field = Csvlint::Field.new("test", { "required" => true } )
+    field2 = Csvlint::Field.new("test", { "minLength" => 3 } )
     schema = Csvlint::Schema.new("http://example.org", [field, field2] )
     
     expect( schema.validate_row( ["", "x"] ) ).to eql(false)
@@ -18,7 +18,7 @@ describe Csvlint::Schema do
       @example=<<-EOL
       {
           "fields": [
-              { "name": "ID", "constraints": { "required": true, "unique": true } },
+              { "name": "ID", "constraints": { "required": true } },
               { "name": "Price", "constraints": { "required": true, "minLength": 1 } },
               { "name": "Postcode", "constraints": { "required": true, "pattern": "[A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2}" } }
           ]

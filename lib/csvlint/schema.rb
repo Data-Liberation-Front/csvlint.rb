@@ -17,7 +17,7 @@ module Csvlint
       values.each_with_index do |value,i|
         if fields[i]
           field = fields[i]
-          field.validate_column(value, row, i)
+          result = field.validate_column(value, row, i)
           @errors += fields[i].errors
           @warnings += fields[i].warnings        
         end
