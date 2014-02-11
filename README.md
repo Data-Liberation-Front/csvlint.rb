@@ -1,4 +1,8 @@
-[![Coverage Status](https://coveralls.io/repos/theodi/csvlint.rb/badge.png)](https://coveralls.io/r/theodi/csvlint.rb) [![Build Status](https://travis-ci.org/theodi/csvlint.rb.png)](https://travis-ci.org/theodi/csvlint.rb)
+[![Build Status](http://img.shields.io/travis/theodi/csvlint.rb.svg)](https://travis-ci.org/theodi/csvlint.rb)
+[![Dependency Status](http://img.shields.io/gemnasium/theodi/csvlint.rb.svg)](https://gemnasium.com/theodi/csvlint.rb)
+[![Coverage Status](http://img.shields.io/coveralls/theodi/csvlint.rb.svg)](https://coveralls.io/r/theodi/csvlint.rb)
+[![License](http://img.shields.io/:license-mit-blue.svg)](http://theodi.mit-license.org)
+[![Badges](http://img.shields.io/:badges-5/5-ff6799.svg)](https://github.com/pikesley/badger)
 
 # CSV Lint
 
