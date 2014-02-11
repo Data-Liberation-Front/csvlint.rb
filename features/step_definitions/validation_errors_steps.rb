@@ -1,6 +1,11 @@
 When(/^I ask if there are errors$/) do
   @csv_options ||= default_csv_options
-  @validator = Csvlint::Validator.new( @url, @csv_options ) 
+  
+  if @schema_json
+    @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", JSON.parse(@schema_json) )
+  end
+  
+  @validator = Csvlint::Validator.new( @url, @csv_options, @schema ) 
   @errors = @validator.errors
 end
 
