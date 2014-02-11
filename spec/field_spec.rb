@@ -5,6 +5,7 @@ describe Csvlint::Field do
   it "should validate required fields" do
     field = Csvlint::Field.new("test", { "required" => true } )
     expect( field.validate_column( nil ) ).to be(false)  
+    expect( field.errors.first.category ).to be(:schema)
     expect( field.validate_column( "" ) ).to be(false)
     expect( field.validate_column( "data" ) ).to be(true)
   end
@@ -15,7 +16,7 @@ describe Csvlint::Field do
     expect( field.validate_column( "" ) ).to be(false)    
     expect( field.validate_column( "ab" ) ).to be(false)
     expect( field.validate_column( "abc" ) ).to be(true)
-    expect( field.validate_column( "abcd" ) ).to be(true)
+    expect( field.validate_column( "abcd" ) ).to be(true)    
   end
   
   it "should validate maximum length" do

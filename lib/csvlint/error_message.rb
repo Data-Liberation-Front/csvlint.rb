@@ -2,7 +2,7 @@ module Csvlint
 
   class ErrorMessage
   
-    attr_reader :type, :row, :column, :content
+    attr_reader :type, :category, :row, :column, :content
   
     def initialize(params)
       params.each do |key, value|

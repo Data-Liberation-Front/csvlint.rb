@@ -31,7 +31,7 @@ module Csvlint
         io = @source.respond_to?(:gets) ? @source : open(@source)
         validate_metadata(io)
         columns = parse_csv(io)
-        build_warnings(:check_options, nil) if columns == 1        
+        build_warnings(:check_options, :structure) if columns == 1        
         check_consistency      
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
@@ -46,15 +46,15 @@ module Csvlint
       @headers = io.meta rescue nil    
       if @headers 
         if @headers["content-type"] !~ /charset=/
-          build_warnings(:no_encoding) 
+          build_warnings(:no_encoding, :context) 
         else
-          build_warnings(:encoding) if @encoding != "utf-8"
+          build_warnings(:encoding, :context) if @encoding != "utf-8"
         end
-        build_warnings(:no_content_type) if @content_type == nil
-        build_warnings(:excel) if @content_type == nil && @extension =~ /.xls(x)?/
-        build_errors(:wrong_content_type) unless (@content_type && @content_type =~ /text\/csv/)
+        build_warnings(:no_content_type, :context) if @content_type == nil
+        build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
+        build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       end
-      build_errors(:line_breaks) unless @line_terminator == "\r\n"
+      build_errors(:line_breaks, :structure) unless @line_terminator == "\r\n"
     end
     
     def parse_csv(io)
@@ -75,8 +75,8 @@ module Csvlint
            if row
              build_formats(row, current_line)
              expected_columns = row.count unless expected_columns != 0
-             build_errors(:ragged_rows, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
-             build_errors(:blank_rows, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+             build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
+             build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
              
              if @schema
                @schema.validate_row(row, current_line)
@@ -91,13 +91,13 @@ module Csvlint
            wrapper.finished
            type = fetch_error(e)
            if type == :quoting && wrapper.line.match(/[^\r]\n/)
-             build_errors(:line_breaks)
+             build_errors(:line_breaks, :structure)
            else
-             build_errors(type, current_line, nil, wrapper.line)
+             build_errors(type, :structure, current_line, nil, wrapper.line)
            end
          rescue ArgumentError => ae
            wrapper.finished           
-           build_errors(:invalid_encoding, current_line, wrapper.line) unless reported_invalid_encoding
+           build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
            reported_invalid_encoding = true
          end
       end
@@ -155,7 +155,7 @@ module Csvlint
       end
       
       percentages.each_with_index do |col, i|
-        build_warnings(:inconsistent_values, nil, i+1) if col.values.max < 0.9
+        build_warnings(:inconsistent_values, :schema, nil, i+1) if col.values.max < 0.9
       end
     end
     

@@ -63,6 +63,7 @@ Errors and warnings returned by the validator are instances of `Csvlint::ErrorMe
 * `content` holds the contents of the row that generated the error or warning
 * `row` holds the line number of the problem
 * `type` has a symbol that indicates the type of error or warning being reported
+* `category` has a symbol that indicates the category or error/warning: `:structure` (well-formedness issues), `:schema` (schema validation), `:context` (publishing metadata, e.g. content type)
 
 The following types of error can be reported:
 
