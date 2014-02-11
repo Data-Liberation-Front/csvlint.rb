@@ -17,3 +17,6 @@ test/version_tmp
 tmp
 coverage/
 /.rspec
+
+.idea
+.DS_Store
