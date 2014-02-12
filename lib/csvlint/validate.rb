@@ -7,9 +7,9 @@ module Csvlint
     attr_reader :encoding, :content_type, :extension, :headers
     
     ERROR_MATCHERS = {
-      "Missing or stray quote" => :quoting,
+      "Missing or stray quote" => :stray_quote,
       "Illegal quoting" => :whitespace,
-      "Unclosed quoted field" => :quoting,
+      "Unclosed quoted field" => :unclosed_quote,
     }
        
     def initialize(source, dialect = nil, schema = nil)      
@@ -17,7 +17,6 @@ module Csvlint
       @formats = []
       @schema = schema  
       @csv_options = dialect_to_csv_options(dialect)
-      @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
         
       @extension = parse_extension(source)
       reset
@@ -54,7 +53,6 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       end
-      build_errors(:line_breaks, :structure) unless @line_terminator == "\r\n"
     end
     
     def parse_csv(io)
@@ -64,10 +62,14 @@ module Csvlint
       
       @csv_options[:encoding] = @encoding  
   
-      wrapper = WrappedIO.new( io )        
-      csv = CSV.new( wrapper , @csv_options )
-      row = nil
-      loop do
+      begin
+        wrapper = WrappedIO.new( io )
+        csv = CSV.new( wrapper, @csv_options )
+        if csv.row_sep != "\r\n"
+          build_info_messages(:nonrfc_line_breaks, :structure)
+        end
+        row = nil
+        loop do
          current_line = current_line + 1
          begin
            row = csv.shift
@@ -90,23 +92,23 @@ module Csvlint
          rescue CSV::MalformedCSVError => e
            wrapper.finished
            type = fetch_error(e)
-           if type == :quoting && wrapper.line.match(/[^\r]\n/)
+           if type == :stray_quote && !wrapper.line.match(csv.row_sep)
              build_errors(:line_breaks, :structure)
            else
              build_errors(type, :structure, current_line, nil, wrapper.line)
            end
-         rescue ArgumentError => ae
-           wrapper.finished           
-           build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
-           reported_invalid_encoding = true
          end
+      end
+      rescue ArgumentError => ae
+        wrapper.finished           
+        build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
+        reported_invalid_encoding = true
       end
       return expected_columns        
     end          
     
     
     def fetch_error(error)
-      return :quoting if error.message.start_with?("Unquoted fields do not allow")
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.?$/i)
       ERROR_MATCHERS.fetch(e[1], :unknown_error)
     end
@@ -119,7 +121,7 @@ module Csvlint
         delimiter = delimiter + " " if !skipinitialspace
         return {
             :col_sep => delimiter,
-            :row_sep => ( dialect["lineTerminator"] || "\r\n" ),
+            :row_sep => ( dialect["lineTerminator"] || :auto),
             :quote_char => ( dialect["quoteChar"] || '"'),
             :skip_blanks => false
         }

@@ -21,7 +21,7 @@ Feature: Get validation errors
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if there are errors
     Then there should be 1 error
-    And that error should have the type "quoting"
+    And that error should have the type "unclosed_quote"
     And that error should have the row "1"
     And that error should have the content ""Foo","Bar","Baz"
     
@@ -130,25 +130,16 @@ Feature: Get validation errors
     And that error should have the type "not_found"
     
   Scenario: Incorrect line endings specified in settings
-    Given I have a CSV with the following content:
-    """
-"abc","2","3"
-    """
+    Given I have a CSV file called "cr-line-endings.csv"
     And I set the line endings to linefeed
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are errors
     Then there should be 1 error
     And that error should have the type "line_breaks"
   
-  Scenario: Incorrect line endings in file
-    Given I have a CSV file called "incorrect-line-endings.csv"
+  Scenario: inconsistent line endings in file cause an error
+    Given I have a CSV file called "inconsistent-line-endings.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are errors
     Then there should be 1 error
     And that error should have the type "line_breaks"
-
-  Scenario: Incorrect line endings in file
-    Given I have a CSV with carriage returns in fields
-    And it is stored at the url "http://example.com/example1.csv"
-    And I ask if there are errors
-    Then there should be 0 error
