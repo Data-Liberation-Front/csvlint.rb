@@ -41,7 +41,3 @@ end
 Then(/^there should be no "(.*?)" errors$/) do |type|
   @errors.each do |error| error.type.should_not == type.to_sym end
 end
-
-Given(/^I have a CSV with carriage returns in fields$/) do
-  @csv = "\"Foo\",\"Bar\",\"Baz\"\r\n\"Bing\",\"Bang\nBung\",\"Bong\""
-end
