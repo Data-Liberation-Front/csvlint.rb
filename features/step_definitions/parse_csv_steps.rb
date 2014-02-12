@@ -1,5 +1,5 @@
 Given(/^I have a CSV with the following content:$/) do |string|
-  @csv = string.gsub("\n", "\r\n")
+  @csv = string
 end
 
 Given(/^it is stored at the url "(.*?)"$/) do |url|
