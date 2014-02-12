@@ -1,9 +1,7 @@
 module Csvlint
   
   module ErrorCollector
-    
-    attr_reader :errors, :warnings
-    
+      
     def build_message(type, category, row, column, content)
       Csvlint::ErrorMessage.new({
                                   :type => type,
@@ -14,12 +12,20 @@ module Csvlint
                                 })
     end
     
-    def build_errors(type, category = nil, row = nil, column = nil, content = nil)
-      @errors << build_message(type, category, row, column, content)
-    end
+    MESSAGE_LEVELS = [
+      :errors,
+      :warnings,
+      :info_messages
+    ]
     
-    def build_warnings(type, category = nil, row = nil, column = nil, content = nil)
-      @warnings << build_message(type, category, row, column, content)
+    MESSAGE_LEVELS.each do |level|
+      
+      attr_reader level
+      
+      define_method "build_#{level}" do |type, category = nil, row = nil, column = nil, content = nil|
+        instance_variable_get("@#{level}") << build_message(type, category, row, column, content)
+      end
+      
     end
     
     def valid?
@@ -27,8 +33,9 @@ module Csvlint
     end
     
     def reset
-      @errors = []
-      @warnings = []
+      MESSAGE_LEVELS.each do |level|
+        instance_variable_set("@#{level}", [])
+      end
     end
     
   end
