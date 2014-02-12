@@ -91,7 +91,7 @@ module Csvlint
            wrapper.finished
            type = fetch_error(e)
            if type == :quoting && wrapper.line.match(/[^\r]\n/)
-             build_errors(:line_breaks, :structure)
+             build_info_messages(:line_breaks, :structure)
            else
              build_errors(type, :structure, current_line, nil, wrapper.line)
            end
