@@ -12,7 +12,7 @@ describe Csvlint::Validator do
       opts = validator.dialect_to_csv_options( nil )
       opts.should == {
         :col_sep => ",",
-        :row_sep => "\r\n",
+        :row_sep => :auto,
         :quote_char => '"',
         :skip_blanks => false  
       }       
