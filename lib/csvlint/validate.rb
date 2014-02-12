@@ -17,7 +17,6 @@ module Csvlint
       @formats = []
       @schema = schema  
       @csv_options = dialect_to_csv_options(dialect)
-      @csv_options[:row_sep] == nil ? @line_terminator = $/ : @line_terminator = @csv_options[:row_sep]
         
       @extension = parse_extension(source)
       reset
@@ -54,7 +53,6 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       end
-      build_errors(:line_breaks, :structure) unless @line_terminator == "\r\n"
     end
     
     def parse_csv(io)
@@ -119,7 +117,7 @@ module Csvlint
         delimiter = delimiter + " " if !skipinitialspace
         return {
             :col_sep => delimiter,
-            :row_sep => ( dialect["lineTerminator"] || "\r\n" ),
+            :row_sep => ( dialect["lineTerminator"] || :auto),
             :quote_char => ( dialect["quoteChar"] || '"'),
             :skip_blanks => false
         }
