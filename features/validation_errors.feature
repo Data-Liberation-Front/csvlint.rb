@@ -139,3 +139,10 @@ Feature: Get validation errors
     And I ask if there are errors
     Then there should be 1 error
     And that error should have the type "line_breaks"
+  
+  Scenario: CR line endings in file cause an error
+    Given I have a CSV file called "cr-line-endings.csv"
+    And it is stored at the url "http://example.com/example1.csv"
+    And I ask if there are errors
+    Then there should be 1 error
+    And that error should have the type "line_breaks"
