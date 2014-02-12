@@ -47,6 +47,9 @@ best practices
 	#access array of warnings
 	validator.warnings
 	
+	#access array of information messages
+	validator.info_messages
+	
 	#get some information about the CSV file that was validated
 	validator.encoding
 	validator.content_type
@@ -72,8 +75,10 @@ The following types of error can be reported:
 * `:blank_rows` -- completely empty row, e.g. blank line or a line where all column values are empty
 * `:invalid_encoding` -- encoding error when parsing row, e.g. because of invalid characters 
 * `:not_found` -- HTTP 404 error when retrieving the data
-* `:quoting` -- problem with quoting, e.g. missing or stray quote, unclosed quoted field
+* `:stray_quote` -- missing or stray quote
+* `:unclosed_quote` -- unclosed quoted field
 * `:whitespace` -- a quoted column has leading or trailing whitespace
+* `:line_breaks` -- line breaks were inconsistent or incorrectly specified
 
 The following types of warning can be reported:
 
@@ -83,6 +88,10 @@ The following types of warning can be reported:
 * `:excel` -- no `Content-Type` header and the file extension is `.xls`
 * `:check_options` -- CSV file appears to contain only a single column
 * `:inconsistent_values` -- inconsistent values in the same column. Reported if <90% of values seem to have same data type (either numeric or alphanumeric including punctuation)
+
+There are also information messages available:
+
+* `:nonrfc_line_breaks` -- uses non-CRLF line breaks, so doesn't conform to RFC4180.
 
 ## Contributing
 
