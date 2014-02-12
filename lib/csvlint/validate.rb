@@ -62,10 +62,14 @@ module Csvlint
       
       @csv_options[:encoding] = @encoding  
   
-      wrapper = WrappedIO.new( io )        
-      csv = CSV.new( wrapper , @csv_options )
-      row = nil
-      loop do
+      begin
+        wrapper = WrappedIO.new( io )
+        csv = CSV.new( wrapper, @csv_options )
+        if csv.row_sep != "\r\n"
+          build_info_messages(:nonrfc_line_breaks, :structure)
+        end
+        row = nil
+        loop do
          current_line = current_line + 1
          begin
            row = csv.shift
@@ -93,11 +97,12 @@ module Csvlint
            else
              build_errors(type, :structure, current_line, nil, wrapper.line)
            end
-         rescue ArgumentError => ae
-           wrapper.finished           
-           build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
-           reported_invalid_encoding = true
          end
+      end
+      rescue ArgumentError => ae
+        wrapper.finished           
+        build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
+        reported_invalid_encoding = true
       end
       return expected_columns        
     end          
