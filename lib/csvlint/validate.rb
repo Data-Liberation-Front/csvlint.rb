@@ -7,9 +7,9 @@ module Csvlint
     attr_reader :encoding, :content_type, :extension, :headers
     
     ERROR_MATCHERS = {
-      "Missing or stray quote" => :quoting,
+      "Missing or stray quote" => :stray_quote,
       "Illegal quoting" => :whitespace,
-      "Unclosed quoted field" => :quoting,
+      "Unclosed quoted field" => :unclosed_quote,
     }
        
     def initialize(source, dialect = nil, schema = nil)      
@@ -92,7 +92,7 @@ module Csvlint
          rescue CSV::MalformedCSVError => e
            wrapper.finished
            type = fetch_error(e)
-           if type == :quoting && wrapper.line.match(/[^\r]\n/)
+           if type == :stray_quote && !wrapper.line.match(csv.row_sep)
              build_errors(:line_breaks, :structure)
            else
              build_errors(type, :structure, current_line, nil, wrapper.line)
@@ -109,7 +109,6 @@ module Csvlint
     
     
     def fetch_error(error)
-      return :quoting if error.message.start_with?("Unquoted fields do not allow")
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.?$/i)
       ERROR_MATCHERS.fetch(e[1], :unknown_error)
     end
