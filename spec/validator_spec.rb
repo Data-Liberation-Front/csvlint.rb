@@ -121,4 +121,19 @@ describe Csvlint::Validator do
     
   end
   
+  context "accessing metadata" do
+   
+    before :all do
+      stub_request(:get, "http://example.com/crlf.csv").to_return(:status => 200, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','windows-line-endings.csv')))
+    end
+    
+    it "can get line break symbol" do
+
+      validator = Csvlint::Validator.new("http://example.com/crlf.csv")
+      validator.line_breaks.should == "\r\n"
+      
+    end
+    
+  end
+
 end
