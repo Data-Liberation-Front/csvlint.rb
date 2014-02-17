@@ -3,6 +3,7 @@ Feature: Validation warnings
   Scenario: UTF-8 Encoding
     Given I have a CSV with the following content:
     """
+"col1","col2","col3"
 "abc","2","3"
     """
     And it is encoded as "utf-8"
@@ -13,6 +14,7 @@ Feature: Validation warnings
    Scenario: ISO-8859-1 Encoding
     Given I have a CSV with the following content:
     """
+"col1","col2","col3"
 "1","2","3"
     """
     And it is encoded as "iso-8859-1"    
@@ -23,6 +25,7 @@ Feature: Validation warnings
   Scenario: Correct content type
     Given I have a CSV with the following content:
     """
+"col1","col2","col3"
 "abc","2","3"
     """
     And the content type is set to "text/csv"
@@ -33,6 +36,7 @@ Feature: Validation warnings
   Scenario: No extension
     Given I have a CSV with the following content:
     """
+"col1","col2","col3"
 "abc","2","3"
     """
     And the content type is set to "text/csv"
@@ -43,6 +47,7 @@ Feature: Validation warnings
   Scenario: Allow query params after extension
     Given I have a CSV with the following content:
     """
+"col1","col2","col3"
 "abc","2","3"
     """
     And the content type is set to "text/csv"
@@ -53,6 +58,7 @@ Feature: Validation warnings
   Scenario: User doesn't supply encoding
     Given I have a CSV with the following content:
     """
+"col1","col2","col3"
 "abc","2","3"
     """
     And it is stored at the url "http://example.com/example1.csv" with no character set

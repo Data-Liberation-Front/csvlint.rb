@@ -4,7 +4,7 @@ module Csvlint
     
     include Csvlint::ErrorCollector
     
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
@@ -15,7 +15,8 @@ module Csvlint
     def initialize(source, dialect = nil, schema = nil)      
       @source = source
       @formats = []
-      @schema = schema  
+      @schema = schema
+      @dialect = dialect  
       @csv_options = dialect_to_csv_options(dialect)
         
       @extension = parse_extension(source)
@@ -75,18 +76,27 @@ module Csvlint
          begin
            row = csv.shift
            wrapper.finished
-           if row
-             build_formats(row, current_line)
-             expected_columns = row.count unless expected_columns != 0
-             build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
-             build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
-             
-             if @schema
-               @schema.validate_row(row, current_line)
-               @errors += @schema.errors
-               @warnings += @schema.warnings
-             end
+           if row             
+             if header? && current_line == 1 #header
+               if @schema
+                 @schema.validate_header(row)
+                 @errors += @schema.errors
+                 @warnings += @schema.warnings
+               end
+             else
                
+               build_formats(row, current_line)
+               expected_columns = row.count unless expected_columns != 0
+               build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
+               build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+               
+               if @schema
+                 @schema.validate_row(row, current_line)
+                 @errors += @schema.errors
+                 @warnings += @schema.warnings
+               end
+               
+             end
            else             
              break
            end         
@@ -108,6 +118,11 @@ module Csvlint
       return expected_columns        
     end          
     
+    
+    def header?
+      return @dialect["header"] if @dialect && @dialect["header"] != nil
+      true
+    end
     
     def fetch_error(error)
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.?$/i)

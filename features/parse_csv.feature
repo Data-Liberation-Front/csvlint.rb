@@ -65,6 +65,7 @@ too"
    Scenario: Successfully report a CSV with ragged rows
     Given I have a CSV with the following content:
     """
+"col1","col2","col2"
 "1","2","3"
 "4","5"
     """
