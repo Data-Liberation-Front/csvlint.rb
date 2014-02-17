@@ -58,6 +58,26 @@ best practices
 	#retrieve HTTP headers from request
 	validator.headers
 
+## Controlling CSV Parsing
+
+The validator supports configuration of the [CSV Dialect](http://dataprotocols.org/csv-dialect/) used in a data file. This is specified by 
+passing an options hash to the constructor:
+
+    opts = {
+    	"header" => true,
+    	"delimiter" => ","
+    }
+	validator = Csvlint::Validator.new( "http://example.org/data.csv", opts )
+
+The options should be a Hash that conforms to the [CSV Dialect](http://dataprotocols.org/csv-dialect/) JSON structure.
+
+While these options configure the parser to correctly process the file, the validator will still raise errors or warnings for CSV 
+structure that it considers to be invalid, e.g. a missing header or different delimiters.
+
+Note that the parser will also check for a `header` parameter on the `Content-Type` header returned when fetching a remote CSV file. As 
+specified in [RFC 4180](http://www.ietf.org/rfc/rfc4180.txt) the values for this can be `present` and `absent`, e.g:
+
+	Content-Type: text/csv; header=present
 
 ## Error Reporting
 
@@ -85,6 +105,7 @@ The following types of error can be reported:
 * `:unclosed_quote` -- unclosed quoted field
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
+* `:no_header` -- the CSV file doesn't include a header
 
 ## Warnings
 
@@ -145,6 +166,8 @@ Schema validation provides some additional types of error and warning messages:
 * `:missing_column` (warning) -- a row in the CSV file has a missing column, that is specified in the schema. This is a warning only, as it may be legitimate
 * `:extra_column` (warning) -- a row in the CSV file has extra column.
 * `:unique` (error) -- a column with a `unique` constraint contains non-unique values
+* `:empty_column_name` (error) -- a column in the CSV header has an empty name
+* `:duplicate_column_name` (error) -- a column in the CSV header has a duplicate name
 
 ## Contributing
 
