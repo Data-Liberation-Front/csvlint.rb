@@ -144,6 +144,7 @@ Schema validation provides some additional types of error and warning messages:
 * `:header_name` (warning) -- the header in the CSV has a column name that doesn't match the schema
 * `:missing_column` (warning) -- a row in the CSV file has a missing column, that is specified in the schema. This is a warning only, as it may be legitimate
 * `:extra_column` (warning) -- a row in the CSV file has extra column.
+* `:unique` (error) -- a column with a `unique` constraint contains non-unique values
 
 ## Contributing
 

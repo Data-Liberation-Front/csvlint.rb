@@ -41,5 +41,13 @@ describe Csvlint::Field do
     expect( field.validate_column( "{3B0DA29C-C89A-4FAA-918A-0000074FA0E0}") ).to be(true)  
     
   end
+
+  it "should enforce uniqueness for a column" do
+    field = Csvlint::Field.new("test", { "unique" => true } )
+    expect( field.validate_column( "abc") ).to be(true)
+    expect( field.validate_column( "abc") ).to be(false)
+    expect( field.errors.first.category ).to be(:schema)
+    expect( field.errors.first.type ).to be(:unique)
+  end
   
 end
