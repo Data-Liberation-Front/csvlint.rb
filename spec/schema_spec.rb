@@ -87,6 +87,10 @@ describe Csvlint::Schema do
       expect( schema.warnings.size ).to eql(1)
       expect( schema.warnings.first.type).to eql(:header_name)
       expect( schema.warnings.first.category).to eql(:schema)
+      
+      expect( schema.validate_header(["minimum", "Required"]) ).to eql(true)
+      expect( schema.warnings.size ).to eql(1)
+
     end        
   end  
   

@@ -17,7 +17,7 @@ module Csvlint
     def validate_header(header)
       reset
       header.each_with_index do |name,i|
-        build_warnings(:header_name, :schema, nil, i+1) if fields[i].name.downcase != name.downcase
+        build_warnings(:header_name, :schema, nil, i+1) if fields[i].name != name
       end
       return valid?
     end
