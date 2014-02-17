@@ -57,5 +57,27 @@ describe Csvlint::Field do
       expect( field.validate_column("forty-two")).to be(false)
     end
 
+    it "validates floats" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#float" })
+      expect(field.validate_column("42.0")).to be(true)
+      expect(field.validate_column("42")).to be(true)
+      expect(field.validate_column("forty-two")).to be(false)
+    end
+
+    it "validates URIs" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#anyURI" })
+      expect(field.validate_column("http://theodi.org/team")).to be(true)
+      expect(field.validate_column("https://theodi.org/team")).to be(true)
+      expect(field.validate_column("42.0")).to be(false)
+    end
+
+    it "validates booleans" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#boolean" })
+      expect(field.validate_column("true")).to be(true)
+      expect(field.validate_column("1")).to be(true)
+      expect(field.validate_column("false")).to be(true)
+      expect(field.validate_column("0")).to be(true)
+      expect(field.validate_column("derp")).to be(false)
+    end
   end
 end

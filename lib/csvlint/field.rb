@@ -6,7 +6,22 @@ module Csvlint
     include Csvlint::ErrorCollector
 
     attr_reader :name, :constraints
-    
+
+    TYPE_VALIDATIONS = {
+        'http://www.w3.org/2001/XMLSchema#int'     => lambda { |field, value, row, column| Integer value },
+        'http://www.w3.org/2001/XMLSchema#float'   => lambda { |field, value, row, column| Float value },
+        'http://www.w3.org/2001/XMLSchema#anyURI'  => lambda do |field, value, row, column|
+          u = URI.parse value
+          field.build_errors(:invalid_type, :schema, row, column) unless u.kind_of?(URI::HTTP) || u.kind_of?(URI::HTTPS)
+          u
+        end,
+        'http://www.w3.org/2001/XMLSchema#boolean' => lambda do |field, value, row, column|
+          return true if ['true', '1'].include? value
+          return false if ['false', '0'].include? value
+          raise ArgumentError.new 'Not a Boolean type'
+        end
+    }
+
     def initialize(name, constraints={})
       @name = name
       @constraints = constraints || {}
@@ -35,9 +50,12 @@ module Csvlint
           @uniques << value
         end
       end
-      if constraints["type"] == "http://www.w3.org/2001/XMLSchema#int"
+
+      tv = TYPE_VALIDATIONS[constraints["type"]]
+
+      if tv
         begin
-          Integer value
+          tv.call self, value, row, column
         rescue ArgumentError => e
           build_errors(:invalid_type, :schema, row, column)
         end
