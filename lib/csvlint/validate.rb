@@ -1,3 +1,5 @@
+require "open_uri_redirections"
+
 module Csvlint
   
   class Validator
@@ -31,7 +33,7 @@ module Csvlint
       single_col = false   
       io = nil   
       begin
-        io = @source.respond_to?(:gets) ? @source : open(@source)
+        io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
         columns = parse_csv(io)
         build_warnings(:check_options, :structure) if columns == 1        
