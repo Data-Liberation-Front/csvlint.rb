@@ -17,10 +17,10 @@ module Csvlint
         build_errors(:missing_value, :schema, row, column) if value.nil? || value.length == 0
       end
       if constraints["minLength"]
-        build_errors(:minLength, :schema, row, column) if value.nil? || value.length < constraints["minLength"]
+        build_errors(:min_length, :schema, row, column) if value.nil? || value.length < constraints["minLength"]
       end
       if constraints["maxLength"]
-          build_errors(:maxLength, :schema, row, column) if !value.nil? && value.length > constraints["maxLength"]
+          build_errors(:max_length, :schema, row, column) if !value.nil? && value.length > constraints["maxLength"]
       end
       if constraints["pattern"]
           build_errors(:pattern, :schema, row, column) if !value.nil? && !value.match( constraints["pattern"] )
