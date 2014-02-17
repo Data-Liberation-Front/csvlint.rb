@@ -19,6 +19,26 @@ module Csvlint
           return true if ['true', '1'].include? value
           return false if ['false', '0'].include? value
           raise ArgumentError.new 'Not a Boolean type'
+        end,
+        'http://www.w3.org/2001/XMLSchema#nonPositiveInteger' => lambda do |field, value, row, column|
+          i = Integer value
+          field.build_errors(:invalid_type, :schema, row, column) unless i <= 0
+          i
+        end,
+        'http://www.w3.org/2001/XMLSchema#negativeInteger' => lambda do |field, value, row, column|
+          i = Integer value
+          field.build_errors(:invalid_type, :schema, row, column) unless i < 0
+          i
+        end,
+        'http://www.w3.org/2001/XMLSchema#nonNegativeInteger' => lambda do |field, value, row, column|
+          i = Integer value
+          field.build_errors(:invalid_type, :schema, row, column) unless i >= 0
+          i
+        end,
+        'http://www.w3.org/2001/XMLSchema#positiveInteger' => lambda do |field, value, row, column|
+          i = Integer value
+          field.build_errors(:invalid_type, :schema, row, column) unless i > 0
+          i
         end
     }
 
