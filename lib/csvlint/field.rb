@@ -35,8 +35,16 @@ module Csvlint
           @uniques << value
         end
       end
+      if constraints["type"] == "http://www.w3.org/2001/XMLSchema#int"
+        begin
+          Integer value
+        rescue ArgumentError => e
+          build_errors(:invalid_type, :schema, row, column)
+        end
+      end
+
       return valid?
-    end    
-    
+    end
+
   end
 end

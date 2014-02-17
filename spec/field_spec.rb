@@ -49,5 +49,13 @@ describe Csvlint::Field do
     expect( field.errors.first.category ).to be(:schema)
     expect( field.errors.first.type ).to be(:unique)
   end
-  
+
+  context "it should validate correct types" do
+    it "validates ints" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#int" })
+      expect( field.validate_column("42")).to be(true)
+      expect( field.validate_column("forty-two")).to be(false)
+    end
+
+  end
 end
