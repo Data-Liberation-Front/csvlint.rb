@@ -123,7 +123,8 @@ describe Csvlint::Field do
             "type" => "http://www.w3.org/2001/XMLSchema#int",
             "minimum" => "40"
         })
-        expect( field.validate_column("39")).to be(false)        
+        expect( field.validate_column("39")).to be(false)     
+        expect( field.errors.first.type ).to eql(:out_of_range)   
       end
       
       it "should enforce maximum values" do
@@ -138,6 +139,8 @@ describe Csvlint::Field do
             "maximum" => "40"
         })
         expect( field.validate_column("41")).to be(false)        
+        expect( field.errors.first.type ).to eql(:out_of_range)   
+
       end
 
       
