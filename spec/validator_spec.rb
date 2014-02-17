@@ -166,5 +166,14 @@ describe Csvlint::Validator do
     end
     
   end
+  
+  it "should follow redirects to SSL" do
+    stub_request(:get, "http://example.com/redirect").to_return(:status => 301, :headers=>{"Location" => "https://example.com/example.csv"})
+    stub_request(:get, "https://example.com/example.csv").to_return(:status => 200, 
+        :headers=>{"Content-Type" => "text/csv"}, 
+        :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
 
+    validator = Csvlint::Validator.new("http://example.com/redirect")    
+    expect( validator.valid? ).to eql(true)
+  end
 end
