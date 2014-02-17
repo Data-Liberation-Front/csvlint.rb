@@ -4,7 +4,7 @@ module Csvlint
     
     include Csvlint::ErrorCollector
     
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
@@ -15,9 +15,13 @@ module Csvlint
     def initialize(source, dialect = nil, schema = nil)      
       @source = source
       @formats = []
-      @schema = schema  
-      @csv_options = dialect_to_csv_options(dialect)
+      @schema = schema
+      @dialect = dialect  
+      
+      @csv_header = true
+      @csv_header = @dialect["header"] if @dialect && @dialect["header"] != nil
         
+      @csv_options = dialect_to_csv_options(dialect)
       @extension = parse_extension(source)
       reset
       validate
@@ -43,7 +47,11 @@ module Csvlint
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
       @headers = io.meta rescue nil    
-      if @headers 
+      if @headers
+        if @headers["content-type"] =~ /header=(present|absent)/
+          @csv_header = true if $1 == "present"
+          @csv_header = false if $1 == "absent"
+        end
         if @headers["content-type"] !~ /charset=/
           build_warnings(:no_encoding, :context) 
         else
@@ -53,6 +61,7 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       end
+      build_errors(:no_header, :structure) unless @csv_header
     end
     
     def parse_csv(io)
@@ -75,18 +84,27 @@ module Csvlint
          begin
            row = csv.shift
            wrapper.finished
-           if row
-             build_formats(row, current_line)
-             expected_columns = row.count unless expected_columns != 0
-             build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
-             build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
-             
-             if @schema
-               @schema.validate_row(row, current_line)
-               @errors += @schema.errors
-               @warnings += @schema.warnings
-             end
+           if row             
+             if header? && current_line == 1 #header
+               if @schema
+                 @schema.validate_header(row)
+                 @errors += @schema.errors
+                 @warnings += @schema.warnings
+               end
+             else
                
+               build_formats(row, current_line)
+               expected_columns = row.count unless expected_columns != 0
+               build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
+               build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+               
+               if @schema
+                 @schema.validate_row(row, current_line)
+                 @errors += @schema.errors
+                 @warnings += @schema.warnings
+               end
+               
+             end
            else             
              break
            end         
@@ -108,6 +126,10 @@ module Csvlint
       return expected_columns        
     end          
     
+    
+    def header?
+      return @csv_header
+    end
     
     def fetch_error(error)
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.?$/i)
