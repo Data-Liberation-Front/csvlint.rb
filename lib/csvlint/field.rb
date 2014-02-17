@@ -10,6 +10,7 @@ module Csvlint
     TYPE_VALIDATIONS = {
         'http://www.w3.org/2001/XMLSchema#int'     => lambda { |field, value, row, column| Integer value },
         'http://www.w3.org/2001/XMLSchema#float'   => lambda { |field, value, row, column| Float value },
+        'http://www.w3.org/2001/XMLSchema#double'   => lambda { |field, value, row, column| Float value },
         'http://www.w3.org/2001/XMLSchema#anyURI'  => lambda do |field, value, row, column|
           u = URI.parse value
           field.build_errors(:invalid_type, :schema, row, column) unless u.kind_of?(URI::HTTP) || u.kind_of?(URI::HTTPS)
