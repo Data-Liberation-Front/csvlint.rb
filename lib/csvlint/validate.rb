@@ -135,7 +135,7 @@ module Csvlint
         end
       end
       if @schema
-        @schema.validate_header(row)
+        @schema.validate_header(header)
         @errors += @schema.errors
         @warnings += @schema.warnings
       end
