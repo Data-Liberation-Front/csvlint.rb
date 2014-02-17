@@ -1,3 +1,5 @@
+require 'set'
+
 module Csvlint
   
   class Field
@@ -8,6 +10,7 @@ module Csvlint
     def initialize(name, constraints={})
       @name = name
       @constraints = constraints || {}
+      @uniques = Set.new
       reset
     end
     
@@ -24,6 +27,13 @@ module Csvlint
       end
       if constraints["pattern"]
           build_errors(:pattern, :schema, row, column) if !value.nil? && !value.match( constraints["pattern"] )
+      end
+      if constraints["unique"] == true
+        if @uniques.include? value
+          build_errors(:unique, :schema, row, column)
+        else
+          @uniques << value
+        end
       end
       return valid?
     end    
