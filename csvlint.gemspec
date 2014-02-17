@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "spork"
   spec.add_development_dependency "webmock"
   spec.add_development_dependency "rspec"
+  spec.add_development_dependency "rspec-pride"
   spec.add_development_dependency "rspec-expectations"
   spec.add_development_dependency "coveralls"  
   spec.add_development_dependency "pry"  
