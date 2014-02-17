@@ -106,6 +106,8 @@ The following types of error can be reported:
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
 * `:no_header` -- the CSV file doesn't include a header
+* `:empty_column_name` -- a column in the CSV header has an empty name
+* `:duplicate_column_name` -- a column in the CSV header has a duplicate name
 
 ## Warnings
 
@@ -166,8 +168,6 @@ Schema validation provides some additional types of error and warning messages:
 * `:missing_column` (warning) -- a row in the CSV file has a missing column, that is specified in the schema. This is a warning only, as it may be legitimate
 * `:extra_column` (warning) -- a row in the CSV file has extra column.
 * `:unique` (error) -- a column with a `unique` constraint contains non-unique values
-* `:empty_column_name` (error) -- a column in the CSV header has an empty name
-* `:duplicate_column_name` (error) -- a column in the CSV header has a duplicate name
 
 ## Contributing
 
