@@ -61,12 +61,18 @@ best practices
 
 ## Error Reporting
 
-Errors and warnings returned by the validator are instances of `Csvlint::ErrorMessage`:
+The validator provides feedback on a validation result using instances of `Csvlint::ErrorMessage`. Errors are divided into errors, warnings and information 
+messages. A validation attempt is successful if there are no errors.
 
-* `content` holds the contents of the row that generated the error or warning
-* `row` holds the line number of the problem
-* `type` has a symbol that indicates the type of error or warning being reported
+Messages provide context including:
+
 * `category` has a symbol that indicates the category or error/warning: `:structure` (well-formedness issues), `:schema` (schema validation), `:context` (publishing metadata, e.g. content type)
+* `type` has a symbol that indicates the type of error or warning being reported
+* `row` holds the line number of the problem
+* `column` holds the column number of the issue
+* `content` holds the contents of the row that generated the error or warning
+
+## Errors
 
 The following types of error can be reported:
 
@@ -80,6 +86,8 @@ The following types of error can be reported:
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
 
+## Warnings
+
 The following types of warning can be reported:
 
 * `:no_encoding` -- the `Content-Type` header returned in the HTTP request does not have a `charset` parameter
@@ -89,9 +97,53 @@ The following types of warning can be reported:
 * `:check_options` -- CSV file appears to contain only a single column
 * `:inconsistent_values` -- inconsistent values in the same column. Reported if <90% of values seem to have same data type (either numeric or alphanumeric including punctuation)
 
+## Information Messages
+
 There are also information messages available:
 
 * `:nonrfc_line_breaks` -- uses non-CRLF line breaks, so doesn't conform to RFC4180.
+
+## Schema Validation
+
+The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON. The structure currently 
+follows JSON Table Schema with some extensions.
+
+An example schema file is:
+
+	{
+		"fields": [
+			{ 
+				"name": "id", 
+			  	"constraints": { "required": true } 
+			},
+            { 
+               	"name": "price", 
+               	"constraints": { "required": true, "minLength": 1 } 
+            },
+            { 
+            	"name": "postcode", 
+            	"constraints": { 
+            		"required": true, 
+            		"pattern": "[A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2}" 
+            	} 
+            }
+        ]
+	}
+
+Parsing and validating with a schema:
+
+	schema = Schema.load_from_json_table(uri)
+	validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, schema )
+	
+Schema validation provides some additional types of error and warning messages:
+
+* `:missing_value` (error) -- a column marked as `required` in the schema has no value
+* `:min_length` (error) -- a column with a `minLength` constraint has a value that is too short
+* `:max_length` (error) -- a column with a `maxLength` constraint has a value that is too long
+* `:pattern` (error) --  a column with a `pattern` constraint has a value that doesn't match the regular expression
+* `:header_name` (warning) -- the header in the CSV has a column name that doesn't match the schema
+* `:missing_column` (warning) -- a row in the CSV file has a missing column, that is specified in the schema. This is a warning only, as it may be legitimate
+* `:extra_column` (warning) -- a row in the CSV file has extra column.
 
 ## Contributing
 
