@@ -7,7 +7,7 @@ module Csvlint
     
     def initialize(name, constraints={})
       @name = name
-      @constraints = constraints
+      @constraints = constraints || {}
       reset
     end
     

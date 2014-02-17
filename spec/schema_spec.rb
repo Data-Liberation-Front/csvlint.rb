@@ -2,6 +2,21 @@ require 'spec_helper'
 
 describe Csvlint::Schema do
   
+  it "should tolerate missing fields" do
+    schema = Csvlint::Schema.from_json_table("http://example.org", {})
+    expect( schema ).to_not be(nil)
+    expect( schema.fields.empty? ).to eql(true)
+  end
+
+  it "should tolerate fields with no constraints" do
+    schema = Csvlint::Schema.from_json_table("http://example.org", {
+      "fields" => [ { "name" => "test" } ]
+    })
+    expect( schema ).to_not be(nil)
+    expect( schema.fields[0].name ).to eql("test")
+    expect( schema.fields[0].constraints ).to eql({})
+  end
+      
   it "should validate against the schema" do
     field = Csvlint::Field.new("test", { "required" => true } )
     field2 = Csvlint::Field.new("test", { "minLength" => 3 } )

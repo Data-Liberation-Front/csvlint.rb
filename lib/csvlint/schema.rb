@@ -28,8 +28,9 @@ module Csvlint
     def Schema.from_json_table(uri, json)
       fields = []
       json["fields"].each do |field_desc|
-        fields << Csvlint::Field.new( field_desc["name"] ,field_desc["constraints"] || [])
-      end
+        fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"] )
+      end if json["fields"]
+        
       return Schema.new( uri , fields )
     end
     
