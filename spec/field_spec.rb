@@ -49,5 +49,65 @@ describe Csvlint::Field do
     expect( field.errors.first.category ).to be(:schema)
     expect( field.errors.first.type ).to be(:unique)
   end
-  
+
+  context "it should validate correct types" do
+    it "validates ints" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#int" })
+      expect( field.validate_column("42")).to be(true)
+      expect( field.validate_column("forty-two")).to be(false)
+    end
+
+    it "validates floats" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#float" })
+      expect(field.validate_column("42.0")).to be(true)
+      expect(field.validate_column("42")).to be(true)
+      expect(field.validate_column("forty-two")).to be(false)
+    end
+
+    it "validates URIs" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#anyURI" })
+      expect(field.validate_column("http://theodi.org/team")).to be(true)
+      expect(field.validate_column("https://theodi.org/team")).to be(true)
+      expect(field.validate_column("42.0")).to be(false)
+    end
+
+    it "validates booleans" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#boolean" })
+      expect(field.validate_column("true")).to be(true)
+      expect(field.validate_column("1")).to be(true)
+      expect(field.validate_column("false")).to be(true)
+      expect(field.validate_column("0")).to be(true)
+      expect(field.validate_column("derp")).to be(false)
+    end
+
+    context "it should validate all kinds of integers" do
+      it "validates a non-positive integer" do
+        field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#nonPositiveInteger" })
+        expect(field.validate_column("0")).to be(true)
+        expect(field.validate_column("-1")).to be(true)
+        expect(field.validate_column("1")).to be(false)
+      end
+
+      it "validates a negative integer" do
+        field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#negativeInteger" })
+        expect(field.validate_column("0")).to be(false)
+        expect(field.validate_column("-1")).to be(true)
+        expect(field.validate_column("1")).to be(false)
+      end
+
+      it "validates a non-negative integer" do
+        field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#nonNegativeInteger" })
+        expect(field.validate_column("0")).to be(true)
+        expect(field.validate_column("-1")).to be(false)
+        expect(field.validate_column("1")).to be(true)
+      end
+
+      it "validates a positive integer" do
+        field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#positiveInteger" })
+        expect(field.validate_column("0")).to be(false)
+        expect(field.validate_column("-1")).to be(false)
+        expect(field.validate_column("1")).to be(true)
+      end
+    end
+  end
 end
