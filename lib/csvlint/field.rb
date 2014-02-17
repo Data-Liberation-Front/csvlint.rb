@@ -42,8 +42,6 @@ module Csvlint
           i
         end
     }
-
-    MINIMUM = lambda { |field, value, min, row, column, | }
       
     def initialize(name, constraints={})
       @name = name
@@ -100,15 +98,19 @@ module Csvlint
       end
       
       def validate_range(value, row, column)
+        #TODO: we're ignoring issues with converting ranges to actual types, maybe we
+        #should generate a warning? The schema is invalid
         if constraints["minimum"]
           minimumValue = convert_to_type( constraints["minimum"] )
-          #TODO what if we have no value, e.g. schema is invalid?
-          build_errors(:invalid_range, :schema, row, column) unless value >= minimumValue            
+          if minimumValue
+            build_errors(:invalid_range, :schema, row, column) unless value >= minimumValue            
+          end
         end
         if constraints["maximum"]
           maximumValue = convert_to_type( constraints["maximum"] )
-          #TODO what if we have no value, e.g. schema is invalid?
-          build_errors(:invalid_range, :schema, row, column) unless value <= maximumValue            
+          if maximumValue
+            build_errors(:invalid_range, :schema, row, column) unless value <= maximumValue           
+          end
         end
       end
 
