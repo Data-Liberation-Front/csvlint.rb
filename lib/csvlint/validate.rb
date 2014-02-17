@@ -87,12 +87,8 @@ module Csvlint
            row = csv.shift
            wrapper.finished
            if row             
-             if header? && current_line == 1 #header
-               if @schema
-                 @schema.validate_header(row)
-                 @errors += @schema.errors
-                 @warnings += @schema.warnings
-               end
+             if header? && current_line == 1
+               validate_header(row)
              else
                
                build_formats(row, current_line)
@@ -128,6 +124,23 @@ module Csvlint
       return expected_columns        
     end          
     
+    def validate_header(header)
+      names = Set.new
+      header.each_with_index do |name,i|
+        build_errors(:empty_column_name, :schema, nil, i+1) if name == ""
+        if names.include?(name)
+          build_errors(:duplicate_column_name, :schema, nil, i+1)
+        else
+          names << name
+        end
+      end
+      if @schema
+        @schema.validate_header(row)
+        @errors += @schema.errors
+        @warnings += @schema.warnings
+      end
+      return valid?
+    end
     
     def header?
       return @csv_header

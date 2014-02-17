@@ -87,30 +87,7 @@ describe Csvlint::Schema do
       expect( schema.warnings.size ).to eql(1)
       expect( schema.warnings.first.type).to eql(:header_name)
       expect( schema.warnings.first.category).to eql(:schema)
-    end
-    
-    it "should error if column names aren't unique" do
-      minimum = Csvlint::Field.new("minimum", { "minLength" => 3 } )
-      required = Csvlint::Field.new("required", { "required" => true } )
-      schema = Csvlint::Schema.new("http://example.org", [minimum, required] )
-      
-      expect( schema.validate_header(["minimum", "minimum"]) ).to eql(false)
-      expect( schema.errors.size ).to eql(1)
-      expect( schema.errors.first.type).to eql(:duplicate_column_name)
-      expect( schema.errors.first.category).to eql(:schema)
-    end
-
-    it "should error if column names are blank" do
-      minimum = Csvlint::Field.new("minimum", { "minLength" => 3 } )
-      required = Csvlint::Field.new("required", { "required" => true } )
-      schema = Csvlint::Schema.new("http://example.org", [minimum, required] )
-      
-      expect( schema.validate_header(["minimum", ""]) ).to eql(false)
-      expect( schema.errors.size ).to eql(1)
-      expect( schema.errors.first.type).to eql(:empty_column_name)
-      expect( schema.errors.first.category).to eql(:schema)
-    end
-        
+    end        
   end  
   
   context "when parsing JSON Tables" do
