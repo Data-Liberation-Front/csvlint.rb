@@ -12,3 +12,8 @@ Given(/^I set the line endings to linefeed$/) do
   @csv_options ||= default_csv_options
   @csv_options["lineTerminator"] = "\n"
 end
+
+Given(/^I set header to "(.*?)"$/) do |boolean|
+  @csv_options ||= default_csv_options
+  @csv_options["header"] = boolean == "true"
+end

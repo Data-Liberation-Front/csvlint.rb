@@ -4,7 +4,7 @@ module Csvlint
     
     include Csvlint::ErrorCollector
     
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
@@ -17,8 +17,11 @@ module Csvlint
       @formats = []
       @schema = schema
       @dialect = dialect  
-      @csv_options = dialect_to_csv_options(dialect)
+      
+      @csv_header = true
+      @csv_header = @dialect["header"] if @dialect && @dialect["header"] != nil
         
+      @csv_options = dialect_to_csv_options(dialect)
       @extension = parse_extension(source)
       reset
       validate
@@ -44,7 +47,11 @@ module Csvlint
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
       @headers = io.meta rescue nil    
-      if @headers 
+      if @headers
+        if @headers["content-type"] =~ /header=(present|absent)/
+          @csv_header = true if $1 == "present"
+          @csv_header = false if $1 == "absent"
+        end
         if @headers["content-type"] !~ /charset=/
           build_warnings(:no_encoding, :context) 
         else
@@ -54,6 +61,7 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       end
+      build_errors(:no_header, :structure) unless @csv_header
     end
     
     def parse_csv(io)
@@ -120,8 +128,7 @@ module Csvlint
     
     
     def header?
-      return @dialect["header"] if @dialect && @dialect["header"] != nil
-      true
+      return @csv_header
     end
     
     def fetch_error(error)

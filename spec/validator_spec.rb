@@ -54,6 +54,16 @@ describe Csvlint::Validator do
       expect( validator.header? ).to eql(false)      
     end
     
+    it "should look in content-type for header" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv; header=absent"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      expect( validator.header? ).to eql(false)
+
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv; header=present"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      expect( validator.header? ).to eql(true)              
+    end  
+    
   end
   
   context "build_formats" do

@@ -32,4 +32,16 @@ Feature: CSV options
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if the CSV is valid
     Then I should get the value of true
+
+  Scenario: Error if options say there is no header
+    Given I have a CSV with the following content:
+    """
+"1","2","3"
+"3","2","1"
+    """
+    And I set header to "false" 
+    And it is stored at the url "http://example.com/example1.csv"
+    And I ask if there are errors
+    Then there should be 1 error
+    And that error should have the type "no_header"
     
