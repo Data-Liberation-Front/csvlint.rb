@@ -18,6 +18,7 @@ begin
 	headers.each do |name|
 	  schema["fields"] << {
 	    "name" => name,
+	    "title" => "",
 	    "description" => "",
 	    "constraints" => {}
 	  }
