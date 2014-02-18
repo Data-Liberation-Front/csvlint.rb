@@ -9,6 +9,7 @@ module Csvlint
     attr_reader :name, :constraints, :title, :description
 
     TYPE_VALIDATIONS = {
+        'http://www.w3.org/2001/XMLSchema#string'     => lambda { |value, constraints| value },
         'http://www.w3.org/2001/XMLSchema#int'     => lambda { |value, constraints| Integer value },
         'http://www.w3.org/2001/XMLSchema#float'   => lambda { |value, constraints| Float value },
         'http://www.w3.org/2001/XMLSchema#double'   => lambda { |value, constraints| Float value },
@@ -119,7 +120,7 @@ module Csvlint
       end
       
       def validate_type(value, row, column)
-        if constraints["type"]
+        if constraints["type"] && value != ""
           parsed = convert_to_type(value)
           if parsed == nil
             build_errors(:invalid_type, :schema, row, column)
