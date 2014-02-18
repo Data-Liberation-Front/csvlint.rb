@@ -200,7 +200,8 @@ Schema validation provides some additional types of error and warning messages:
 * `:missing_column` (warning) -- a row in the CSV file has a missing column, that is specified in the schema. This is a warning only, as it may be legitimate
 * `:extra_column` (warning) -- a row in the CSV file has extra column.
 * `:unique` (error) -- a column with a `unique` constraint contains non-unique values
-* `:out_of_range` (error) -- a column with a `minimum` or `maximum` constraint contains a value that is outside of the range
+* `:below_minimum` (error) -- a column with a `minimum` constraint contains a value that is below the minimum
+* `:above_maximum` (error) -- a column with a `maximum` constraint contains a value that is above the maximum
 
 ## Contributing
 
