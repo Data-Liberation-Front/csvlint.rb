@@ -109,5 +109,41 @@ describe Csvlint::Field do
         expect(field.validate_column("1")).to be(true)
       end
     end
+    
+    context "when validating ranges" do
+      
+      it "should enforce minimum values" do
+        field = Csvlint::Field.new("test", { 
+            "type" => "http://www.w3.org/2001/XMLSchema#int",
+            "minimum" => "40"
+        })
+        expect( field.validate_column("42")).to be(true)
+
+        field = Csvlint::Field.new("test", { 
+            "type" => "http://www.w3.org/2001/XMLSchema#int",
+            "minimum" => "40"
+        })
+        expect( field.validate_column("39")).to be(false)     
+        expect( field.errors.first.type ).to eql(:out_of_range)   
+      end
+      
+      it "should enforce maximum values" do
+        field = Csvlint::Field.new("test", { 
+            "type" => "http://www.w3.org/2001/XMLSchema#int",
+            "maximum" => "40"
+        })
+        expect( field.validate_column("39")).to be(true)
+
+        field = Csvlint::Field.new("test", { 
+            "type" => "http://www.w3.org/2001/XMLSchema#int",
+            "maximum" => "40"
+        })
+        expect( field.validate_column("41")).to be(false)        
+        expect( field.errors.first.type ).to eql(:out_of_range)   
+
+      end
+
+      
+    end
   end
 end
