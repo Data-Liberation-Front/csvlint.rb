@@ -14,16 +14,23 @@ module Csvlint
       "Unclosed quoted field" => :unclosed_quote,
     }
        
-    def initialize(source, dialect = nil, schema = nil)      
+    def initialize(source, dialect = {}, schema = nil)      
       @source = source
       @formats = []
       @schema = schema
-      @dialect = dialect  
       
+      @dialect = dialect_defaults = {
+        "header" => true,
+        "delimiter" => ",",
+        "skipInitialSpace" => true,
+        "lineTerminator" => :auto,
+        "quoteChar" => '"'
+      }.merge(dialect || {})
+            
       @csv_header = true
-      @csv_header = @dialect["header"] if @dialect && @dialect["header"] != nil
+      @csv_header = @dialect["header"] if @dialect["header"] != nil
         
-      @csv_options = dialect_to_csv_options(dialect)
+      @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source)
       reset
       validate
@@ -151,16 +158,14 @@ module Csvlint
       ERROR_MATCHERS.fetch(e[1], :unknown_error)
     end
     
-    def dialect_to_csv_options(dialect)
-        dialect ||= {}
-        #supplying defaults here just in case the dialect is invalid        
-        delimiter = dialect["delimiter"] || ","
+    def dialect_to_csv_options(dialect) 
         skipinitialspace = dialect["skipInitialSpace"] || true
+        delimiter = dialect["delimiter"]
         delimiter = delimiter + " " if !skipinitialspace
         return {
             :col_sep => delimiter,
-            :row_sep => ( dialect["lineTerminator"] || :auto),
-            :quote_char => ( dialect["quoteChar"] || '"'),
+            :row_sep => dialect["lineTerminator"],
+            :quote_char => dialect["quoteChar"],
             :skip_blanks => false
         }
     end
