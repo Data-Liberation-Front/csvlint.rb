@@ -9,7 +9,7 @@ describe Csvlint::Validator do
   context "csv dialect" do
     it "should provide sensible defaults for CSV parsing" do
       validator = Csvlint::Validator.new("http://example.com/example.csv")
-      opts = validator.dialect_to_csv_options( nil )
+      opts = validator.instance_variable_get("@csv_options")
       opts.should include({
         :col_sep => ",",
         :row_sep => :auto,
