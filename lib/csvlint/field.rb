@@ -119,7 +119,7 @@ module Csvlint
       end
       
       def validate_type(value, row, column)
-        if constraints["type"]
+        if constraints["type"] && value != ""
           parsed = convert_to_type(value)
           if parsed == nil
             build_errors(:invalid_type, :schema, row, column)

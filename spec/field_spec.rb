@@ -51,6 +51,11 @@ describe Csvlint::Field do
   end
 
   context "it should validate correct types" do
+    it "skips empty fields" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#int" })
+      expect( field.validate_column("")).to be(true)
+    end
+    
     it "validates ints" do
       field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#int" })
       expect( field.validate_column("42")).to be(true)
