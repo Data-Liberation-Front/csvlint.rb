@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+$:.unshift File.join( File.dirname(__FILE__), "..", "lib")
+
+require 'csvlint'
+
+begin
+  puts ARGV[0]
+	csv = CSV.new( open(ARGV[0]) )
+	headers = csv.shift
+	
+	name = File.basename( ARGV[0] )
+	schema = {
+	  "title" => name,
+	  "description" => "Auto generated schema for #{name}",
+	  "fields" => []
+	}
+	
+	headers.each do |name|
+	  schema["fields"] << {
+	    "name" => name,
+	    "description" => "",
+	    "constraints" => {}
+	  }
+	end
+	
+	$stdout.puts JSON.pretty_generate(schema)
+rescue => e
+  puts e
+  puts e.backtrace
+	puts "Unable to parse CSV file"
+end
