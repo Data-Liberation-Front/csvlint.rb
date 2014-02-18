@@ -170,6 +170,27 @@ describe Csvlint::Field do
          expect( field.validate_column("not-a-time")).to be(false)     
          expect( field.validate_column("27:97:00")).to be(false)   
       end
+      it "should validate a year" do
+        field = Csvlint::Field.new("test", { 
+             "type" => "http://www.w3.org/2001/XMLSchema#gYear"
+         })
+         expect( field.validate_column("1999")).to be(true)
+         expect( field.validate_column("2525")).to be(true)
+         expect( field.validate_column("0001")).to be(true)
+         expect( field.validate_column("2014-02-17T11:09:00Z")).to be(false)
+         expect( field.validate_column("not-a-time")).to be(false)     
+         expect( field.validate_column("27:97:00")).to be(false)   
+      end
+      it "should validate a year-month" do
+        field = Csvlint::Field.new("test", { 
+             "type" => "http://www.w3.org/2001/XMLSchema#gYearMonth"
+         })
+         expect( field.validate_column("1999-12")).to be(true)
+         expect( field.validate_column("2525-01")).to be(true)
+         expect( field.validate_column("2014-02-17T11:09:00Z")).to be(false)
+         expect( field.validate_column("not-a-time")).to be(false)     
+         expect( field.validate_column("27:97:00")).to be(false)   
+      end
       it "should allow user to specify custom date time pattern" do
         field = Csvlint::Field.new("test", { 
              "type" => "http://www.w3.org/2001/XMLSchema#dateTime",

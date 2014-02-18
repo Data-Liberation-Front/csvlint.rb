@@ -59,7 +59,19 @@ module Csvlint
           d = DateTime.strptime(value, date_pattern)
           raise ArgumentError unless d.strftime(date_pattern) == value
           d
-        end     
+        end,
+        'http://www.w3.org/2001/XMLSchema#gYear' => lambda do |value, constraints|
+          date_pattern = constraints["datePattern"] || "%Y"
+          d = Date.strptime(value, date_pattern)
+          raise ArgumentError unless d.strftime(date_pattern) == value
+          d
+        end,     
+        'http://www.w3.org/2001/XMLSchema#gYearMonth' => lambda do |value, constraints|
+          date_pattern = constraints["datePattern"] || "%Y-%m"
+          d = Date.strptime(value, date_pattern)
+          raise ArgumentError unless d.strftime(date_pattern) == value
+          d
+        end 
     }
       
     def initialize(name, constraints={}, title=nil, description=nil)
