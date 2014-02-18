@@ -168,6 +168,7 @@ Supported constraints:
 * `type` -- specifies an XML Schema data type. Values of the column must be a valid value for that type
 * `minimum` -- specify a minimum range for values, the value will be parsed as specified by `type`
 * `maximum` -- specify a maximum range for values, the value will be parsed as specified by `type` 
+* `datePattern` -- specify a `strftime` compatible date pattern to be used when parsing date values and min/max constraints
 
 Supported data types (this is still a work in progress):
 
@@ -180,6 +181,11 @@ Supported data types (this is still a work in progress):
 * Positive Integer -- `http://www.w3.org/2001/XMLSchema#positiveInteger`
 * Non Negative Integer -- `http://www.w3.org/2001/XMLSchema#nonNegativeInteger`
 * Negative Integer -- `http://www.w3.org/2001/XMLSchema#negativeInteger`
+* Date -- `http://www.w3.org/2001/XMLSchema#date`
+* Date Time -- `http://www.w3.org/2001/XMLSchema#dateTime`
+* Year -- `http://www.w3.org/2001/XMLSchema#gYear`
+* Year Month -- `http://www.w3.org/2001/XMLSchema#gYearMonth`
+* Time -- `http://www.w3.org/2001/XMLSchema#time`
 	
 Schema validation provides some additional types of error and warning messages:
 
