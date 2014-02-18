@@ -6,11 +6,13 @@ module Csvlint
     
     include Csvlint::ErrorCollector
     
-    attr_reader :uri, :fields
+    attr_reader :uri, :fields, :title, :description
     
-    def initialize(uri, fields=[])
+    def initialize(uri, fields=[], title=nil, description=nil)
       @uri = uri
       @fields = fields
+      @title = title
+      @description = description
       reset
     end
 
@@ -48,10 +50,10 @@ module Csvlint
     def Schema.from_json_table(uri, json)
       fields = []
       json["fields"].each do |field_desc|
-        fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"] )
+        fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"], 
+          field_desc["title"], field_desc["description"] )
       end if json["fields"]
-        
-      return Schema.new( uri , fields )
+      return Schema.new( uri , fields, json["title"], json["description"] )
     end
     
     def Schema.load_from_json_table(uri)

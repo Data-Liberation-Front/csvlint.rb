@@ -99,8 +99,10 @@ describe Csvlint::Schema do
     before(:each) do 
       @example=<<-EOL
       {
+          "title": "Schema title",
+          "description": "schema", 
           "fields": [
-              { "name": "ID", "constraints": { "required": true } },
+              { "name": "ID", "constraints": { "required": true }, "title": "id", "description": "house identifier" },
               { "name": "Price", "constraints": { "required": true, "minLength": 1 } },
               { "name": "Postcode", "constraints": { "required": true, "pattern": "[A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2}" } }
           ]
@@ -114,9 +116,13 @@ describe Csvlint::Schema do
       schema = Csvlint::Schema.from_json_table("http://example.org", json)
       
       expect( schema.uri ).to eql("http://example.org")
+      expect( schema.title ).to eql("Schema title")
+      expect( schema.description ).to eql("schema")
       expect( schema.fields.length ).to eql(3)
       expect( schema.fields[0].name ).to eql("ID")
       expect( schema.fields[0].constraints["required"] ).to eql(true)
+      expect( schema.fields[0].title ).to eql("id")
+      expect( schema.fields[0].description ).to eql("house identifier")
     end
     
     it "should create a schema from a JSON Table URL" do

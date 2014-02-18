@@ -5,7 +5,7 @@ module Csvlint
   class Field
     include Csvlint::ErrorCollector
 
-    attr_reader :name, :constraints
+    attr_reader :name, :constraints, :title, :description
 
     TYPE_VALIDATIONS = {
         'http://www.w3.org/2001/XMLSchema#int'     => lambda { |value| Integer value },
@@ -43,10 +43,12 @@ module Csvlint
         end
     }
       
-    def initialize(name, constraints={})
+    def initialize(name, constraints={}, title=nil, description=nil)
       @name = name
       @constraints = constraints || {}
       @uniques = Set.new
+      @title = title
+      @description = description
       reset
     end
     
