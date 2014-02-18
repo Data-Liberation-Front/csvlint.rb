@@ -135,7 +135,7 @@ describe Csvlint::Field do
             "minimum" => "40"
         })
         expect( field.validate_column("39")).to be(false)     
-        expect( field.errors.first.type ).to eql(:out_of_range)   
+        expect( field.errors.first.type ).to eql(:below_minimum)
       end
       
       it "should enforce maximum values" do
@@ -150,7 +150,7 @@ describe Csvlint::Field do
             "maximum" => "40"
         })
         expect( field.validate_column("41")).to be(false)        
-        expect( field.errors.first.type ).to eql(:out_of_range)   
+        expect( field.errors.first.type ).to eql(:above_maximum)
 
       end      
     end

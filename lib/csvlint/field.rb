@@ -137,13 +137,13 @@ module Csvlint
         if constraints["minimum"]
           minimumValue = convert_to_type( constraints["minimum"] )
           if minimumValue
-            build_errors(:out_of_range, :schema, row, column, value) unless value >= minimumValue
+            build_errors(:below_minimum, :schema, row, column, value) unless value >= minimumValue
           end
         end
         if constraints["maximum"]
           maximumValue = convert_to_type( constraints["maximum"] )
           if maximumValue
-            build_errors(:out_of_range, :schema, row, column, value) unless value <= maximumValue
+            build_errors(:above_maximum, :schema, row, column, value) unless value <= maximumValue
           end
         end
       end
