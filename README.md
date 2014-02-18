@@ -155,6 +155,29 @@ Parsing and validating with a schema:
 
 	schema = Schema.load_from_json_table(uri)
 	validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, schema )
+
+Supported constraints:
+
+* `required` -- there must be a value for this field in every row
+* `unique` -- the values in every row should be unique
+* `minLength` -- minimum number of characters in the value
+* `maxLength` -- maximum number of characters in the value
+* `pattern` -- values must match the provided regular expression
+* `type` -- specifies an XML Schema data type. Values of the column must be a valid value for that type
+* `minimum` -- specify a minimum range for values, the value will be parsed as specified by `type`
+* `maximum` -- specify a maximum range for values, the value will be parsed as specified by `type` 
+
+Supported data types (this is still a work in progress):
+
+* Integer -- `http://www.w3.org/2001/XMLSchema#int`
+* Float -- `http://www.w3.org/2001/XMLSchema#float`
+* Double -- `http://www.w3.org/2001/XMLSchema#double`
+* URI -- `http://www.w3.org/2001/XMLSchema#anyURI`
+* Boolean -- `http://www.w3.org/2001/XMLSchema#boolean`
+* Non Positive Integer -- `http://www.w3.org/2001/XMLSchema#nonPositiveInteger`
+* Positive Integer -- `http://www.w3.org/2001/XMLSchema#positiveInteger`
+* Non Negative Integer -- `http://www.w3.org/2001/XMLSchema#nonNegativeInteger`
+* Negative Integer -- `http://www.w3.org/2001/XMLSchema#negativeInteger`
 	
 Schema validation provides some additional types of error and warning messages:
 
@@ -166,6 +189,7 @@ Schema validation provides some additional types of error and warning messages:
 * `:missing_column` (warning) -- a row in the CSV file has a missing column, that is specified in the schema. This is a warning only, as it may be legitimate
 * `:extra_column` (warning) -- a row in the CSV file has extra column.
 * `:unique` (error) -- a column with a `unique` constraint contains non-unique values
+* `:out_of_range` (error) -- a column with a `minimum` or `maximum` constraint contains a value that is outside of the range
 * `:empty_column_name` (error) -- a column in the CSV header has an empty name
 * `:duplicate_column_name` (error) -- a column in the CSV header has a duplicate name
 
