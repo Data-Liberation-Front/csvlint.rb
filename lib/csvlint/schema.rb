@@ -15,15 +15,9 @@ module Csvlint
     end
 
     def validate_header(header)
-      names = Set.new
+      reset
       header.each_with_index do |name,i|
-        build_warnings(:header_name, :schema, nil, i+1) if fields[i].name.downcase != name.downcase
-        build_errors(:empty_column_name, :schema, nil, i+1) if name == ""
-        if names.include?(name)
-          build_errors(:duplicate_column_name, :schema, nil, i+1)
-        else
-          names << name
-        end
+        build_warnings(:header_name, :schema, nil, i+1) if fields[i].name != name
       end
       return valid?
     end

@@ -66,6 +66,28 @@ describe Csvlint::Validator do
     
   end
   
+  context "when validating headers" do
+    it "should error if column names aren't unique" do      
+      data = StringIO.new( "minimum, minimum" )
+      validator = Csvlint::Validator.new(data)
+      expect( validator.validate_header(["minimum", "minimum"]) ).to eql(false)
+      expect( validator.errors.size ).to eql(1)
+      expect( validator.errors.first.type).to eql(:duplicate_column_name)
+      expect( validator.errors.first.category).to eql(:schema)
+    end
+
+    it "should error if column names are blank" do
+      data = StringIO.new( "minimum," )
+      validator = Csvlint::Validator.new(data)
+      
+      expect( validator.validate_header(["minimum", ""]) ).to eql(false)
+      expect( validator.errors.size ).to eql(1)
+      expect( validator.errors.first.type).to eql(:empty_column_name)
+      expect( validator.errors.first.category).to eql(:schema)
+    end
+
+  end
+  
   context "build_formats" do
   
     it "should return the format of each column correctly" do    
