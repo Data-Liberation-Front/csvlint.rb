@@ -23,6 +23,10 @@ describe Csvlint::Schema do
     schema = Csvlint::Schema.new("http://example.org", [field, field2] )
     
     expect( schema.validate_row( ["", "x"] ) ).to eql(false)
+    expect( schema.errors.size ).to eql(2)
+    expect( schema.errors.first.type).to eql(:missing_value)
+    expect( schema.errors.first.category).to eql(:schema)
+    expect( schema.errors.first.column).to eql(1)
     expect( schema.validate_row( ["abc", "1234"] ) ).to eql(true)
       
   end
@@ -86,6 +90,8 @@ describe Csvlint::Schema do
       expect( schema.validate_header(["wrong", "required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
       expect( schema.warnings.first.type).to eql(:header_name)
+      expect( schema.warnings.first.content).to eql("wrong")
+      expect( schema.warnings.first.column).to eql(1)
       expect( schema.warnings.first.category).to eql(:schema)
       
       expect( schema.validate_header(["minimum", "Required"]) ).to eql(true)
