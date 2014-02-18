@@ -172,6 +172,7 @@ Supported constraints:
 
 Supported data types (this is still a work in progress):
 
+* String -- `http://www.w3.org/2001/XMLSchema#string` (effectively a no-op)
 * Integer -- `http://www.w3.org/2001/XMLSchema#int`
 * Float -- `http://www.w3.org/2001/XMLSchema#float`
 * Double -- `http://www.w3.org/2001/XMLSchema#double`
@@ -186,6 +187,8 @@ Supported data types (this is still a work in progress):
 * Year -- `http://www.w3.org/2001/XMLSchema#gYear`
 * Year Month -- `http://www.w3.org/2001/XMLSchema#gYearMonth`
 * Time -- `http://www.w3.org/2001/XMLSchema#time`
+
+Use of an unknown data type will result in the column failing to validate.
 	
 Schema validation provides some additional types of error and warning messages:
 

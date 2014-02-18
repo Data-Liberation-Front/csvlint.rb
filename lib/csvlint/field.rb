@@ -9,6 +9,7 @@ module Csvlint
     attr_reader :name, :constraints, :title, :description
 
     TYPE_VALIDATIONS = {
+        'http://www.w3.org/2001/XMLSchema#string'     => lambda { |value, constraints| value },
         'http://www.w3.org/2001/XMLSchema#int'     => lambda { |value, constraints| Integer value },
         'http://www.w3.org/2001/XMLSchema#float'   => lambda { |value, constraints| Float value },
         'http://www.w3.org/2001/XMLSchema#double'   => lambda { |value, constraints| Float value },
