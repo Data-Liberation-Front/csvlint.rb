@@ -6,7 +6,7 @@ module Csvlint
     
     include Csvlint::ErrorCollector
     
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
