@@ -215,6 +215,8 @@ module Csvlint
         return ""
       when StringIO
         return ""
+      when Tempfile
+        return ""
       else
         parsed = URI.parse(source)
         File.extname(parsed.path)
