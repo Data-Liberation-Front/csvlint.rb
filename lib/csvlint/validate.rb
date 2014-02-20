@@ -155,7 +155,8 @@ module Csvlint
     
     def fetch_error(error)
       e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.?$/i)
-      ERROR_MATCHERS.fetch(e[1], :unknown_error)
+      message = e[1] rescue nil
+      ERROR_MATCHERS.fetch(message, :unknown_error)
     end
     
     def dialect_to_csv_options(dialect) 
