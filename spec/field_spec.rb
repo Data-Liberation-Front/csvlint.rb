@@ -10,6 +10,12 @@ describe Csvlint::Field do
     expect( field.validate_column( "data" ) ).to be(true)
   end
   
+  it "should include the failed constraints" do
+    field = Csvlint::Field.new("test", { "required" => true } )
+    expect( field.validate_column( nil ) ).to be(false)  
+    expect( field.errors.first.constraints ).to eql( { "required" => true } )
+  end
+  
   it "should validate minimum length" do
     field = Csvlint::Field.new("test", { "minLength" => 3 } )
     expect( field.validate_column( nil ) ).to be(false)
@@ -37,7 +43,11 @@ describe Csvlint::Field do
   it "should apply combinations of constraints" do
     field = Csvlint::Field.new("test", { "required"=>true, "pattern" => "\{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\}"} )
     expect( field.validate_column( "abc") ).to be(false)
+    expect( field.errors.first.constraints ).to eql( { "pattern" => "\{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\}" } )
+
     expect( field.validate_column( nil ) ).to be(false)
+    expect( field.errors.first.constraints ).to eql( { "required"=>true } )
+    
     expect( field.validate_column( "{3B0DA29C-C89A-4FAA-918A-0000074FA0E0}") ).to be(true)  
     
   end
@@ -117,6 +127,7 @@ describe Csvlint::Field do
         field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#positiveInteger" })
         expect(field.validate_column("0")).to be(false)
         expect(field.validate_column("-1")).to be(false)
+        expect(field.errors.first.constraints).to eql( { "type" => "http://www.w3.org/2001/XMLSchema#positiveInteger" } )
         expect(field.validate_column("1")).to be(true)
       end
     end
@@ -210,6 +221,11 @@ describe Csvlint::Field do
          expect( field.validate_column("1999-12-01 10:00:00")).to be(true)
          expect( field.validate_column("invalid-date")).to be(false)
         expect( field.validate_column("2014-02-17")).to be(false)  
+        expect( field.errors.first.constraints ).to eql( { 
+             "type" => "http://www.w3.org/2001/XMLSchema#dateTime",
+             "datePattern" => "%Y-%m-%d %H:%M:%S"
+         })
+         
       end
       it "should allow user to compare dates" do
         field = Csvlint::Field.new("test", { 

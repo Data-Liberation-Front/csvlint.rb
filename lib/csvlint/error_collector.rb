@@ -2,13 +2,14 @@ module Csvlint
   
   module ErrorCollector
       
-    def build_message(type, category, row, column, content)
+    def build_message(type, category, row, column, content, constraints)
       Csvlint::ErrorMessage.new({
                                   :type => type,
                                   :category => category,
                                   :row => row,
                                   :column => column,
-                                  :content => content
+                                  :content => content,
+                                  :constraints => constraints
                                 })
     end
     
@@ -22,8 +23,8 @@ module Csvlint
       
       attr_reader level
       
-      define_method "build_#{level}" do |type, category = nil, row = nil, column = nil, content = nil|
-        instance_variable_get("@#{level}") << build_message(type, category, row, column, content)
+      define_method "build_#{level}" do |type, category = nil, row = nil, column = nil, content = nil, constraints = {}|
+        instance_variable_get("@#{level}") << build_message(type, category, row, column, content, constraints)
       end
       
     end
