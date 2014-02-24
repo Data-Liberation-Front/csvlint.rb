@@ -59,6 +59,9 @@ describe Csvlint::Schema do
     expect( schema.warnings.first.category).to eql(:schema)
     expect( schema.warnings.first.row).to eql(1)
     expect( schema.warnings.first.column).to eql(2)
+
+    #no ragged row error    
+    expect( schema.errors.size ).to eql(0)
   end
   
   it "should warn if the data has additional columns" do
@@ -75,7 +78,9 @@ describe Csvlint::Schema do
 
     expect( schema.warnings[1].type).to eql(:extra_column)
     expect( schema.warnings[1].column).to eql(4)
-    
+
+    #no ragged row error    
+    expect( schema.errors.size ).to eql(0)        
   end  
 
   context "when validating header" do

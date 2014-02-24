@@ -96,17 +96,18 @@ module Csvlint
            if row             
              if header? && current_line == 1
                validate_header(row)
-             else
-               
+             else               
                build_formats(row, current_line)
                expected_columns = row.count unless expected_columns != 0
-               build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
+               
                build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
                
                if @schema
                  @schema.validate_row(row, current_line)
                  @errors += @schema.errors
                  @warnings += @schema.warnings
+               else
+                 build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
                end
                
              end
