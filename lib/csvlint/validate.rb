@@ -6,7 +6,7 @@ module Csvlint
     
     include Csvlint::ErrorCollector
     
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
@@ -83,6 +83,7 @@ module Csvlint
       begin
         wrapper = WrappedIO.new( io )
         csv = CSV.new( wrapper, @csv_options )
+        @data = []
         @line_breaks = csv.row_sep
         if @line_breaks != "\r\n"
           build_info_messages(:nonrfc_line_breaks, :structure)
@@ -92,6 +93,7 @@ module Csvlint
          current_line = current_line + 1
          begin
            row = csv.shift
+           @data << row
            wrapper.finished
            if row             
              if header? && current_line == 1
