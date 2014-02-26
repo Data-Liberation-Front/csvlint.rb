@@ -189,6 +189,18 @@ describe Csvlint::Validator do
     
   end
   
+  it "should give access to the complete CSV data file" do
+    stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, 
+        :headers=>{"Content-Type" => "text/csv"}, 
+        :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+    validator = Csvlint::Validator.new("http://example.com/example.csv")    
+    expect( validator.valid? ).to eql(true)
+    data = validator.data
+    expect( data.count ).to eql 4
+    expect( data[0] ).to eql ['Foo','Bar','Baz']
+    expect( data[2] ).to eql ['3','2','1']
+  end
+  
   it "should follow redirects to SSL" do
     stub_request(:get, "http://example.com/redirect").to_return(:status => 301, :headers=>{"Location" => "https://example.com/example.csv"})
     stub_request(:get, "https://example.com/example.csv").to_return(:status => 200, 
