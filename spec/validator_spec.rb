@@ -97,12 +97,23 @@ describe Csvlint::Validator do
       validator.build_formats(row, 1)
       formats = validator.instance_variable_get("@formats") 
             
-      formats[0].first.should == "http://www.w3.org/2001/XMLSchema#string"
-      formats[1].first.should == "http://www.w3.org/2001/XMLSchema#int"
-      formats[2].first.should == "http://www.w3.org/2001/XMLSchema#anyURI"
-      formats[3].first.should == "http://www.w3.org/2001/XMLSchema#dateTime"
-      formats[4].first.should == "http://www.w3.org/2001/XMLSchema#date"
-      formats[5].first.should == "http://www.w3.org/2001/XMLSchema#time"
+      formats[0].first.should == "string"
+      formats[1].first.should == "numeric"
+      formats[2].first.should == "uri"
+      formats[3].first.should == "dateTime"
+      formats[4].first.should == "date"
+      formats[5].first.should == "time"
+    end
+    
+    it "treats floats and ints the same" do
+      row = ["12", "3.1476"]
+      
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      validator.build_formats(row, 1)
+      formats = validator.instance_variable_get("@formats")
+      
+      formats[0].first.should == "numeric"
+      formats[1].first.should == "numeric"
     end
   
     it "should ignore blank arrays" do
@@ -130,9 +141,9 @@ describe Csvlint::Validator do
       formats = validator.instance_variable_get("@formats")
       
       formats.should == [
-          ["http://www.w3.org/2001/XMLSchema#string",
-          "http://www.w3.org/2001/XMLSchema#string",
-          "http://www.w3.org/2001/XMLSchema#string"]
+          ["string",
+          "string",
+          "string"]
         ]
     end
   
@@ -151,9 +162,9 @@ describe Csvlint::Validator do
       formats = validator.instance_variable_get("@formats") 
             
       formats.should == [
-        ["http://www.w3.org/2001/XMLSchema#string"],
-        ["http://www.w3.org/2001/XMLSchema#int"],
-        ["http://www.w3.org/2001/XMLSchema#string"]
+        ["string"],
+        ["numeric"],
+        ["string"]
       ]
     end
     
@@ -163,9 +174,9 @@ describe Csvlint::Validator do
     
     it "should return a warning if columns have inconsistent values" do
       formats = [
-          ["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#string"],
-          ["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#int", "http://www.w3.org/2001/XMLSchema#string"],
-          ["http://www.w3.org/2001/XMLSchema#int", "http://www.w3.org/2001/XMLSchema#int", "http://www.w3.org/2001/XMLSchema#int"],
+          ["string", "string", "string"],
+          ["string", "numeric", "string"],
+          ["numeric", "numeric", "numeric"],
         ]
         
       validator = Csvlint::Validator.new("http://example.com/example.csv")
