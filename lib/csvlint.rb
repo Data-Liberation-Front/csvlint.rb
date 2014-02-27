@@ -3,6 +3,7 @@ require 'csv'
 require 'open-uri'
 require 'mime/types'
 
+require 'csvlint/types'
 require 'csvlint/error_message'
 require 'csvlint/error_collector'
 require 'csvlint/validate'

@@ -5,6 +5,7 @@ module Csvlint
   class Validator
     
     include Csvlint::ErrorCollector
+    include Csvlint::Types
     
     attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
     
@@ -178,21 +179,23 @@ module Csvlint
       row.each_with_index do |col, i|
         @formats[i] ||= []
         
-        case col
-          when /^[0-9]+$/
-            @formats[i] << :numeric
-          when /^[a-z0-9 *[\]\[!"#\$%&'()*+,.\/:;<=>?@\^_`{|}~-]]+$/i
-            @formats[i] << :alphanumeric
-          else
-            @formats[i] << :unknown
+        SIMPLE_FORMATS.each do |type, lambda|
+          begin
+            lambda.call(col, {})
+            @format = type
+          rescue
+            nil
           end
+        end
+        
+        @formats[i] << @format
       end
     end
     
     def check_consistency
       percentages = []
                 
-      formats = [:numeric, :alpha, :unknown, :alphanumeric]
+      formats = SIMPLE_FORMATS.map {|type, lambda| type }
             
       formats.each do |type, regex|
         @formats.count.times do |i|
@@ -202,7 +205,7 @@ module Csvlint
           end
         end
       end
-      
+            
       percentages.each_with_index do |col, i|
         build_warnings(:inconsistent_values, :schema, nil, i+1) if col.values.max < 0.9
       end

@@ -91,14 +91,18 @@ describe Csvlint::Validator do
   context "build_formats" do
   
     it "should return the format of each column correctly" do    
-      row = ["foo","1","$2345"]
+      row = ["foo","1","http://www.example.com", "2013-01-01T13:00:00Z", "2013-01-01", "13:00:00"]
     
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       validator.build_formats(row, 1)
       formats = validator.instance_variable_get("@formats") 
-      formats[0].first.should == :alphanumeric
-      formats[1].first.should == :numeric
-      formats[2].first.should == :alphanumeric
+            
+      formats[0].first.should == "http://www.w3.org/2001/XMLSchema#string"
+      formats[1].first.should == "http://www.w3.org/2001/XMLSchema#int"
+      formats[2].first.should == "http://www.w3.org/2001/XMLSchema#anyURI"
+      formats[3].first.should == "http://www.w3.org/2001/XMLSchema#dateTime"
+      formats[4].first.should == "http://www.w3.org/2001/XMLSchema#date"
+      formats[5].first.should == "http://www.w3.org/2001/XMLSchema#time"
     end
   
     it "should ignore blank arrays" do
@@ -126,8 +130,10 @@ describe Csvlint::Validator do
       formats = validator.instance_variable_get("@formats")
       
       formats.should == [
-        [:alphanumeric, :alphanumeric, :alphanumeric],
-      ]
+          ["http://www.w3.org/2001/XMLSchema#string",
+          "http://www.w3.org/2001/XMLSchema#string",
+          "http://www.w3.org/2001/XMLSchema#string"]
+        ]
     end
   
     it "should return formats correctly if a row is blank" do
@@ -145,9 +151,9 @@ describe Csvlint::Validator do
       formats = validator.instance_variable_get("@formats") 
             
       formats.should == [
-        [:alphanumeric],
-        [:numeric],
-        [:alphanumeric]
+        ["http://www.w3.org/2001/XMLSchema#string"],
+        ["http://www.w3.org/2001/XMLSchema#int"],
+        ["http://www.w3.org/2001/XMLSchema#string"]
       ]
     end
     
@@ -157,9 +163,9 @@ describe Csvlint::Validator do
     
     it "should return a warning if columns have inconsistent values" do
       formats = [
-          [:alphanumeric, :alphanumeric, :alphanumeric],
-          [:alphanumeric, :numeric, :alphanumeric],
-          [:numeric, :numeric, :numeric],
+          ["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#string"],
+          ["http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#int", "http://www.w3.org/2001/XMLSchema#string"],
+          ["http://www.w3.org/2001/XMLSchema#int", "http://www.w3.org/2001/XMLSchema#int", "http://www.w3.org/2001/XMLSchema#int"],
         ]
         
       validator = Csvlint::Validator.new("http://example.com/example.csv")
