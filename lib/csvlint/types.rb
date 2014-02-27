@@ -1,5 +1,8 @@
 require 'set'
 require 'date'
+require 'active_support/core_ext/date/conversions'
+require 'active_support/core_ext/time/conversions'
+require 'pry'
 
 module Csvlint
   
@@ -18,27 +21,31 @@ module Csvlint
         u = URI.parse value
         raise ArgumentError unless u.kind_of?(URI::HTTP) || u.kind_of?(URI::HTTPS)
         u
-      end,
-      'dateTime' => lambda do |value, constraints|
-        date_pattern = constraints["datePattern"] || "%Y-%m-%dT%H:%M:%SZ"
-        d = DateTime.strptime(value, date_pattern)
-        raise ArgumentError unless d.strftime(date_pattern) == value
-        d
-      end,
-      'date' => lambda do |value, constraints|
-        date_pattern = constraints["datePattern"] || "%Y-%m-%d"
-        d = Date.strptime(value, date_pattern)
-        raise ArgumentError unless d.strftime(date_pattern) == value
-        d
-      end,
-      'time' => lambda do |value, constraints|
-        date_pattern = constraints["datePattern"] || "%H:%M:%S"
-        d = DateTime.strptime(value, date_pattern)
-        raise ArgumentError unless d.strftime(date_pattern) == value
-        d
-      end,    
+      end
     }
     
+    def self.date_format(klass = DateTime, value, type)
+      date = klass.strptime(value, klass::DATE_FORMATS[type])
+      raise ArgumentError unless date.to_formatted_s(type) == value
+    end
+    
+    def self.included(base)
+      Time::DATE_FORMATS[:iso8601] = "%Y-%m-%dT%H:%M:%SZ"
+      Time::DATE_FORMATS[:hms] = "%H:%M:%S"
+      
+      Date::DATE_FORMATS.each do |type|
+        SIMPLE_FORMATS["date_#{type.first}"] = lambda do |value, constraints|
+          date_format(Date, value, type.first)
+        end
+      end
+    
+      Time::DATE_FORMATS.each do |type|
+        SIMPLE_FORMATS["dateTime_#{type.first}"] = lambda do |value, constraints|
+          date_format(Time, value, type.first)
+        end
+      end
+    end
+        
     TYPE_VALIDATIONS = {
         'http://www.w3.org/2001/XMLSchema#string'  => SIMPLE_FORMATS['string'],
         'http://www.w3.org/2001/XMLSchema#int'     => lambda { |value, constraints| Integer value },

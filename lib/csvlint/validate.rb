@@ -183,7 +183,7 @@ module Csvlint
           begin
             lambda.call(col, {})
             @format = type
-          rescue
+          rescue => e
             nil
           end
         end

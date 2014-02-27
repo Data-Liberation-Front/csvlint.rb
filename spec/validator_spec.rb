@@ -89,20 +89,24 @@ describe Csvlint::Validator do
   end
   
   context "build_formats" do
-  
-    it "should return the format of each column correctly" do    
-      row = ["foo","1","http://www.example.com", "2013-01-01T13:00:00Z", "2013-01-01", "13:00:00"]
     
-      validator = Csvlint::Validator.new("http://example.com/example.csv")
-      validator.build_formats(row, 1)
-      formats = validator.instance_variable_get("@formats") 
-            
-      formats[0].first.should == "string"
-      formats[1].first.should == "numeric"
-      formats[2].first.should == "uri"
-      formats[3].first.should == "dateTime"
-      formats[4].first.should == "date"
-      formats[5].first.should == "time"
+    {
+      "string" => "foo",
+      "numeric" => "1",
+      "uri" => "http://www.example.com",
+      "dateTime_iso8601" => "2013-01-01T13:00:00Z",
+      "date_db" => "2013-01-01",
+      "dateTime_hms" => "13:00:00"
+    }.each do |type, content|
+      it "should return the format of #{type} correctly" do
+        row = [content]
+        
+        validator = Csvlint::Validator.new("http://example.com/example.csv")
+        validator.build_formats(row, 1)
+        formats = validator.instance_variable_get("@formats")
+        
+        formats[0].first.should == type
+      end
     end
     
     it "treats floats and ints the same" do
