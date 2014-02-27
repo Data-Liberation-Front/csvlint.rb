@@ -89,16 +89,35 @@ describe Csvlint::Validator do
   end
   
   context "build_formats" do
-  
-    it "should return the format of each column correctly" do    
-      row = ["foo","1","$2345"]
     
+    {
+      "string" => "foo",
+      "numeric" => "1",
+      "uri" => "http://www.example.com",
+      "dateTime_iso8601" => "2013-01-01T13:00:00Z",
+      "date_db" => "2013-01-01",
+      "dateTime_hms" => "13:00:00"
+    }.each do |type, content|
+      it "should return the format of #{type} correctly" do
+        row = [content]
+        
+        validator = Csvlint::Validator.new("http://example.com/example.csv")
+        validator.build_formats(row, 1)
+        formats = validator.instance_variable_get("@formats")
+        
+        formats[0].first.should == type
+      end
+    end
+    
+    it "treats floats and ints the same" do
+      row = ["12", "3.1476"]
+      
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       validator.build_formats(row, 1)
-      formats = validator.instance_variable_get("@formats") 
-      formats[0].first.should == :alphanumeric
-      formats[1].first.should == :numeric
-      formats[2].first.should == :alphanumeric
+      formats = validator.instance_variable_get("@formats")
+      
+      formats[0].first.should == "numeric"
+      formats[1].first.should == "numeric"
     end
   
     it "should ignore blank arrays" do
@@ -126,8 +145,10 @@ describe Csvlint::Validator do
       formats = validator.instance_variable_get("@formats")
       
       formats.should == [
-        [:alphanumeric, :alphanumeric, :alphanumeric],
-      ]
+          ["string",
+          "string",
+          "string"]
+        ]
     end
   
     it "should return formats correctly if a row is blank" do
@@ -145,9 +166,9 @@ describe Csvlint::Validator do
       formats = validator.instance_variable_get("@formats") 
             
       formats.should == [
-        [:alphanumeric],
-        [:numeric],
-        [:alphanumeric]
+        ["string"],
+        ["numeric"],
+        ["string"]
       ]
     end
     
@@ -157,9 +178,9 @@ describe Csvlint::Validator do
     
     it "should return a warning if columns have inconsistent values" do
       formats = [
-          [:alphanumeric, :alphanumeric, :alphanumeric],
-          [:alphanumeric, :numeric, :alphanumeric],
-          [:numeric, :numeric, :numeric],
+          ["string", "string", "string"],
+          ["string", "numeric", "string"],
+          ["numeric", "numeric", "numeric"],
         ]
         
       validator = Csvlint::Validator.new("http://example.com/example.csv")
