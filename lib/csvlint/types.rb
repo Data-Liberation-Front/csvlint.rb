@@ -2,7 +2,6 @@ require 'set'
 require 'date'
 require 'active_support/core_ext/date/conversions'
 require 'active_support/core_ext/time/conversions'
-require 'pry'
 
 module Csvlint
   
