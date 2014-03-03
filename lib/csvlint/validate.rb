@@ -7,7 +7,7 @@ module Csvlint
     include Csvlint::ErrorCollector
     include Csvlint::Types
     
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data, :assumed_header
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
@@ -20,6 +20,11 @@ module Csvlint
       @formats = []
       @schema = schema
       
+      @assumed_header = true
+      if dialect && dialect["header"] != nil
+        @assumed_header = false
+      end
+      
       @dialect = dialect_defaults = {
         "header" => true,
         "delimiter" => ",",
@@ -28,8 +33,7 @@ module Csvlint
         "quoteChar" => '"'
       }.merge(dialect || {})
             
-      @csv_header = true
-      @csv_header = @dialect["header"] if @dialect["header"] != nil
+      @csv_header = @dialect["header"]
         
       @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source)
@@ -61,6 +65,7 @@ module Csvlint
         if @headers["content-type"] =~ /header=(present|absent)/
           @csv_header = true if $1 == "present"
           @csv_header = false if $1 == "absent"
+          @assumed_header = false
         end
         if @headers["content-type"] !~ /charset=/
           build_warnings(:no_encoding, :context) 
@@ -71,7 +76,7 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       end
-      build_errors(:no_header, :structure) unless @csv_header
+      build_info_messages(:assumed_header, :structure) if @assumed_header
     end
     
     def parse_csv(io)
@@ -138,9 +143,9 @@ module Csvlint
     def validate_header(header)
       names = Set.new
       header.each_with_index do |name,i|
-        build_errors(:empty_column_name, :schema, nil, i+1) if name == ""
+        build_warnings(:empty_column_name, :schema, nil, i+1) if name == ""
         if names.include?(name)
-          build_errors(:duplicate_column_name, :schema, nil, i+1)
+          build_warnings(:duplicate_column_name, :schema, nil, i+1)
         else
           names << name
         end
