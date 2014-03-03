@@ -20,6 +20,11 @@ module Csvlint
       @formats = []
       @schema = schema
       
+      @assumed_header = true
+      if dialect && dialect["header"] != nil
+        @assumed_header = false
+      end
+      
       @dialect = dialect_defaults = {
         "header" => true,
         "delimiter" => ",",
@@ -28,8 +33,7 @@ module Csvlint
         "quoteChar" => '"'
       }.merge(dialect || {})
             
-      @csv_header = true
-      @csv_header = @dialect["header"] if @dialect["header"] != nil
+      @csv_header = @dialect["header"]
         
       @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source)
@@ -61,8 +65,6 @@ module Csvlint
         if @headers["content-type"] =~ /header=(present|absent)/
           @csv_header = true if $1 == "present"
           @csv_header = false if $1 == "absent"
-        else
-          build_errors(:no_header, :structure)
         end
         if @headers["content-type"] !~ /charset=/
           build_warnings(:no_encoding, :context) 
@@ -73,7 +75,7 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       else
-        build_warnings(:no_header, :structure) unless @csv_header
+        build_info_messages(:assumed_header, :structure) if @assumed_header
       end
     end
     

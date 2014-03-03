@@ -67,7 +67,7 @@ describe Csvlint::Validator do
   end
   
   context "when validating headers" do
-    it "should error if column names aren't unique" do      
+    it "should warn if column names aren't unique" do      
       data = StringIO.new( "minimum, minimum" )
       validator = Csvlint::Validator.new(data)
       expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
@@ -76,7 +76,7 @@ describe Csvlint::Validator do
       expect( validator.warnings.first.category).to eql(:schema)
     end
 
-    it "should error if column names are blank" do
+    it "should warn if column names are blank" do
       data = StringIO.new( "minimum," )
       validator = Csvlint::Validator.new(data)
       
@@ -85,25 +85,25 @@ describe Csvlint::Validator do
       expect( validator.warnings.first.type).to eql(:empty_column_name)
       expect( validator.warnings.first.category).to eql(:schema)
     end
+    
+    it "should include info message about missing header when we have assumed a header" do
+      data = StringIO.new( "1,2,3\r\n" )
+      validator = Csvlint::Validator.new(data)
+      
+      expect( validator.valid? ).to eql(true)
+      expect( validator.info_messages.size ).to eql(1)
+      expect( validator.info_messages.first.type).to eql(:assumed_header)
+      expect( validator.info_messages.first.category).to eql(:structure)
+    end  
 
-    it "should give an error if there's no header indicator in Content-Type" do
-      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv; charset=utf-8"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-      validator = Csvlint::Validator.new("http://example.com/example.csv")
-      expect( validator.valid? ).to eql(false)      
-      expect( validator.errors.size ).to eql(1)
-      expect( validator.errors.first.type).to eql(:no_header)
-      expect( validator.errors.first.category).to eql(:structure)
-    end
-
-    it "should give an error if there's no Content-Type" do
-      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-      validator = Csvlint::Validator.new("http://example.com/example.csv")
-      expect( validator.valid? ).to eql(false)      
-      expect( validator.errors.size ).to eql(2)
-      expect( validator.errors.first.type).to eql(:no_header)
-      expect( validator.errors.first.category).to eql(:structure)
-    end
-        
+    it "should not include info message about missing header when we are told about the header" do
+      data = StringIO.new( "1,2,3\r\n" )
+      validator = Csvlint::Validator.new(data, "header"=>false)
+      
+      expect( validator.valid? ).to eql(true)
+      expect( validator.info_messages.size ).to eql(0)
+    end  
+                        
   end
   
   context "build_formats" do

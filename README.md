@@ -105,7 +105,6 @@ The following types of error can be reported:
 * `:unclosed_quote` -- unclosed quoted field
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
-* `:no_header` -- the CSV file doesn't include a header
 
 ## Warnings
 
@@ -125,6 +124,7 @@ The following types of warning can be reported:
 There are also information messages available:
 
 * `:nonrfc_line_breaks` -- uses non-CRLF line breaks, so doesn't conform to RFC4180.
+* `:assumed_header` -- the validator has assumed that a header is present
 
 ## Schema Validation
 
