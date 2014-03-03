@@ -106,8 +106,6 @@ The following types of error can be reported:
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
 * `:no_header` -- the CSV file doesn't include a header
-* `:empty_column_name` -- a column in the CSV header has an empty name
-* `:duplicate_column_name` -- a column in the CSV header has a duplicate name
 
 ## Warnings
 
@@ -119,6 +117,8 @@ The following types of warning can be reported:
 * `:excel` -- no `Content-Type` header and the file extension is `.xls`
 * `:check_options` -- CSV file appears to contain only a single column
 * `:inconsistent_values` -- inconsistent values in the same column. Reported if <90% of values seem to have same data type (either numeric or alphanumeric including punctuation)
+* `:empty_column_name` -- a column in the CSV header has an empty name
+* `:duplicate_column_name` -- a column in the CSV header has a duplicate name
 
 ## Information Messages
 

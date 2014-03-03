@@ -70,22 +70,40 @@ describe Csvlint::Validator do
     it "should error if column names aren't unique" do      
       data = StringIO.new( "minimum, minimum" )
       validator = Csvlint::Validator.new(data)
-      expect( validator.validate_header(["minimum", "minimum"]) ).to eql(false)
-      expect( validator.errors.size ).to eql(1)
-      expect( validator.errors.first.type).to eql(:duplicate_column_name)
-      expect( validator.errors.first.category).to eql(:schema)
+      expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
+      expect( validator.warnings.size ).to eql(1)
+      expect( validator.warnings.first.type).to eql(:duplicate_column_name)
+      expect( validator.warnings.first.category).to eql(:schema)
     end
 
     it "should error if column names are blank" do
       data = StringIO.new( "minimum," )
       validator = Csvlint::Validator.new(data)
       
-      expect( validator.validate_header(["minimum", ""]) ).to eql(false)
-      expect( validator.errors.size ).to eql(1)
-      expect( validator.errors.first.type).to eql(:empty_column_name)
-      expect( validator.errors.first.category).to eql(:schema)
+      expect( validator.validate_header(["minimum", ""]) ).to eql(true)
+      expect( validator.warnings.size ).to eql(1)
+      expect( validator.warnings.first.type).to eql(:empty_column_name)
+      expect( validator.warnings.first.category).to eql(:schema)
     end
 
+    it "should give an error if there's no header indicator in Content-Type" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv; charset=utf-8"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      expect( validator.valid? ).to eql(false)      
+      expect( validator.errors.size ).to eql(1)
+      expect( validator.errors.first.type).to eql(:no_header)
+      expect( validator.errors.first.category).to eql(:structure)
+    end
+
+    it "should give an error if there's no Content-Type" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      expect( validator.valid? ).to eql(false)      
+      expect( validator.errors.size ).to eql(2)
+      expect( validator.errors.first.type).to eql(:no_header)
+      expect( validator.errors.first.category).to eql(:structure)
+    end
+        
   end
   
   context "build_formats" do
@@ -212,7 +230,7 @@ describe Csvlint::Validator do
   
   it "should give access to the complete CSV data file" do
     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, 
-        :headers=>{"Content-Type" => "text/csv"}, 
+        :headers=>{"Content-Type" => "text/csv; header=present"}, 
         :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
     validator = Csvlint::Validator.new("http://example.com/example.csv")    
     expect( validator.valid? ).to eql(true)
@@ -225,7 +243,7 @@ describe Csvlint::Validator do
   it "should follow redirects to SSL" do
     stub_request(:get, "http://example.com/redirect").to_return(:status => 301, :headers=>{"Location" => "https://example.com/example.csv"})
     stub_request(:get, "https://example.com/example.csv").to_return(:status => 200, 
-        :headers=>{"Content-Type" => "text/csv"}, 
+        :headers=>{"Content-Type" => "text/csv; header=present"}, 
         :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
 
     validator = Csvlint::Validator.new("http://example.com/redirect")    

@@ -61,6 +61,8 @@ module Csvlint
         if @headers["content-type"] =~ /header=(present|absent)/
           @csv_header = true if $1 == "present"
           @csv_header = false if $1 == "absent"
+        else
+          build_errors(:no_header, :structure)
         end
         if @headers["content-type"] !~ /charset=/
           build_warnings(:no_encoding, :context) 
@@ -70,8 +72,9 @@ module Csvlint
         build_warnings(:no_content_type, :context) if @content_type == nil
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
+      else
+        build_warnings(:no_header, :structure) unless @csv_header
       end
-      build_errors(:no_header, :structure) unless @csv_header
     end
     
     def parse_csv(io)
@@ -138,9 +141,9 @@ module Csvlint
     def validate_header(header)
       names = Set.new
       header.each_with_index do |name,i|
-        build_errors(:empty_column_name, :schema, nil, i+1) if name == ""
+        build_warnings(:empty_column_name, :schema, nil, i+1) if name == ""
         if names.include?(name)
-          build_errors(:duplicate_column_name, :schema, nil, i+1)
+          build_warnings(:duplicate_column_name, :schema, nil, i+1)
         else
           names << name
         end
