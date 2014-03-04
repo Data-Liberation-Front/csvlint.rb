@@ -102,7 +102,34 @@ describe Csvlint::Validator do
       
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(0)
+    end
+    
+    it "should be an error if we have assumed a header, there is no dialect and there's no content-type" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      expect( validator.valid? ).to eql(false)   
     end  
+
+    it "should be an error if we have assumed a header, there is no dialect and content-type doesn't declare header" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      expect( validator.valid? ).to eql(false)   
+    end  
+        
+    it "should be valid if we have a dialect and the data is from the web" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      #header defaults to true in csv dialect, so this is valid
+      validator = Csvlint::Validator.new("http://example.com/example.csv", {})
+      expect( validator.valid? ).to eql(true)   
+
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))      
+      validator = Csvlint::Validator.new("http://example.com/example.csv", {"header"=>true})
+      expect( validator.valid? ).to eql(true) 
+      
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))      
+      validator = Csvlint::Validator.new("http://example.com/example.csv", {"header"=>false})
+      expect( validator.valid? ).to eql(true) 
+    end
                         
   end
   

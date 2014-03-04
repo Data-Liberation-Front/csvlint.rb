@@ -7,7 +7,7 @@ module Csvlint
     include Csvlint::ErrorCollector
     include Csvlint::Types
     
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data, :assumed_header
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
     
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
@@ -15,13 +15,15 @@ module Csvlint
       "Unclosed quoted field" => :unclosed_quote,
     }
        
-    def initialize(source, dialect = {}, schema = nil)      
+    def initialize(source, dialect = nil, schema = nil)      
       @source = source
       @formats = []
       @schema = schema
       
       @assumed_header = true
-      if dialect && dialect["header"] != nil
+      @supplied_dialect = dialect != nil
+      
+      if dialect
         @assumed_header = false
       end
       
@@ -75,6 +77,12 @@ module Csvlint
         build_warnings(:no_content_type, :context) if @content_type == nil
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
+        
+        #binding.pry
+        if @assumed_header && !@supplied_dialect && (@content_type == nil || @headers["content-type"] !~ /header=(present|absent)/ )
+          build_errors(:undeclared_header, :structure)
+        end
+        
       end
       build_info_messages(:assumed_header, :structure) if @assumed_header
     end
