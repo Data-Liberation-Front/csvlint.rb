@@ -48,6 +48,7 @@ module Csvlint
     TYPE_VALIDATIONS = {
         'http://www.w3.org/2001/XMLSchema#string'  => SIMPLE_FORMATS['string'],
         'http://www.w3.org/2001/XMLSchema#int'     => lambda { |value, constraints| Integer value },
+        'http://www.w3.org/2001/XMLSchema#integer' => lambda { |value, constraints| Integer value },
         'http://www.w3.org/2001/XMLSchema#float'   => lambda { |value, constraints| Float value },
         'http://www.w3.org/2001/XMLSchema#double'   => lambda { |value, constraints| Float value },
         'http://www.w3.org/2001/XMLSchema#anyURI'  => SIMPLE_FORMATS['uri'],

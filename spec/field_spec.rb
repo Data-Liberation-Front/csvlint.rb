@@ -78,6 +78,12 @@ describe Csvlint::Field do
       expect( field.validate_column("forty-two")).to be(false)
     end
 
+    it "validates integers" do
+      field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#integer" })
+      expect( field.validate_column("42")).to be(true)
+      expect( field.validate_column("forty-two")).to be(false)
+    end        
+
     it "validates floats" do
       field = Csvlint::Field.new("test", { "type" => "http://www.w3.org/2001/XMLSchema#float" })
       expect(field.validate_column("42.0")).to be(true)
