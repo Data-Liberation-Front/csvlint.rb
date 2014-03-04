@@ -173,7 +173,7 @@ Supported constraints:
 Supported data types (this is still a work in progress):
 
 * String -- `http://www.w3.org/2001/XMLSchema#string` (effectively a no-op)
-* Integer -- `http://www.w3.org/2001/XMLSchema#int`
+* Integer -- `http://www.w3.org/2001/XMLSchema#integer` or `http://www.w3.org/2001/XMLSchema#int`
 * Float -- `http://www.w3.org/2001/XMLSchema#float`
 * Double -- `http://www.w3.org/2001/XMLSchema#double`
 * URI -- `http://www.w3.org/2001/XMLSchema#anyURI`
