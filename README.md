@@ -105,6 +105,7 @@ The following types of error can be reported:
 * `:unclosed_quote` -- unclosed quoted field
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
+* `:undeclared_header` -- if there is no machine-readable description of whether a header is present (e.g. in a dialect or `Content-Type` header)
 
 ## Warnings
 
