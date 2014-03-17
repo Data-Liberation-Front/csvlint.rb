@@ -37,3 +37,5 @@ if validator.warnings.size > 0
     print_error(i, error, :yellow)
   end
 end
+
+exit 1 unless validator.valid?
