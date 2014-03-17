@@ -15,16 +15,24 @@ def print_error(index, error, color=:red)
 end
 
 if ARGV.length == 0
-  puts "Usage: csvlint <filename|url>"
-  exit 1
+  unless ARGF.eof?
+    source = StringIO.new(ARGF.read)
+  end
+else
+  source = ARGV[0]
+  unless source =~ /^http(s)?/
+    begin
+      source = File.new( source ) unless source =~ /^http(s)?/ 
+    rescue Errno::ENOENT
+      puts "File not found"
+      exit 1
+    end
+  end
 end
-
-source = ARGV[0]
-source = File.new( source ) unless source =~ /^http(s)?/
 
 validator = Csvlint::Validator.new( source )
 
-puts "#{ARGV[0]} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+puts "#{ARGV[0] || "CSV"} is #{validator.valid? ? "VALID".green : "INVALID".red}"
 
 if validator.errors.size > 0
   validator.errors.each_with_index do |error, i|
