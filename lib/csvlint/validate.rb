@@ -49,8 +49,11 @@ module Csvlint
       begin
         io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
-        columns = parse_csv(io)
-        build_warnings(:check_options, :structure) if columns == 1        
+        parse_csv(io)
+        unless @col_counts.inject(:+).nil?
+          build_warnings(:title_row, :structure) if @col_counts.first < (@col_counts.inject(:+) / @col_counts.count)
+        end
+        build_warnings(:check_options, :structure) if @expected_columns == 1        
         check_consistency      
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
@@ -78,7 +81,6 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
         
-        #binding.pry
         if @assumed_header && !@supplied_dialect && (@content_type == nil || @headers["content-type"] !~ /header=(present|absent)/ )
           build_errors(:undeclared_header, :structure)
         end
@@ -88,9 +90,10 @@ module Csvlint
     end
     
     def parse_csv(io)
-      expected_columns = 0
+      @expected_columns = 0
       current_line = 0
       reported_invalid_encoding = false
+      @col_counts = []
       
       @csv_options[:encoding] = @encoding  
   
@@ -111,10 +114,13 @@ module Csvlint
            wrapper.finished
            if row             
              if header? && current_line == 1
+               row = row.delete_if {|r| r.blank? }
                validate_header(row)
+               @col_counts << row.count
              else               
                build_formats(row, current_line)
-               expected_columns = row.count unless expected_columns != 0
+               @col_counts << row.delete_if {|r| r.blank? }.count
+               @expected_columns = row.count unless @expected_columns != 0
                
                build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
                
@@ -123,7 +129,7 @@ module Csvlint
                  @errors += @schema.errors
                  @warnings += @schema.warnings
                else
-                 build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != expected_columns
+                 build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != @expected_columns
                end
                
              end
@@ -145,7 +151,6 @@ module Csvlint
         build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
         reported_invalid_encoding = true
       end
-      return expected_columns        
     end          
     
     def validate_header(header)
