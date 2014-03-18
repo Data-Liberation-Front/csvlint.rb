@@ -119,6 +119,7 @@ The following types of warning can be reported:
 * `:inconsistent_values` -- inconsistent values in the same column. Reported if <90% of values seem to have same data type (either numeric or alphanumeric including punctuation)
 * `:empty_column_name` -- a column in the CSV header has an empty name
 * `:duplicate_column_name` -- a column in the CSV header has a duplicate name
+* `:title_row` -- if there appears to be a title field in the first row of the CSV
 
 ## Information Messages
 

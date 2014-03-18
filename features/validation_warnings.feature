@@ -65,3 +65,10 @@ Feature: Validation warnings
     When I ask if there are warnings
     Then there should be 1 warnings
     And that warning should have the type "no_encoding"
+
+  Scenario: Title rows
+    Given I have a CSV file called "title-row.csv"
+    And it is stored at the url "http://example.com/example1.csv"
+    And I ask if there are warnings
+    Then there should be 1 warnings
+    And that warning should have the type "title_row"
