@@ -114,12 +114,12 @@ module Csvlint
            wrapper.finished
            if row             
              if header? && current_line == 1
-               row = row.delete_if {|r| r.blank? }
+               row = row.reject {|r| r.blank? }
                validate_header(row)
                @col_counts << row.count
              else               
                build_formats(row, current_line)
-               @col_counts << row.delete_if {|r| r.blank? }.count
+               @col_counts << row.reject {|r| r.blank? }.count
                @expected_columns = row.count unless @expected_columns != 0
                
                build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
