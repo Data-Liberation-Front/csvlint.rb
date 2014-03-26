@@ -73,3 +73,18 @@ too"
     When I ask if the CSV is valid
     Then I should get the value of false
 
+    Scenario: Don't class blank values as inconsistencies
+     Given I have a CSV with the following content:
+     """
+"col1","col2","col3"
+"1","2","3"
+"4","5","6"
+"","7","8"
+"9","10","11"
+"","12","13"
+"","14","15"
+"16","17","18"
+     """
+     And it is stored at the url "http://example.com/example1.csv"
+     When I ask if there are warnings
+     Then there should be 0 warnings

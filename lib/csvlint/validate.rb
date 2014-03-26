@@ -195,6 +195,7 @@ module Csvlint
     
     def build_formats(row, line) 
       row.each_with_index do |col, i|
+        next if col.blank?
         @formats[i] ||= []
         
         SIMPLE_FORMATS.each do |type, lambda|
@@ -225,6 +226,7 @@ module Csvlint
       end
             
       percentages.each_with_index do |col, i|
+        next if col.values.blank?
         build_warnings(:inconsistent_values, :schema, nil, i+1) if col.values.max < 0.9
       end
     end
