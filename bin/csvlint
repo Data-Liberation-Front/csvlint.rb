@@ -14,17 +14,28 @@ def print_error(index, error, color=:red)
   puts "#{index+1}. #{error.type}. #{location}".colorize(color)
 end
 
-if ARGV.length == 0
-  puts "Usage: csvlint <filename|url>"
-  exit 1
+if ARGV.length == 0 && !$stdin.tty?
+  source = StringIO.new(ARGF.read)
+else
+  if ARGV[0]
+    source = ARGV[0]
+    unless source =~ /^http(s)?/
+      begin
+        source = File.new( source ) unless source =~ /^http(s)?/ 
+      rescue Errno::ENOENT
+        puts "File not found"
+        exit 1
+      end
+    end
+  else
+    puts "Usage: csvlint {file or URL} or {input} | csvlint"
+    exit 1
+  end
 end
-
-source = ARGV[0]
-source = File.new( source ) unless source =~ /^http(s)?/
 
 validator = Csvlint::Validator.new( source )
 
-puts "#{ARGV[0]} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+puts "#{ARGV[0] || "CSV"} is #{validator.valid? ? "VALID".green : "INVALID".red}"
 
 if validator.errors.size > 0
   validator.errors.each_with_index do |error, i|
@@ -37,3 +48,5 @@ if validator.warnings.size > 0
     print_error(i, error, :yellow)
   end
 end
+
+exit 1 unless validator.valid?
