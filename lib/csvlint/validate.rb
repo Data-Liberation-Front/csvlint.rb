@@ -20,13 +20,8 @@ module Csvlint
       @formats = []
       @schema = schema
       
-      @assumed_header = true
       @supplied_dialect = dialect != nil
-      
-      if dialect
-        @assumed_header = false
-      end
-      
+            
       @dialect = dialect_defaults = {
         "header" => true,
         "delimiter" => ",",
@@ -66,11 +61,12 @@ module Csvlint
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
       @headers = io.meta rescue nil    
+      assumed_header = !@supplied_dialect
       if @headers
         if @headers["content-type"] =~ /header=(present|absent)/
           @csv_header = true if $1 == "present"
           @csv_header = false if $1 == "absent"
-          @assumed_header = false
+          assumed_header = false
         end
         if @headers["content-type"] !~ /charset=/
           build_warnings(:no_encoding, :context) 
@@ -81,12 +77,12 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
         
-        if @assumed_header && !@supplied_dialect && (@content_type == nil || @headers["content-type"] !~ /header=(present|absent)/ )
+        if assumed_header && !@supplied_dialect && (@content_type == nil || @headers["content-type"] !~ /header=(present|absent)/ )
           build_errors(:undeclared_header, :structure)
         end
         
       end
-      build_info_messages(:assumed_header, :structure) if @assumed_header
+      build_info_messages(:assumed_header, :structure) if assumed_header
     end
     
     def parse_csv(io)
