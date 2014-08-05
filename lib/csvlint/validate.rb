@@ -61,11 +61,17 @@ module Csvlint
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
       @headers = io.meta rescue nil    
-      assumed_header = !@supplied_dialect
+      assumed_header = undeclared_header = !@supplied_dialect
       if @headers
+        if @headers["content-type"] =~ /text\/csv/
+          @csv_header = true
+          undeclared_header = false
+          assumed_header = true
+        end
         if @headers["content-type"] =~ /header=(present|absent)/
           @csv_header = true if $1 == "present"
           @csv_header = false if $1 == "absent"
+          undeclared_header = false
           assumed_header = false
         end
         if @headers["content-type"] !~ /charset=/
@@ -77,8 +83,9 @@ module Csvlint
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
         
-        if assumed_header && !@supplied_dialect && (@content_type == nil || @headers["content-type"] !~ /header=(present|absent)/ )
+        if undeclared_header
           build_errors(:undeclared_header, :structure)
+          assumed_header = false
         end
         
       end
