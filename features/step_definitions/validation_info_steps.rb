@@ -13,6 +13,6 @@ Then(/^there should be (\d+) info messages?$/) do |num|
   @info_messages.count.should == num.to_i
 end
 
-Then(/^that message should have the type "(.*?)"$/) do |msg_type|
-  @info_messages.first.type.should == msg_type.to_sym
+Then(/^one of the messages should have the type "(.*?)"$/) do |msg_type|
+  @info_messages.find{|x| x.type == msg_type.to_sym}.should be_present
 end
