@@ -157,7 +157,7 @@ An example schema file is:
 
 Parsing and validating with a schema:
 
-	schema = Schema.load_from_json_table(uri)
+	schema = Csvlint::Schema.load_from_json_table(uri)
 	validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, schema )
 
 Supported constraints:
