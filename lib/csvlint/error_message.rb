@@ -1,15 +1,14 @@
 module Csvlint
-
   class ErrorMessage
-  
     attr_reader :type, :category, :row, :column, :content, :constraints
-  
-    def initialize(params)
-      params.each do |key, value|
-        self.instance_variable_set("@#{key}".to_sym, value)
-      end
-    end
-  
-  end
 
+    def initialize(type, category, row, column, content, constraints)
+      @type = type
+      @category = category
+      @row = row
+      @column = column
+      @content = content
+      @constraints = constraints
+    end
+  end
 end
