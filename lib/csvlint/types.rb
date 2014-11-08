@@ -4,54 +4,79 @@ require 'active_support/core_ext/date/conversions'
 require 'active_support/core_ext/time/conversions'
 
 module Csvlint
-  
   module Types
-    
     SIMPLE_FORMATS = {
-      'string'  => lambda { |value, constraints| value },
-      'numeric'     => lambda do |value, constraints| 
-        begin
-          Integer value 
-        rescue ArgumentError
-          Float value
+      'string' => lambda { |value| true },
+      'numeric' => lambda { |value| value.strip[/\A[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?\z/] },
+      'uri' => lambda do |value|
+        if value.strip[/\Ahttps?:/]
+          u = URI.parse(value)
+          u.kind_of?(URI::HTTP) || u.kind_of?(URI::HTTPS)
         end
-      end,
-      'uri'  => lambda do |value, constraints|
-        u = URI.parse value
-        raise ArgumentError unless u.kind_of?(URI::HTTP) || u.kind_of?(URI::HTTPS)
-        u
       end
     }
-    
-    def self.date_format(klass = DateTime, value, type)
-      date = klass.strptime(value, klass::DATE_FORMATS[type])
-      raise ArgumentError unless date.to_formatted_s(type) == value
+
+    def self.date_format(klass, value, format, pattern)
+      if value[pattern]
+        klass.strptime(value, format)
+      end
     end
-    
+
     def self.included(base)
-      Time::DATE_FORMATS[:iso8601] = "%Y-%m-%dT%H:%M:%SZ"
-      Time::DATE_FORMATS[:hms] = "%H:%M:%S"
-      
-      Date::DATE_FORMATS.each do |type|
-        SIMPLE_FORMATS["date_#{type.first}"] = lambda do |value, constraints|
-          date_format(Date, value, type.first)
+      [
+        [ :db, "%Y-%m-%d",
+               /\A\d+-\d\d?-\d\d?/],
+        [ :number, "%Y%m%d",
+                   /\A\d{7,}/],
+        [ :short, "%e %b",
+                  /\A[ \d]?\d [A-Za-z]{3}/],
+        [ :rfc822, "%e %b %Y",
+                   /\A[ \d]?\d [A-Za-z]{3} \d+/],
+        [ :long, "%B %e, %Y",
+                 /\A[A-Za-z]{3,9} \d\d?, \d+/],
+      ].each do |type,format,pattern|
+        SIMPLE_FORMATS["date_#{type}"] = lambda do |value|
+          date_format(Date, value, format, pattern)
         end
       end
-    
-      Time::DATE_FORMATS.each do |type|
-        SIMPLE_FORMATS["dateTime_#{type.first}"] = lambda do |value, constraints|
-          date_format(Time, value, type.first)
+
+      # strptime doesn't support widths like %9N, unlike strftime.
+      # @see http://ruby-doc.org/stdlib-2.0/libdoc/date/rdoc/DateTime.html
+      [
+        [ :time,    "%H:%M",
+                    /\A[ \d]?\d:\d\d?/],
+        [ :hms,     "%H:%M:%S",
+                    /\A[ \d]?\d:\d\d?:\d\d?/],
+        [ :db,      "%Y-%m-%d %H:%M:%S",
+                    /\A\d+-\d\d?-\d\d? \d\d?:\d\d?:\d\d?/],
+        [ :iso8601, "%Y-%m-%dT%H:%M:%SZ",
+                    /\A\d+-\d\d?-\d\d?T\d\d?:\d\d?:\d\d?Z/],
+        [ :number,  "%Y%m%d%H%M%S",
+                    /\A\d{13,14}/],
+        [ :nsec,    "%Y%m%d%H%M%S%N",
+                    /\A\d{15,}/],
+        [ :short,   "%d %b %H:%M",
+                    /\A[ \d]?\d [A-Za-z]{3} \d\d?:\d\d?/],
+        [ :long,    "%B %d, %Y %H:%M",
+                    /\A[A-Za-z]{3,9} \d\d?, \d+ \d\d?:\d\d?/],
+      ].each do |type,format,pattern|
+        SIMPLE_FORMATS["dateTime_#{type}"] = lambda do |value|
+          date_format(Time, value, format, pattern)
         end
       end
     end
-        
+
     TYPE_VALIDATIONS = {
-        'http://www.w3.org/2001/XMLSchema#string'  => SIMPLE_FORMATS['string'],
+        'http://www.w3.org/2001/XMLSchema#string'  => lambda { |value, constraints| value },
         'http://www.w3.org/2001/XMLSchema#int'     => lambda { |value, constraints| Integer value },
         'http://www.w3.org/2001/XMLSchema#integer' => lambda { |value, constraints| Integer value },
         'http://www.w3.org/2001/XMLSchema#float'   => lambda { |value, constraints| Float value },
         'http://www.w3.org/2001/XMLSchema#double'   => lambda { |value, constraints| Float value },
-        'http://www.w3.org/2001/XMLSchema#anyURI'  => SIMPLE_FORMATS['uri'],
+        'http://www.w3.org/2001/XMLSchema#anyURI'  => lambda do |value, constraints|
+          u = URI.parse value
+          raise ArgumentError unless u.kind_of?(URI::HTTP) || u.kind_of?(URI::HTTPS)
+          u
+        end,
         'http://www.w3.org/2001/XMLSchema#boolean' => lambda do |value, constraints|
           return true if ['true', '1'].include? value
           return false if ['false', '0'].include? value
@@ -100,14 +125,13 @@ module Csvlint
           d = Date.strptime(value, date_pattern)
           raise ArgumentError unless d.strftime(date_pattern) == value
           d
-        end,     
+        end,
         'http://www.w3.org/2001/XMLSchema#gYearMonth' => lambda do |value, constraints|
           date_pattern = constraints["datePattern"] || "%Y-%m"
           d = Date.strptime(value, date_pattern)
           raise ArgumentError unless d.strftime(date_pattern) == value
           d
-        end 
+        end,
     }
   end
-
 end

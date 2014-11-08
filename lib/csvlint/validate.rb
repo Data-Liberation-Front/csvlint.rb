@@ -201,10 +201,10 @@ module Csvlint
         
         SIMPLE_FORMATS.each do |type, lambda|
           begin
-            lambda.call(col, {})
-            @format = type
-          rescue => e
-            nil
+            if lambda.call(col)
+              @format = type
+            end
+          rescue ArgumentError, URI::InvalidURIError
           end
         end
         
