@@ -8,13 +8,13 @@ module Csvlint
 
     def gets(*args)
       if args.size == 1 && args[0].is_a?(String)
-        s = super
+        s = __getobj__.gets(args[0])
         if s
           @line << s
         end
         s
       else
-        super
+        __getobj__.gets(*args)
       end
     end
   end
