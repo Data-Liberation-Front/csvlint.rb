@@ -215,13 +215,11 @@ module Csvlint
     def check_consistency
       percentages = []
                 
-      formats = SIMPLE_FORMATS.keys
-            
-      formats.each do |type, regex|
-        @formats.size.times do |i|
+      SIMPLE_FORMATS.keys.each do |type|
+        @formats.each_with_index do |format,i|
           percentages[i] ||= {}
-          unless @formats[i].nil?
-            percentages[i][type] = @formats[i].grep(/^#{type}$/).size.to_f / @formats[i].size.to_f
+          unless format.nil?
+            percentages[i][type] = format.count(type) / format.size.to_f
           end
         end
       end
