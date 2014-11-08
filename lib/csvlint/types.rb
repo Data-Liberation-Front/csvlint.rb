@@ -18,22 +18,22 @@ module Csvlint
 
     def self.date_format(klass, value, format, pattern)
       if value[pattern]
-        klass.strptime(value, format)
+        klass.strptime(value, format).strftime(format) == value
       end
     end
 
     def self.included(base)
       [
         [ :db, "%Y-%m-%d",
-               /\A\d+-\d\d?-\d\d?/],
+               /\A\d{4,}-\d\d-\d\d\z/],
         [ :number, "%Y%m%d",
-                   /\A\d{7,}/],
+                   /\A\d{8}\z/],
         [ :short, "%e %b",
-                  /\A[ \d]?\d [A-Za-z]{3}/],
+                  /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')})\z/],
         [ :rfc822, "%e %b %Y",
-                   /\A[ \d]?\d [A-Za-z]{3} \d+/],
+                   /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d{4,}\z/],
         [ :long, "%B %e, %Y",
-                 /\A[A-Za-z]{3,9} \d\d?, \d+/],
+                 /\A(?:#{Date::MONTHNAMES.join('|')}) [ \d]\d, \d{4,}\z/],
       ].each do |type,format,pattern|
         SIMPLE_FORMATS["date_#{type}"] = lambda do |value|
           date_format(Date, value, format, pattern)
@@ -44,21 +44,21 @@ module Csvlint
       # @see http://ruby-doc.org/stdlib-2.0/libdoc/date/rdoc/DateTime.html
       [
         [ :time,    "%H:%M",
-                    /\A[ \d]?\d:\d\d?/],
+                    /\A\d\d:\d\d\z/],
         [ :hms,     "%H:%M:%S",
-                    /\A[ \d]?\d:\d\d?:\d\d?/],
+                    /\A\d\d:\d\d:\d\d\z/],
         [ :db,      "%Y-%m-%d %H:%M:%S",
-                    /\A\d+-\d\d?-\d\d? \d\d?:\d\d?:\d\d?/],
+                    /\A\d{4,}-\d\d-\d\d \d\d:\d\d:\d\d\z/],
         [ :iso8601, "%Y-%m-%dT%H:%M:%SZ",
-                    /\A\d+-\d\d?-\d\d?T\d\d?:\d\d?:\d\d?Z/],
+                    /\A\d{4,}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/],
         [ :number,  "%Y%m%d%H%M%S",
-                    /\A\d{13,14}/],
+                    /\A\d{14}\z/],
         [ :nsec,    "%Y%m%d%H%M%S%N",
-                    /\A\d{15,}/],
+                    /\A\d{23}\z/],
         [ :short,   "%d %b %H:%M",
-                    /\A[ \d]?\d [A-Za-z]{3} \d\d?:\d\d?/],
+                    /\A\d\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d\d:\d\d\z/],
         [ :long,    "%B %d, %Y %H:%M",
-                    /\A[A-Za-z]{3,9} \d\d?, \d+ \d\d?:\d\d?/],
+                    /\A(?:#{Date::MONTHNAMES.join('|')}) \d\d, \d{4,} \d\d:\d\d\z/],
       ].each do |type,format,pattern|
         SIMPLE_FORMATS["dateTime_#{type}"] = lambda do |value|
           date_format(Time, value, format, pattern)
