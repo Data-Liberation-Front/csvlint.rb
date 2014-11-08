@@ -112,9 +112,9 @@ module Csvlint
         loop do
          current_line = current_line + 1
          begin
+           wrapper.reset_line
            row = csv.shift
            @data << row
-           wrapper.finished
            if row             
              if header? && current_line == 1
                row = row.reject {|r| r.blank? }
@@ -140,7 +140,6 @@ module Csvlint
              break
            end         
          rescue CSV::MalformedCSVError => e
-           wrapper.finished
            type = fetch_error(e)
            if type == :stray_quote && !wrapper.line.match(csv.row_sep)
              build_errors(:line_breaks, :structure)
@@ -150,7 +149,6 @@ module Csvlint
          end
       end
       rescue ArgumentError => ae
-        wrapper.finished           
         build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
         reported_invalid_encoding = true
       end
