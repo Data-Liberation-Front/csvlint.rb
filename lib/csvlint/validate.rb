@@ -116,7 +116,7 @@ module Csvlint
            row = csv.shift
            @data << row
            if row             
-             if header? && current_line == 1
+             if current_line == 1 && header?
                row = row.reject {|r| r.blank? }
                validate_header(row)
                @col_counts << row.size
@@ -173,7 +173,7 @@ module Csvlint
     end
     
     def header?
-      return @csv_header
+      @csv_header
     end
     
     def fetch_error(error)
