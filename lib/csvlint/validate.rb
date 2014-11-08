@@ -22,7 +22,7 @@ module Csvlint
       
       @supplied_dialect = dialect != nil
             
-      @dialect = dialect_defaults = {
+      @dialect = {
         "header" => true,
         "delimiter" => ",",
         "skipInitialSpace" => true,
