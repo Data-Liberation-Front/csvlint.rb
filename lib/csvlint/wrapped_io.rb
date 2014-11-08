@@ -6,7 +6,7 @@ module Csvlint
     end
   
     def gets(*args)
-      if args.count == 1 && args[0].is_a?(String)
+      if args.size == 1 && args[0].is_a?(String)
         delim = args[0]
         @line = "" if @new_line
         s = @io.gets(delim)
