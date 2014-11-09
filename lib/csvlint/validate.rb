@@ -45,8 +45,9 @@ module Csvlint
         io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
         parse_csv(io)
-        unless @col_counts.inject(:+).nil?
-          build_warnings(:title_row, :structure) if @col_counts.first < (@col_counts.inject(:+) / @col_counts.size)
+        sum = @col_counts.inject(:+)
+        unless sum.nil?
+          build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
         end
         build_warnings(:check_options, :structure) if @expected_columns == 1        
         check_consistency      
