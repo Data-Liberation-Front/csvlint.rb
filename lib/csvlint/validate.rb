@@ -27,11 +27,12 @@ module Csvlint
         "delimiter" => ",",
         "skipInitialSpace" => true,
         "lineTerminator" => :auto,
+        "limitLines" => 0,
         "quoteChar" => '"'
       }.merge(dialect || {})
             
       @csv_header = @dialect["header"]
-        
+      @limit_lines = @dialect["limitLines"] 
       @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source)
       reset
@@ -111,6 +112,9 @@ module Csvlint
         row = nil
         loop do
          current_line = current_line + 1
+         if @limit_lines > 0 && current_line >= @limit_lines 
+           break
+         end
          begin
            wrapper.reset_line
            row = csv.shift
