@@ -1,4 +1,3 @@
-require "csvlint/version"
 require 'csv'
 require 'open-uri'
 require 'mime/types'

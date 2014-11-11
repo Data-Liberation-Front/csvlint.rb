@@ -22,7 +22,7 @@ module Csvlint
       
       @supplied_dialect = dialect != nil
             
-      @dialect = dialect_defaults = {
+      @dialect = {
         "header" => true,
         "delimiter" => ",",
         "skipInitialSpace" => true,
@@ -45,8 +45,9 @@ module Csvlint
         io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
         parse_csv(io)
-        unless @col_counts.inject(:+).nil?
-          build_warnings(:title_row, :structure) if @col_counts.first < (@col_counts.inject(:+) / @col_counts.count)
+        sum = @col_counts.inject(:+)
+        unless sum.nil?
+          build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
         end
         build_warnings(:check_options, :structure) if @expected_columns == 1        
         check_consistency      
@@ -112,27 +113,27 @@ module Csvlint
         loop do
          current_line = current_line + 1
          begin
+           wrapper.reset_line
            row = csv.shift
            @data << row
-           wrapper.finished
            if row             
-             if header? && current_line == 1
+             if current_line == 1 && header?
                row = row.reject {|r| r.blank? }
                validate_header(row)
-               @col_counts << row.count
+               @col_counts << row.size
              else               
                build_formats(row, current_line)
-               @col_counts << row.reject {|r| r.blank? }.count
-               @expected_columns = row.count unless @expected_columns != 0
+               @col_counts << row.reject {|r| r.blank? }.size
+               @expected_columns = row.size unless @expected_columns != 0
                
-               build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.count == 0
+               build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.size == 0
                
                if @schema
                  @schema.validate_row(row, current_line)
                  @errors += @schema.errors
                  @warnings += @schema.warnings
                else
-                 build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.count != @expected_columns
+                 build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.size != @expected_columns
                end
                
              end
@@ -140,7 +141,6 @@ module Csvlint
              break
            end         
          rescue CSV::MalformedCSVError => e
-           wrapper.finished
            type = fetch_error(e)
            if type == :stray_quote && !wrapper.line.match(csv.row_sep)
              build_errors(:line_breaks, :structure)
@@ -150,7 +150,6 @@ module Csvlint
          end
       end
       rescue ArgumentError => ae
-        wrapper.finished           
         build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
         reported_invalid_encoding = true
       end
@@ -175,7 +174,7 @@ module Csvlint
     end
     
     def header?
-      return @csv_header
+      @csv_header
     end
     
     def fetch_error(error)
@@ -203,10 +202,10 @@ module Csvlint
         
         SIMPLE_FORMATS.each do |type, lambda|
           begin
-            lambda.call(col, {})
-            @format = type
-          rescue => e
-            nil
+            if lambda.call(col)
+              @format = type
+            end
+          rescue ArgumentError, URI::InvalidURIError
           end
         end
         
@@ -217,13 +216,11 @@ module Csvlint
     def check_consistency
       percentages = []
                 
-      formats = SIMPLE_FORMATS.map {|type, lambda| type }
-            
-      formats.each do |type, regex|
-        @formats.count.times do |i|
+      SIMPLE_FORMATS.keys.each do |type|
+        @formats.each_with_index do |format,i|
           percentages[i] ||= {}
-          unless @formats[i].nil?
-            percentages[i][type] = @formats[i].grep(/^#{type}$/).count.to_f / @formats[i].count.to_f
+          unless format.nil?
+            percentages[i][type] = format.count(type) / format.size.to_f
           end
         end
       end
