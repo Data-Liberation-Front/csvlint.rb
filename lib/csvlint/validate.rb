@@ -102,8 +102,7 @@ module Csvlint
       @csv_options[:encoding] = @encoding  
   
       begin
-        wrapper = WrappedIO.new( io )
-        csv = CSV.new( wrapper, @csv_options )
+        csv = FastCSV.new(io, @csv_options)
         @data = []
         @line_breaks = csv.row_sep
         if @line_breaks != "\r\n"
@@ -113,7 +112,6 @@ module Csvlint
         loop do
          current_line = current_line + 1
          begin
-           wrapper.reset_line
            row = csv.shift
            @data << row
            if row             
@@ -126,31 +124,31 @@ module Csvlint
                @col_counts << row.reject {|r| r.blank? }.size
                @expected_columns = row.size unless @expected_columns != 0
                
-               build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.size == 0
+               build_errors(:blank_rows, :structure, current_line, nil, csv.row) if row.reject{ |c| c.nil? || c.empty? }.size == 0
                
                if @schema
                  @schema.validate_row(row, current_line)
                  @errors += @schema.errors
                  @warnings += @schema.warnings
                else
-                 build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.size != @expected_columns
+                 build_errors(:ragged_rows, :structure, current_line, nil, csv.row) if !row.empty? && row.size != @expected_columns
                end
                
              end
            else             
              break
            end         
-         rescue CSV::MalformedCSVError => e
+         rescue FastCSV::MalformedCSVError => e
            type = fetch_error(e)
-           if type == :stray_quote && !wrapper.line.match(csv.row_sep)
+           if type == :stray_quote && !csv.row.match(@line_breaks)
              build_errors(:line_breaks, :structure)
            else
-             build_errors(type, :structure, current_line, nil, wrapper.line)
+             build_errors(type, :structure, current_line, nil, csv.row)
            end
          end
       end
-      rescue ArgumentError => ae
-        build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
+      rescue ArgumentError, FastCSV::MalformedCSVError => ae
+        build_errors(:invalid_encoding, :structure, current_line, csv && csv.row || "") unless reported_invalid_encoding
         reported_invalid_encoding = true
       end
     end          
