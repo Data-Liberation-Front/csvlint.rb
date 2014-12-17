@@ -1,5 +1,5 @@
 require 'coveralls'
-Coveralls.wear_merged!
+Coveralls.wear_merged!('test_frameworks')
 
 $:.unshift File.join( File.dirname(__FILE__), "..", "..", "lib")
 
