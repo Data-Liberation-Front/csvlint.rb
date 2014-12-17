@@ -61,13 +61,13 @@ best practices
 ## Controlling CSV Parsing
 
 The validator supports configuration of the [CSV Dialect](http://dataprotocols.org/csv-dialect/) used in a data file. This is specified by 
-passing an options hash to the constructor:
+passing a dialect hash to the constructor:
 
-    opts = {
+    dialect = {
     	"header" => true,
     	"delimiter" => ","
     }
-	validator = Csvlint::Validator.new( "http://example.org/data.csv", opts )
+	validator = Csvlint::Validator.new( "http://example.org/data.csv", dialect )
 
 The options should be a Hash that conforms to the [CSV Dialect](http://dataprotocols.org/csv-dialect/) JSON structure.
 
@@ -204,6 +204,19 @@ Schema validation provides some additional types of error and warning messages:
 * `:unique` (error) -- a column with a `unique` constraint contains non-unique values
 * `:below_minimum` (error) -- a column with a `minimum` constraint contains a value that is below the minimum
 * `:above_maximum` (error) -- a column with a `maximum` constraint contains a value that is above the maximum
+
+## Other validation options
+
+You can also provide an optional options hash as the fourth argument to Validator#new. Supported options are:
+
+* :limit_lines -- only check this number of lines of the CSV file. Good for a quick check on huge files.
+
+```
+options = {
+  limit_lines: 100
+}
+validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+```
 
 ## Contributing
 

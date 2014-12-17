@@ -3,8 +3,26 @@ rvm:
 notifications:
   irc:
     channels:
-      - "irc.freenode.net#theodi"
+    - irc.freenode.net#theodi
     template:
-      - "%{repository} %{branch} - %{message} %{build_url}"
+    - '%{repository} %{branch} - %{message} %{build_url}'
     on_success: change
     on_failure: always
+deploy:
+  provider: rubygems
+  api_key:
+    secure: fjnPS61/skQ1PsRJu1SYWIct0vjdkTyQhj0ria9zfcJfbWbfiHnpehVh1ege3sTUkDSTvoOFT35jzEeozvtKZOlAWMU5QbL8LTXu+JSp9olOdSuGeWRWVuQT3NLgRJW0+2c7N66piZvnRUUTyt2P8VIR8c/Ltuhc32bUGL7X6Gw=
+  gem: csvlint
+  on:
+    tags: true
+    repo: theodi/csvlint.rb
+    all_branches: true
+after_success:
+- export GEM_VERSION=`ruby -e "puts Gem::Specification.load(Dir['*.gemspec'].first).version.to_s"`
+- '[ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ] && curl
+  -v -X POST -d ''{"ref":"refs/tags/''$GEM_VERSION''","sha":"''$TRAVIS_COMMIT''"}''  --header
+  "Content-Type:application/json" -u $GITHUB_USER:$GITHUB_PASSWORD "https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs"'
+env:
+  global:
+  - secure: hM8Pv/EAZoB4fGGEUwKQQ/2+mgKbUac+PH2cwud25l2MJ64eoKEMZzfy4TF6+XMIzXhlWpsg4s51y6K3+W8pUyRAuwo2MsN5Iee7HnLz+LlYTiT0//iQdAmxQ0JlOyh8vd2SEFBcVfwpp/iZFIHAfbBO73ZDXhtGMEieMk025I0=
+  - secure: hsKbZ0kVKVU/e8oVCPJpRmBxbbieN2tVbyjdhJo/UYchcyLWeGAmAj/ApUDL4SyR0HZxpfi+SIsGFNRy5LnrFeCFgY9aZ6u9ma4n0Y2cTElMRt5kvI/c28FehsRjCzAe6W8dxwhJ8wSkvFDNpLml47/iy8bw4a7aUZDdq3OYXck=
