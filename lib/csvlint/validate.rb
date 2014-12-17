@@ -15,7 +15,7 @@ module Csvlint
       "Unclosed quoted field" => :unclosed_quote,
     }
        
-    def initialize(source, dialect = nil, schema = nil)      
+    def initialize(source, dialect = nil, schema = nil, options = {})      
       @source = source
       @formats = []
       @schema = schema
@@ -27,12 +27,11 @@ module Csvlint
         "delimiter" => ",",
         "skipInitialSpace" => true,
         "lineTerminator" => :auto,
-        "limitLines" => 0,
         "quoteChar" => '"'
       }.merge(dialect || {})
             
       @csv_header = @dialect["header"]
-      @limit_lines = @dialect["limitLines"] 
+      @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source)
       reset
@@ -113,7 +112,7 @@ module Csvlint
         row = nil
         loop do
          current_line = current_line + 1
-         if @limit_lines > 0 && current_line >= @limit_lines 
+         if @limit_lines && current_line > @limit_lines 
            break
          end
          begin

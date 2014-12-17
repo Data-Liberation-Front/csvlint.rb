@@ -290,6 +290,17 @@ describe Csvlint::Validator do
     expect( data[2] ).to eql ['3','2','1']
   end
   
+  it "should limit number of lines read" do
+    stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, 
+    :headers=>{"Content-Type" => "text/csv; header=present"}, 
+    :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+    validator = Csvlint::Validator.new("http://example.com/example.csv", nil, nil, limit_lines: 2)    
+    expect( validator.valid? ).to eql(true)
+    data = validator.data
+    expect( data.count ).to eql 2    
+    expect( data[0] ).to eql ['Foo','Bar','Baz']
+  end
+  
   it "should follow redirects to SSL" do
     stub_request(:get, "http://example.com/redirect").to_return(:status => 301, :headers=>{"Location" => "https://example.com/example.csv"})
     stub_request(:get, "https://example.com/example.csv").to_return(:status => 200, 
