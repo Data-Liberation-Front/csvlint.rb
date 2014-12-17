@@ -6,12 +6,12 @@ require 'tempfile'
 
 require 'active_support/core_ext/date/conversions'
 require 'active_support/core_ext/time/conversions'
+require 'fastcsv'
 require 'mime/types'
 require 'open_uri_redirections'
 
 require 'csvlint/error_message'
 require 'csvlint/error_collector'
 require 'csvlint/validate'
-require 'csvlint/wrapped_io'
 require 'csvlint/field'
 require 'csvlint/schema'
