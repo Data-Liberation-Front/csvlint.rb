@@ -29,7 +29,7 @@ Currently the gem supports retrieving a CSV accessible from a URL, File, or an I
 	require 'csvlint'
 	
 	validator = Csvlint::Validator.new( "http://example.org/data.csv" )
-	validator = Csvlint::Validator.new( File.new("/path/to/my/data.csv" )
+	validator = Csvlint::Validator.new( File.new("/path/to/my/data.csv" ))
 	validator = Csvlint::Validator.new( StringIO.new( my_data_in_a_string ) )
 
 When validating from a URL the range of errors and warnings is wider as the library will also check HTTP headers for 
