@@ -201,15 +201,7 @@ module Csvlint
         @formats[i] ||= Hash.new(0)
 
         format = if col.strip[FORMATS[:numeric]]
-          if col[FORMATS[:date_number]] && date_format?(Date, col, '%Y%m%d')
-            :date_number
-          elsif col[FORMATS[:dateTime_number]] && date_format?(Time, col, '%Y%m%d%H%M%S')
-            :dateTime_number
-          elsif col[FORMATS[:dateTime_nsec]] && date_format?(Time, col, '%Y%m%d%H%M%S%N')
-            :dateTime_nsec
-          else
-            :numeric
-          end
+          :numeric
         elsif uri?(col)
           :uri
         elsif col[FORMATS[:date_db]] && date_format?(Date, col, '%Y-%m-%d')
@@ -288,19 +280,16 @@ module Csvlint
       :string => nil,
       :numeric => /\A[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?\z/,
       :uri => /\Ahttps?:/,
-      :date_db => /\A\d{4,}-\d\d-\d\d\z/,
-      :date_long => /\A(?:#{Date::MONTHNAMES.join('|')}) [ \d]\d, \d{4,}\z/,
-      :date_number => /\A\d{8}\z/,
-      :date_rfc822 => /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d{4,}\z/,
-      :date_short => /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')})\z/,
-      :dateTime_db => /\A\d{4,}-\d\d-\d\d \d\d:\d\d:\d\d\z/,
-      :dateTime_hms => /\A\d\d:\d\d:\d\d\z/,
-      :dateTime_iso8601 => /\A\d{4,}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/,
-      :dateTime_long => /\A(?:#{Date::MONTHNAMES.join('|')}) \d\d, \d{4,} \d\d:\d\d\z/,
-      :dateTime_nsec => /\A\d{23}\z/,
-      :dateTime_number => /\A\d{14}\z/,
-      :dateTime_short => /\A\d\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d\d:\d\d\z/,
-      :dateTime_time => /\A\d\d:\d\d\z/,
+      :date_db => /\A\d{4,}-\d\d-\d\d\z/,                                               # "12345-01-01"
+      :date_long => /\A(?:#{Date::MONTHNAMES.join('|')}) [ \d]\d, \d{4,}\z/,            # "January  1, 12345"
+      :date_rfc822 => /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d{4,}\z/,      # " 1 Jan 12345"
+      :date_short => /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')})\z/,              # "1 Jan"
+      :dateTime_db => /\A\d{4,}-\d\d-\d\d \d\d:\d\d:\d\d\z/,                            # "12345-01-01 00:00:00"
+      :dateTime_hms => /\A\d\d:\d\d:\d\d\z/,                                            # "00:00:00"
+      :dateTime_iso8601 => /\A\d{4,}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/,                      # "12345-01-01T00:00:00Z"
+      :dateTime_long => /\A(?:#{Date::MONTHNAMES.join('|')}) \d\d, \d{4,} \d\d:\d\d\z/, # "January 01, 12345 00:00"
+      :dateTime_short => /\A\d\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d\d:\d\d\z/,   # "01 Jan 00:00"
+      :dateTime_time => /\A\d\d:\d\d\z/,                                                # "00:00"
     }.freeze
   end
 end
