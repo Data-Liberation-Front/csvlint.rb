@@ -1,11 +1,8 @@
-require "open_uri_redirections"
-
 module Csvlint
   
   class Validator
     
     include Csvlint::ErrorCollector
-    include Csvlint::Types
     
     attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
     
@@ -13,9 +10,10 @@ module Csvlint
       "Missing or stray quote" => :stray_quote,
       "Illegal quoting" => :whitespace,
       "Unclosed quoted field" => :unclosed_quote,
+      "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
        
-    def initialize(source, dialect = nil, schema = nil)      
+    def initialize(source, dialect = nil, schema = nil, options = {})      
       @source = source
       @formats = []
       @schema = schema
@@ -31,7 +29,7 @@ module Csvlint
       }.merge(dialect || {})
             
       @csv_header = @dialect["header"]
-        
+      @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source)
       reset
@@ -110,7 +108,10 @@ module Csvlint
         end
         row = nil
         loop do
-         current_line = current_line + 1
+         current_line += 1
+         if @limit_lines && current_line > @limit_lines 
+           break
+         end
          begin
            row = csv.shift
            @data << row
@@ -120,7 +121,7 @@ module Csvlint
                validate_header(row)
                @col_counts << row.size
              else               
-               build_formats(row, current_line)
+               build_formats(row)
                @col_counts << row.reject {|r| r.blank? }.size
                @expected_columns = row.size unless @expected_columns != 0
                
@@ -176,7 +177,7 @@ module Csvlint
     end
     
     def fetch_error(error)
-      e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.?$/i)
+      e = error.message.match(/^(.+?)(?: [io]n)? \(?line \d+\)?\.?$/i)
       message = e[1] rescue nil
       ERROR_MATCHERS.fetch(message, :unknown_error)
     end
@@ -193,39 +194,59 @@ module Csvlint
         }
     end
     
-    def build_formats(row, line) 
+    def build_formats(row) 
       row.each_with_index do |col, i|
         next if col.blank?
-        @formats[i] ||= []
-        
-        SIMPLE_FORMATS.each do |type, lambda|
-          begin
-            if lambda.call(col)
-              @format = type
-            end
-          rescue ArgumentError, URI::InvalidURIError
+        @formats[i] ||= Hash.new(0)
+
+        format = if col.strip[FORMATS[:numeric]]
+          if col[FORMATS[:date_number]] && date_format?(Date, col, '%Y%m%d')
+            :date_number
+          elsif col[FORMATS[:dateTime_number]] && date_format?(Time, col, '%Y%m%d%H%M%S')
+            :dateTime_number
+          elsif col[FORMATS[:dateTime_nsec]] && date_format?(Time, col, '%Y%m%d%H%M%S%N')
+            :dateTime_nsec
+          else
+            :numeric
           end
+        elsif uri?(col)
+          :uri
+        elsif col[FORMATS[:date_db]] && date_format?(Date, col, '%Y-%m-%d')
+          :date_db
+        elsif col[FORMATS[:date_short]] && date_format?(Date, col, '%e %b')
+          :date_short
+        elsif col[FORMATS[:date_rfc822]] && date_format?(Date, col, '%e %b %Y')
+          :date_rfc822
+        elsif col[FORMATS[:date_long]] && date_format?(Date, col, '%B %e, %Y')
+          :date_long
+        elsif col[FORMATS[:dateTime_time]] && date_format?(Time, col, '%H:%M')
+          :dateTime_time
+        elsif col[FORMATS[:dateTime_hms]] && date_format?(Time, col, '%H:%M:%S')
+          :dateTime_hms
+        elsif col[FORMATS[:dateTime_db]] && date_format?(Time, col, '%Y-%m-%d %H:%M:%S')
+          :dateTime_db
+        elsif col[FORMATS[:dateTime_iso8601]] && date_format?(Time, col, '%Y-%m-%dT%H:%M:%SZ')
+          :dateTime_iso8601
+        elsif col[FORMATS[:dateTime_short]] && date_format?(Time, col, '%d %b %H:%M')
+          :dateTime_short
+        elsif col[FORMATS[:dateTime_long]] && date_format?(Time, col, '%B %d, %Y %H:%M')
+          :dateTime_long
+        else
+          :string
         end
         
-        @formats[i] << @format
+        @formats[i][format] += 1
       end
     end
     
     def check_consistency
-      percentages = []
-                
-      SIMPLE_FORMATS.keys.each do |type|
-        @formats.each_with_index do |format,i|
-          percentages[i] ||= {}
-          unless format.nil?
-            percentages[i][type] = format.count(type) / format.size.to_f
+      @formats.each_with_index do |format,i|
+        if format
+          total = format.values.reduce(:+).to_f
+          if format.none?{|_,count| count / total >= 0.9}
+            build_warnings(:inconsistent_values, :schema, nil, i + 1)
           end
         end
-      end
-            
-      percentages.each_with_index do |col, i|
-        next if col.values.blank?
-        build_warnings(:inconsistent_values, :schema, nil, i+1) if col.values.max < 0.9
       end
     end
     
@@ -246,6 +267,39 @@ module Csvlint
         File.extname(parsed.path)
       end
     end
-    
+
+    def uri?(value)
+      if value.strip[FORMATS[:uri]]
+        uri = URI.parse(value)
+        uri.kind_of?(URI::HTTP) || uri.kind_of?(URI::HTTPS)
+      end
+    rescue URI::InvalidURIError
+      false
+    end
+
+    def date_format?(klass, value, format)
+      klass.strptime(value, format).strftime(format) == value
+    rescue ArgumentError # invalid date
+      false
+    end
+
+    FORMATS = {
+      :string => nil,
+      :numeric => /\A[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?\z/,
+      :uri => /\Ahttps?:/,
+      :date_db => /\A\d{4,}-\d\d-\d\d\z/,
+      :date_long => /\A(?:#{Date::MONTHNAMES.join('|')}) [ \d]\d, \d{4,}\z/,
+      :date_number => /\A\d{8}\z/,
+      :date_rfc822 => /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d{4,}\z/,
+      :date_short => /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')})\z/,
+      :dateTime_db => /\A\d{4,}-\d\d-\d\d \d\d:\d\d:\d\d\z/,
+      :dateTime_hms => /\A\d\d:\d\d:\d\d\z/,
+      :dateTime_iso8601 => /\A\d{4,}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/,
+      :dateTime_long => /\A(?:#{Date::MONTHNAMES.join('|')}) \d\d, \d{4,} \d\d:\d\d\z/,
+      :dateTime_nsec => /\A\d{23}\z/,
+      :dateTime_number => /\A\d{14}\z/,
+      :dateTime_short => /\A\d\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d\d:\d\d\z/,
+      :dateTime_time => /\A\d\d:\d\d\z/,
+    }.freeze
   end
 end

@@ -1,16 +1,11 @@
+require 'coveralls'
+Coveralls.wear_merged!('test_frameworks')
+
 $:.unshift File.join( File.dirname(__FILE__), "..", "..", "lib")
 
-require 'simplecov'
-require 'simplecov-rcov'
 require 'rspec/expectations'
 require 'csvlint'
-require 'coveralls'
 require 'pry'
-
-Coveralls.wear_merged!
-
-SimpleCov.formatter = SimpleCov::Formatter::RcovFormatter
-SimpleCov.start
 
 require 'spork'
 
