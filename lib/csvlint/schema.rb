@@ -1,5 +1,3 @@
-require "set"
-
 module Csvlint
   
   class Schema

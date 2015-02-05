@@ -159,21 +159,21 @@ describe Csvlint::Validator do
   context "build_formats" do
     
     {
-      "string" => "foo",
-      "numeric" => "1",
-      "uri" => "http://www.example.com",
-      "dateTime_iso8601" => "2013-01-01T13:00:00Z",
-      "date_db" => "2013-01-01",
-      "dateTime_hms" => "13:00:00"
+      :string => "foo",
+      :numeric => "1",
+      :uri => "http://www.example.com",
+      :dateTime_iso8601 => "2013-01-01T13:00:00Z",
+      :date_db => "2013-01-01",
+      :dateTime_hms => "13:00:00"
     }.each do |type, content|
       it "should return the format of #{type} correctly" do
         row = [content]
         
         validator = Csvlint::Validator.new("http://example.com/example.csv")
-        validator.build_formats(row, 1)
+        validator.build_formats(row)
         formats = validator.instance_variable_get("@formats")
         
-        formats[0].first.should == type
+        formats[0].keys.first.should == type
       end
     end
     
@@ -181,18 +181,18 @@ describe Csvlint::Validator do
       row = ["12", "3.1476"]
       
       validator = Csvlint::Validator.new("http://example.com/example.csv")
-      validator.build_formats(row, 1)
+      validator.build_formats(row)
       formats = validator.instance_variable_get("@formats")
       
-      formats[0].first.should == "numeric"
-      formats[1].first.should == "numeric"
+      formats[0].keys.first.should == :numeric
+      formats[1].keys.first.should == :numeric
     end
   
     it "should ignore blank arrays" do
       row = []
     
       validator = Csvlint::Validator.new("http://example.com/example.csv")
-      validator.build_formats(row, 1)
+      validator.build_formats(row)
       formats = validator.instance_variable_get("@formats") 
       formats.should == []
     end
@@ -207,16 +207,12 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       
       rows.each_with_index do |row, i|
-        validator.build_formats(row, i)
+        validator.build_formats(row)
       end
       
       formats = validator.instance_variable_get("@formats")
       
-      formats.should == [
-          ["string",
-          "string",
-          "string"]
-        ]
+      formats.should == [{:string => 3}]
     end
   
     it "should return formats correctly if a row is blank" do
@@ -228,15 +224,15 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       
       rows.each_with_index do |row, i|
-        validator.build_formats(row, i)
+        validator.build_formats(row)
       end
       
       formats = validator.instance_variable_get("@formats") 
             
       formats.should == [
-        ["string"],
-        ["numeric"],
-        ["string"]
+        {:string => 1},
+        {:numeric => 1},
+        {:string => 1},
       ]
     end
     
@@ -246,9 +242,9 @@ describe Csvlint::Validator do
     
     it "should return a warning if columns have inconsistent values" do
       formats = [
-          ["string", "string", "string"],
-          ["string", "numeric", "string"],
-          ["numeric", "numeric", "numeric"],
+          {:string => 3},
+          {:string => 2, :numeric => 1},
+          {:numeric => 3},
         ]
         
       validator = Csvlint::Validator.new("http://example.com/example.csv")
@@ -288,6 +284,17 @@ describe Csvlint::Validator do
     expect( data.count ).to eql 4
     expect( data[0] ).to eql ['Foo','Bar','Baz']
     expect( data[2] ).to eql ['3','2','1']
+  end
+  
+  it "should limit number of lines read" do
+    stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, 
+    :headers=>{"Content-Type" => "text/csv; header=present"}, 
+    :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+    validator = Csvlint::Validator.new("http://example.com/example.csv", nil, nil, limit_lines: 2)    
+    expect( validator.valid? ).to eql(true)
+    data = validator.data
+    expect( data.count ).to eql 2    
+    expect( data[0] ).to eql ['Foo','Bar','Baz']
   end
   
   it "should follow redirects to SSL" do
