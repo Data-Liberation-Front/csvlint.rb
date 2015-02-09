@@ -118,12 +118,12 @@ module Csvlint
            @data << row
            if row             
              if current_line == 1 && header?
-               row = row.reject {|r| r.blank? }
+               row = row.reject{|col| col.nil? || col.empty?}
                validate_header(row)
                @col_counts << row.size
              else               
                build_formats(row)
-               @col_counts << row.reject {|r| r.blank? }.size
+               @col_counts << row.reject{|col| col.nil? || col.empty?}.size
                @expected_columns = row.size unless @expected_columns != 0
                
                build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.size == 0
@@ -197,7 +197,7 @@ module Csvlint
     
     def build_formats(row) 
       row.each_with_index do |col, i|
-        next if col.blank?
+        next if col.nil? || col.empty?
         @formats[i] ||= Hash.new(0)
 
         format = if col.strip[FORMATS[:numeric]]
