@@ -10,6 +10,7 @@ module Csvlint
       "Missing or stray quote" => :stray_quote,
       "Illegal quoting" => :whitespace,
       "Unclosed quoted field" => :unclosed_quote,
+      "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
        
     def initialize(source, dialect = nil, schema = nil, options = {})      
@@ -178,7 +179,7 @@ module Csvlint
     end
     
     def fetch_error(error)
-      e = error.message.match(/^([a-z ]+) (i|o)n line ([0-9]+)\.?$/i)
+      e = error.message.match(/^(.+?)(?: [io]n)? \(?line \d+\)?\.?$/i)
       message = e[1] rescue nil
       ERROR_MATCHERS.fetch(message, :unknown_error)
     end
