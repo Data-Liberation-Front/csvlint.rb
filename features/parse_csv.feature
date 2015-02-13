@@ -1,6 +1,6 @@
 Feature: Parse CSV
-  
-  Scenario: Sucessfully parse a valid CSV
+
+  Scenario: Successfully parse a valid CSV
     Given I have a CSV with the following content:
     """
 "Foo","Bar","Baz"
@@ -10,12 +10,12 @@ Feature: Parse CSV
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if the CSV is valid
     Then I should get the value of true
-    
+
    Scenario: Successfully parse a CSV with newlines in quoted fields
     Given I have a CSV with the following content:
     """
 "a","b","c"
-"d","e","this is 
+"d","e","this is
 valid"
 "a","b","c"
 """
@@ -27,14 +27,14 @@ valid"
     Given I have a CSV with the following content:
     """
 "a","b","c"
-"d","this is 
-valid","as is this 
+"d","this is
+valid","as is this
 too"
 """
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if the CSV is valid
     Then I should get the value of true
-        
+
   Scenario: Successfully report an invalid CSV
     Given I have a CSV with the following content:
     """
@@ -43,7 +43,7 @@ too"
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if the CSV is valid
     Then I should get the value of false
-    
+
    Scenario: Successfully report a CSV with incorrect quoting
     Given I have a CSV with the following content:
     """
@@ -51,8 +51,8 @@ too"
     """
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if the CSV is valid
-    Then I should get the value of false      
-    
+    Then I should get the value of false
+
    Scenario: Successfully report a CSV with incorrect whitespace
     Given I have a CSV with the following content:
     """
@@ -60,8 +60,8 @@ too"
     """
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if the CSV is valid
-    Then I should get the value of false     
-    
+    Then I should get the value of false
+
    Scenario: Successfully report a CSV with ragged rows
     Given I have a CSV with the following content:
     """
