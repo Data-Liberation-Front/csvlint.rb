@@ -3,15 +3,57 @@ $:.unshift File.join( File.dirname(__FILE__), "..", "lib")
 
 require 'csvlint'
 require 'colorize'
+require 'json'
+require 'optparse'
+require 'pp'
 
-def print_error(index, error, color=:red)
+options = {}
+opts = OptionParser.new
+
+opts.banner = "Usage: csvlint [options] [file]"
+
+opts.on("-d", "--dump-errors", "Pretty print error and warning objects.") do |d|
+  options[:dump] = d
+end
+
+opts.on("-s", "--schema-file FILENAME", "Schema file") do |s|
+  options[:schema_file] = s
+end
+q
+opts.on_tail("-h", "--help",
+             "Show this message") do
+  puts opts
+  exit
+end
+
+begin
+  opts.parse!
+rescue OptionParser::InvalidOption => e
+  puts e
+  puts opts
+  exit(1)
+end
+
+def print_error(index, error, dump, color)
+
   location = ""
   location += error.row.to_s if error.row
   location += "#{error.row ? "," : ""}#{error.column.to_s}" if error.column
   if error.row || error.column
     location = "#{error.row ? "Row" : "Column"}: #{location}"
   end
-  puts "#{index+1}. #{error.type}. #{location}".colorize(color)
+  output_string = "#{index+1}. #{error.type}. #{location}"
+
+  if $stdout.tty?
+    puts output_string.colorize(color)
+  else
+    puts output_string
+  end
+
+  if dump
+    pp error
+  end
+
 end
 
 if ARGV.length == 0 && !$stdin.tty?
@@ -23,29 +65,45 @@ else
       begin
         source = File.new( source ) unless source =~ /^http(s)?/ 
       rescue Errno::ENOENT
-        puts "File not found"
+        puts "#{source} not found"
         exit 1
       end
     end
   else
-    puts "Usage: csvlint {file or URL} or {input} | csvlint"
+    puts "No CSV data to validate."
+    puts opts
     exit 1
   end
 end
 
-validator = Csvlint::Validator.new( source )
+schema = nil
+if options[:schema_file]
+  begin
+    schemafile = File.read( options[:schema_file] )
+  rescue Errno::ENOENT
+    puts "#{options[:schema_file]} not found"
+    exit 1
+  end
+  schema = Csvlint::Schema.from_json_table(nil, JSON.parse(schemafile))
+end
 
-puts "#{ARGV[0] || "CSV"} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+validator = Csvlint::Validator.new( source, nil, schema )
+
+if $stdout.tty?
+  puts "#{ARGV[0] || "CSV"} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+else
+  puts "#{ARGV[0] || "CSV"} is #{validator.valid? ? "VALID" : "INVALID"}"
+end
 
 if validator.errors.size > 0
   validator.errors.each_with_index do |error, i|
-    print_error(i, error)
+    print_error(i, error, options[:dump], :red)
   end
 end
 
 if validator.warnings.size > 0
   validator.warnings.each_with_index do |error, i|
-    print_error(i, error, :yellow)
+    print_error(i, error, options[:dump], :yellow)
   end
 end
 
