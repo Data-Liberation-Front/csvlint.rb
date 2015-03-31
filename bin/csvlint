@@ -19,7 +19,7 @@ end
 opts.on("-s", "--schema-file FILENAME", "Schema file") do |s|
   options[:schema_file] = s
 end
-q
+
 opts.on_tail("-h", "--help",
              "Show this message") do
   puts opts
