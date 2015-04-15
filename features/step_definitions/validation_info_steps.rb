@@ -10,9 +10,9 @@ Given(/^I ask if there are info messages$/) do
 end
 
 Then(/^there should be (\d+) info messages?$/) do |num|
-  @info_messages.count.should == num.to_i
+  expect( @info_messages.count ).to eq( num.to_i )
 end
 
 Then(/^one of the messages should have the type "(.*?)"$/) do |msg_type|
-  @info_messages.find{|x| x.type == msg_type.to_sym}.should be_present
+  expect( @info_messages.find{|x| x.type == msg_type.to_sym} ).to be_present
 end
