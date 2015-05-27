@@ -118,12 +118,12 @@ module Csvlint
            @data << row
            if row
              if current_line == 1 && header?
-               row = row.reject {|r| r.blank? }
+               row = row.reject(&:blank?)
                validate_header(row)
                @col_counts << row.size
              else
                build_formats(row)
-               @col_counts << row.reject {|r| r.blank? }.size
+               @col_counts << row.reject(&:blank?).size
                @expected_columns = row.size unless @expected_columns != 0
 
                unless @csv_options[:skip_blanks]
