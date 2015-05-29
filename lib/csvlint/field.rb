@@ -40,9 +40,11 @@ module Csvlint
       end
 
       def validate_values(value, row, column)
+        return if constraints["required"] == true && (value.nil? || value.length == 0)
+
         if constraints["pattern"]
           build_errors(:pattern, :schema, row, column, value,
-           { "pattern" => constraints["pattern"] } ) if !value.blank? && !value.match( constraints["pattern"] )
+           { "pattern" => constraints["pattern"] } ) unless value.match( constraints["pattern"] )
         end
         if constraints["unique"] == true
           if @uniques.include? value
