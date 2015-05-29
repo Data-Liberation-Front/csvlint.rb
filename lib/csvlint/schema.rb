@@ -21,7 +21,7 @@ module Csvlint
         field = fields.find { |field| field.name == name }
         if field
           fields_by_index[i] = field
-          build_warnings(:different_index_header, :schema, nil, i+1, name) if fields[i].name != name
+          build_warnings(:different_index_header, :schema, nil, i+1, name) if fields[i].try(:name) != name
         else
           build_warnings(:extra_header, :schema, nil, i+1, name)
         end
