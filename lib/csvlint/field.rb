@@ -1,10 +1,10 @@
 module Csvlint
-  
+
   class Field
     include Csvlint::ErrorCollector
 
     attr_reader :name, :constraints, :title, :description
-      
+
     def initialize(name, constraints={}, title=nil, description=nil)
       @name = name
       @constraints = constraints || {}
@@ -13,7 +13,7 @@ module Csvlint
       @description = description
       reset
     end
-    
+
     def validate_column(value, row=nil, column=nil)
       reset
       validate_length(value, row, column)
@@ -26,11 +26,11 @@ module Csvlint
     private
       def validate_length(value, row, column)
         if constraints["required"] == true
-          build_errors(:missing_value, :schema, row, column, value, 
+          build_errors(:missing_value, :schema, row, column, value,
             { "required" => true }) if value.nil? || value.length == 0
         end
         if constraints["minLength"]
-          build_errors(:min_length, :schema, row, column, value, 
+          build_errors(:min_length, :schema, row, column, value,
             { "minLength" => constraints["minLength"] }) if value.nil? || value.length < constraints["minLength"]
         end
         if constraints["maxLength"]
@@ -38,11 +38,11 @@ module Csvlint
              { "maxLength" => constraints["maxLength"] } ) if !value.nil? && value.length > constraints["maxLength"]
         end
       end
-      
+
       def validate_values(value, row, column)
         if constraints["pattern"]
-          build_errors(:pattern, :schema, row, column, value, 
-           { "pattern" => constraints["pattern"] } ) if !value.nil? && !value.match( constraints["pattern"] )
+          build_errors(:pattern, :schema, row, column, value,
+           { "pattern" => constraints["pattern"] } ) if !value.blank? && !value.match( constraints["pattern"] )
         end
         if constraints["unique"] == true
           if @uniques.include? value
@@ -52,7 +52,7 @@ module Csvlint
           end
         end
       end
-      
+
       def validate_type(value, row, column)
         if constraints["type"] && value != ""
           parsed = convert_to_type(value)
@@ -66,21 +66,21 @@ module Csvlint
         end
         return nil
       end
-      
+
       def validate_range(value, row, column)
         #TODO: we're ignoring issues with converting ranges to actual types, maybe we
         #should generate a warning? The schema is invalid
         if constraints["minimum"]
           minimumValue = convert_to_type( constraints["minimum"] )
           if minimumValue
-            build_errors(:below_minimum, :schema, row, column, value, 
+            build_errors(:below_minimum, :schema, row, column, value,
               { "minimum" => constraints["minimum"] }) unless value >= minimumValue
           end
         end
         if constraints["maximum"]
           maximumValue = convert_to_type( constraints["maximum"] )
           if maximumValue
-            build_errors(:above_maximum, :schema, row, column, value, 
+            build_errors(:above_maximum, :schema, row, column, value,
             { "maximum" => constraints["maximum"] }) unless value <= maximumValue
           end
         end
@@ -96,7 +96,7 @@ module Csvlint
           end
         end
         return parsed
-      end            
+      end
 
       TYPE_VALIDATIONS = {
           'http://www.w3.org/2001/XMLSchema#string'  => lambda { |value, constraints| value },
