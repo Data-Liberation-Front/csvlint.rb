@@ -24,6 +24,29 @@ Or install it yourself as:
 
 ## Usage
 
+You can either use this gem within your own Ruby code, or as a standolone command line application
+
+## On the command line
+
+After installing the gem, you can validate a CSV on the command line like so:
+
+	csvlint myfile.csv
+	
+You will then see the validation result, together with any warnings or errors e.g.
+
+```
+myfile.csv is INVALID
+1. blank_rows. Row: 3
+1. title_row. 
+2. inconsistent_values. Column: 14
+```
+
+You can also optionally pass a schema file like so:
+
+	csvlint myfile.csv --schema=schema.json
+
+## In your own Ruby code
+
 Currently the gem supports retrieving a CSV accessible from a URL, File, or an IO-style object (e.g. StringIO)
 
 	require 'csvlint'
