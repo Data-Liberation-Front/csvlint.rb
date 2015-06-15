@@ -130,12 +130,11 @@ module Csvlint
                  build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.size == 0
                end
 
+               build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.size != @expected_columns
                if @schema
                  @schema.validate_row(row, current_line)
                  @errors += @schema.errors
                  @warnings += @schema.warnings
-               else
-                 build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.size != @expected_columns
                end
 
              end
