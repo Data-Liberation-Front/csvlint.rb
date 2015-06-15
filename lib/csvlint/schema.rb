@@ -18,7 +18,7 @@ module Csvlint
       reset
       @fields_by_index = {}
       header.each_with_index do |name,i|
-        field = fields.find { |field| field.name == name }
+        field = fields.find { |field| field.name == name.downcase }
         if field
           fields_by_index[i] = field
           build_warnings(:different_index_header, :schema, nil, i+1, name) if fields[i].try(:name) != name
