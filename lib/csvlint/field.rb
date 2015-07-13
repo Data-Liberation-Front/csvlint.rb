@@ -40,6 +40,10 @@ module Csvlint
       end
 
       def validate_values(value, row, column)
+        # If a pattern exists, raise an invalid regex error if it is not in
+        # valid regex form, else, if the value of the relevant field in the csv
+        # does not match the given regex pattern in the schema, raise a
+        # pattern error.
         pattern = constraints["pattern"]
         if pattern
           begin
