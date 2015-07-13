@@ -16,9 +16,13 @@ module Csvlint
 
     def validate_header(header)
       reset
-      header.each_with_index do |name,i|
-        build_warnings(:header_name, :schema, nil, i+1, name) if fields[i].name != name
+
+      found_header = header.join(',')
+      expected_header = @fields.map{ |f| f.name }.join(',')
+      if found_header != expected_header
+        build_warnings(:malformed_header, :schema, 1, nil, found_header, expected_header)
       end
+
       return valid?
     end
         
