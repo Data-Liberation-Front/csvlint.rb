@@ -81,10 +81,9 @@ describe Csvlint::Schema do
 
     #no ragged row error    
     expect( schema.errors.size ).to eql(0)        
-  end
+  end  
 
   context "when validating header" do
-
     it "should warn if column names are different to field names" do
       minimum = Csvlint::Field.new("minimum", { "minLength" => 3 } )
       required = Csvlint::Field.new("required", { "required" => true } )
@@ -95,55 +94,16 @@ describe Csvlint::Schema do
       
       expect( schema.validate_header(["wrong", "required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
-      expect( schema.warnings.first.type ).to eql(:header_name)
-      expect( schema.warnings.first.content ).to eql("wrong")
-      expect( schema.warnings.first.column ).to eql(1)
-      expect( schema.warnings.first.category ).to eql(:schema)
+      expect( schema.warnings.first.type).to eql(:header_name)
+      expect( schema.warnings.first.content).to eql("wrong")
+      expect( schema.warnings.first.column).to eql(1)
+      expect( schema.warnings.first.category).to eql(:schema)
       
       expect( schema.validate_header(["minimum", "Required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
 
-    end
-
-    it "should warn if column count is less than field count" do
-      minimum = Csvlint::Field.new("minimum", { "minLength" => 3 } )
-      required = Csvlint::Field.new("required", { "required" => true } )
-      schema = Csvlint::Schema.new("http://example.org", [minimum, required] )
-
-      expect( schema.validate_header(["minimum"]) ).to eql(true)
-      expect( schema.warnings.size ).to eql(1)
-      expect( schema.warnings.first.type ).to eql(:header_count)
-      expect( schema.warnings.first.content ).to eql("2 header field(s) specified but found 1")
-      expect( schema.warnings.first.column ).to eql(1)
-      expect( schema.warnings.first.category ).to eql(:schema)
-
-    end
-
-    it "should warn if column count is more than field count" do
-      minimum = Csvlint::Field.new("minimum", { "minLength" => 3 } )
-      schema = Csvlint::Schema.new("http://example.org", [minimum] )
-
-      expect( schema.validate_header(["wrong", "required"]) ).to eql(true)
-      expect( schema.warnings.size ).to eql(3)
-
-      expect( schema.warnings.first.type ).to eql(:header_count)
-      expect( schema.warnings.first.content ).to eql("1 header field(s) specified but found 2")
-      expect( schema.warnings.first.column ).to eql(1)
-      expect( schema.warnings.first.category ).to eql(:schema)
-
-      expect( schema.warnings[1].type ).to eql(:header_name)
-      expect( schema.warnings[1].content ).to eql("wrong")
-      expect( schema.warnings[1].column ).to eql(1)
-      expect( schema.warnings[1].category ).to eql(:schema)
-
-      expect( schema.warnings[2].type ).to eql(:header_name)
-      expect( schema.warnings[2].content ).to eql("required")
-      expect( schema.warnings[2].column ).to eql(2)
-      expect( schema.warnings[2].category ).to eql(:schema)
-
-    end
-
-  end
+    end        
+  end  
   
   context "when parsing JSON Tables" do
     
