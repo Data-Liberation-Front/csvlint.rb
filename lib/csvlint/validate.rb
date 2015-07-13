@@ -1,25 +1,25 @@
 module Csvlint
-  
+
   class Validator
-    
+
     include Csvlint::ErrorCollector
-    
+
     attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
-    
+
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
       "Illegal quoting" => :whitespace,
       "Unclosed quoted field" => :unclosed_quote,
       "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
-       
-    def initialize(source, dialect = nil, schema = nil, options = {})      
+
+    def initialize(source, dialect = nil, schema = nil, options = {})
       @source = source
       @formats = []
       @schema = schema
-      
+
       @supplied_dialect = dialect != nil
-            
+
       @dialect = {
         "header" => true,
         "delimiter" => ",",
@@ -27,7 +27,7 @@ module Csvlint
         "lineTerminator" => :auto,
         "quoteChar" => '"'
       }.merge(dialect || {})
-            
+
       @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
@@ -35,10 +35,10 @@ module Csvlint
       reset
       validate
     end
-        
+
     def validate
-      single_col = false   
-      io = nil   
+      single_col = false
+      io = nil
       begin
         io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
@@ -47,19 +47,19 @@ module Csvlint
         unless sum.nil?
           build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
         end
-        build_warnings(:check_options, :structure) if @expected_columns == 1        
-        check_consistency      
+        build_warnings(:check_options, :structure) if @expected_columns == 1
+        check_consistency
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
       ensure
         io.close if io && io.respond_to?(:close)
       end
     end
-    
+
     def validate_metadata(io)
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
-      @headers = io.meta rescue nil    
+      @headers = io.meta rescue nil
       assumed_header = undeclared_header = !@supplied_dialect
       if @headers
         if @headers["content-type"] =~ /text\/csv/
@@ -74,31 +74,32 @@ module Csvlint
           assumed_header = false
         end
         if @headers["content-type"] !~ /charset=/
-          build_warnings(:no_encoding, :context) 
+          build_warnings(:no_encoding, :context)
         else
           build_warnings(:encoding, :context) if @encoding != "utf-8"
         end
         build_warnings(:no_content_type, :context) if @content_type == nil
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
-        
+
         if undeclared_header
           build_errors(:undeclared_header, :structure)
           assumed_header = false
         end
-        
+
       end
       build_info_messages(:assumed_header, :structure) if assumed_header
     end
-    
+
+    # analyses the provided csv and builds errors, warnings and info messages
     def parse_csv(io)
       @expected_columns = 0
       current_line = 0
       reported_invalid_encoding = false
       @col_counts = []
-      
-      @csv_options[:encoding] = @encoding  
-  
+
+      @csv_options[:encoding] = @encoding
+
       begin
         wrapper = WrappedIO.new( io )
         csv = CSV.new( wrapper, @csv_options )
@@ -110,25 +111,25 @@ module Csvlint
         row = nil
         loop do
          current_line += 1
-         if @limit_lines && current_line > @limit_lines 
+         if @limit_lines && current_line > @limit_lines
            break
          end
          begin
            wrapper.reset_line
            row = csv.shift
            @data << row
-           if row             
+           if row
              if current_line == 1 && header?
                row = row.reject{|col| col.nil? || col.empty?}
                validate_header(row)
                @col_counts << row.size
-             else               
+             else
                build_formats(row)
                @col_counts << row.reject{|col| col.nil? || col.empty?}.size
                @expected_columns = row.size unless @expected_columns != 0
-               
+
                build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.size == 0
-               
+               # Builds errors and warnings related to the provided schema file
                if @schema
                  @schema.validate_row(row, current_line)
                  @errors += @schema.errors
@@ -136,11 +137,11 @@ module Csvlint
                else
                  build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.size != @expected_columns
                end
-               
+
              end
-           else             
+           else
              break
-           end         
+           end
          rescue CSV::MalformedCSVError => e
            type = fetch_error(e)
            if type == :stray_quote && !wrapper.line.match(csv.row_sep)
@@ -154,8 +155,8 @@ module Csvlint
         build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
         reported_invalid_encoding = true
       end
-    end          
-    
+    end
+
     def validate_header(header)
       names = Set.new
       header.each_with_index do |name,i|
@@ -173,18 +174,18 @@ module Csvlint
       end
       return valid?
     end
-    
+
     def header?
       @csv_header
     end
-    
+
     def fetch_error(error)
       e = error.message.match(/^(.+?)(?: [io]n)? \(?line \d+\)?\.?$/i)
       message = e[1] rescue nil
       ERROR_MATCHERS.fetch(message, :unknown_error)
     end
-    
-    def dialect_to_csv_options(dialect) 
+
+    def dialect_to_csv_options(dialect)
         skipinitialspace = dialect["skipInitialSpace"] || true
         delimiter = dialect["delimiter"]
         delimiter = delimiter + " " if !skipinitialspace
@@ -195,8 +196,8 @@ module Csvlint
             :skip_blanks => false
         }
     end
-    
-    def build_formats(row) 
+
+    def build_formats(row)
       row.each_with_index do |col, i|
         next if col.nil? || col.empty?
         @formats[i] ||= Hash.new(0)
@@ -228,11 +229,11 @@ module Csvlint
         else
           :string
         end
-        
+
         @formats[i][format] += 1
       end
     end
-    
+
     def check_consistency
       @formats.each_with_index do |format,i|
         if format
@@ -243,9 +244,9 @@ module Csvlint
         end
       end
     end
-    
+
     private
-    
+
     def parse_extension(source)
       case source
       when File

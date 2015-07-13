@@ -1,11 +1,11 @@
 module Csvlint
-  
+
   class Schema
-    
+
     include Csvlint::ErrorCollector
-    
+
     attr_reader :uri, :fields, :title, :description
-    
+
     def initialize(uri, fields=[], title=nil, description=nil)
       @uri = uri
       @fields = fields
@@ -21,7 +21,7 @@ module Csvlint
       end
       return valid?
     end
-        
+
     def validate_row(values, row=nil)
       reset
       if values.length < fields.length
@@ -34,26 +34,29 @@ module Csvlint
           build_warnings(:extra_column, :schema, row, fields.size+i+1)
         end
       end
-      
+
       fields.each_with_index do |field,i|
         value = values[i] || ""
         result = field.validate_column(value, row, i+1)
         @errors += fields[i].errors
-        @warnings += fields[i].warnings        
+        @warnings += fields[i].warnings
       end
-            
+
       return valid?
     end
-    
+
     def Schema.from_json_table(uri, json)
       fields = []
       json["fields"].each do |field_desc|
-        fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"], 
+        fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"],
           field_desc["title"], field_desc["description"] )
       end if json["fields"]
       return Schema.new( uri , fields, json["title"], json["description"] )
     end
-    
+
+    # Difference in functionality between from_json_table and load_from_json_table
+    # needs to be specified
+
     def Schema.load_from_json_table(uri)
       begin
         json = JSON.parse( open(uri).read )
@@ -62,6 +65,6 @@ module Csvlint
         return nil
       end
     end
-    
+
   end
 end
