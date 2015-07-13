@@ -17,10 +17,6 @@ module Csvlint
     def validate_header(header)
       reset
 
-      #if header.size != fields.size
-      #  build_warnings(:header_count, :schema, nil, 1, "#{fields.size} header field(s) specified but found #{header.size}")
-      #end
-
       found_header = header.join(',')
       expected_header = @fields.map{ |f| f.name }.join(',')
       if found_header != expected_header
