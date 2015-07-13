@@ -16,17 +16,9 @@ module Csvlint
 
     def validate_header(header)
       reset
-
-      if header.size != fields.size
-        build_warnings(:header_count, :schema, nil, 1, "#{fields.size} header field(s) specified but found #{header.size}")
-      end
-
       header.each_with_index do |name,i|
-        if fields.size < i+1 || fields[i].name != name
-          build_warnings(:header_name, :schema, nil, i+1, name)
-        end
+        build_warnings(:header_name, :schema, nil, i+1, name) if fields[i].name != name
       end
-
       return valid?
     end
         
