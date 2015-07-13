@@ -1,3 +1,5 @@
+require "byebug"
+
 module Csvlint
 
   class Field
@@ -40,11 +42,13 @@ module Csvlint
       end
 
       def validate_values(value, row, column)
-        if constraints["pattern"]
-          if Regexp.new(constraints["pattern"])
+        pattern = constraints["pattern"]
+        if pattern
+          begin
+            Regexp.new(pattern)
             build_errors(:pattern, :schema, row, column, value,
-             { "pattern" => constraints["pattern"] } ) if !value.nil? && !value.match( constraints["pattern"] )
-          else
+            { "pattern" => constraints["pattern"] } ) if !value.nil? && !value.match( constraints["pattern"] )
+          rescue RegexpError
             build_errors(:invalid_regex, :schema, row, column, value,
               { "pattern" => constraints["pattern"] })
           end

@@ -92,7 +92,7 @@ Feature: Schema Validation
     """
 {
   "fields": [
-          { "name": "Name", "constraints": { "required": true, "pattern": "invalid" } },
+          { "name": "Name", "constraints": { "required": true, "pattern": "((" } },
           { "name": "Id", "constraints": { "required": true, "minLength": 1 } },
           { "name": "Email", "constraints": { "required": true } }
     ]
@@ -100,3 +100,4 @@ Feature: Schema Validation
     """
     When I ask if there are errors
     Then there should be 1 error
+    And that error should have the type "invalid_regex"
