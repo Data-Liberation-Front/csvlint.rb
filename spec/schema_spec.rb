@@ -95,10 +95,12 @@ describe Csvlint::Schema do
       
       expect( schema.validate_header(["wrong", "required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
-      expect( schema.warnings.first.type ).to eql(:header_name)
-      expect( schema.warnings.first.content ).to eql("wrong")
-      expect( schema.warnings.first.column ).to eql(1)
+      expect( schema.warnings.first.row ).to eql(1)
+      expect( schema.warnings.first.type ).to eql(:malformed_header)
+      expect( schema.warnings.first.content ).to eql('wrong,required')
+      expect( schema.warnings.first.column ).to eql(nil)
       expect( schema.warnings.first.category ).to eql(:schema)
+      expect( schema.warnings.first.constraints ).to eql('minimum,required')
       
       expect( schema.validate_header(["minimum", "Required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
@@ -112,10 +114,12 @@ describe Csvlint::Schema do
 
       expect( schema.validate_header(["minimum"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
-      expect( schema.warnings.first.type ).to eql(:header_count)
-      expect( schema.warnings.first.content ).to eql("2 header field(s) specified but found 1")
-      expect( schema.warnings.first.column ).to eql(1)
+      expect( schema.warnings.first.row ).to eql(1)
+      expect( schema.warnings.first.type ).to eql(:malformed_header)
+      expect( schema.warnings.first.content ).to eql("minimum")
+      expect( schema.warnings.first.column ).to eql(nil)
       expect( schema.warnings.first.category ).to eql(:schema)
+      expect( schema.warnings.first.constraints ).to eql('minimum,required')
 
     end
 
@@ -124,22 +128,13 @@ describe Csvlint::Schema do
       schema = Csvlint::Schema.new("http://example.org", [minimum] )
 
       expect( schema.validate_header(["wrong", "required"]) ).to eql(true)
-      expect( schema.warnings.size ).to eql(3)
-
-      expect( schema.warnings.first.type ).to eql(:header_count)
-      expect( schema.warnings.first.content ).to eql("1 header field(s) specified but found 2")
-      expect( schema.warnings.first.column ).to eql(1)
+      expect( schema.warnings.size ).to eql(1)
+      expect( schema.warnings.first.row ).to eql(1)
+      expect( schema.warnings.first.type ).to eql(:malformed_header)
+      expect( schema.warnings.first.content ).to eql("wrong,required")
+      expect( schema.warnings.first.column ).to eql(nil)
       expect( schema.warnings.first.category ).to eql(:schema)
-
-      expect( schema.warnings[1].type ).to eql(:header_name)
-      expect( schema.warnings[1].content ).to eql("wrong")
-      expect( schema.warnings[1].column ).to eql(1)
-      expect( schema.warnings[1].category ).to eql(:schema)
-
-      expect( schema.warnings[2].type ).to eql(:header_name)
-      expect( schema.warnings[2].content ).to eql("required")
-      expect( schema.warnings[2].column ).to eql(2)
-      expect( schema.warnings[2].category ).to eql(:schema)
+      expect( schema.warnings.first.constraints ).to eql('minimum')
 
     end
 
