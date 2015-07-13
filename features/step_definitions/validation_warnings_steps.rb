@@ -21,12 +21,12 @@ When(/^I ask if there are warnings$/) do
     @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", JSON.parse(@schema_json) )
   end
 
-  @validator = Csvlint::Validator.new( @url, @csv_options, @schema ) 
+  @validator = Csvlint::Validator.new( @url, @csv_options, @schema )
   @warnings = @validator.warnings
 end
 
 Then(/^there should be (\d+) warnings$/) do |count|
-  @warnings.count.should == count.to_i
+  expect( @warnings.count ).to eq( count.to_i )
 end
 
 Given(/^the content type is set to "(.*?)"$/) do |type|
@@ -34,13 +34,13 @@ Given(/^the content type is set to "(.*?)"$/) do |type|
 end
 
 Then(/^that warning should have the row "(.*?)"$/) do |row|
-  @warnings.first.row.should == row.to_i
+  expect( @warnings.first.row ).to eq( row.to_i )
 end
 
 Then(/^that warning should have the column "(.*?)"$/) do |column|
-  @warnings.first.column.should == column.to_i
+  expect( @warnings.first.column ).to eq( column.to_i )
 end
 
 Then(/^that warning should have the type "(.*?)"$/) do |type|
-  @warnings.first.type.should == type.to_sym
+  expect( @warnings.first.type ).to eq( type.to_sym )
 end

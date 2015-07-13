@@ -81,10 +81,9 @@ describe Csvlint::Schema do
 
     #no ragged row error    
     expect( schema.errors.size ).to eql(0)        
-  end
+  end  
 
   context "when validating header" do
-
     it "should warn if column names are different to field names" do
       minimum = Csvlint::Field.new("minimum", { "minLength" => 3 } )
       required = Csvlint::Field.new("required", { "required" => true } )
@@ -101,7 +100,7 @@ describe Csvlint::Schema do
       expect( schema.warnings.first.column ).to eql(nil)
       expect( schema.warnings.first.category ).to eql(:schema)
       expect( schema.warnings.first.constraints ).to eql('minimum,required')
-      
+
       expect( schema.validate_header(["minimum", "Required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
 

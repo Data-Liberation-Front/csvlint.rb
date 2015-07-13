@@ -1,5 +1,5 @@
 Given(/^I have a CSV with the following content:$/) do |string|
-  @csv = string
+  @csv = string.to_s
 end
 
 Given(/^it is stored at the url "(.*?)"$/) do |url|
@@ -17,7 +17,7 @@ end
 
 When(/^I ask if the CSV is valid$/) do
   @csv_options ||= default_csv_options
-  @validator = Csvlint::Validator.new( @url, @csv_options ) 
+  @validator = Csvlint::Validator.new( @url, @csv_options )
   @valid = @validator.valid?
 end
 
