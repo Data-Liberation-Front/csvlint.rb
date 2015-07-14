@@ -94,16 +94,50 @@ describe Csvlint::Schema do
       
       expect( schema.validate_header(["wrong", "required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
-      expect( schema.warnings.first.type).to eql(:header_name)
-      expect( schema.warnings.first.content).to eql("wrong")
-      expect( schema.warnings.first.column).to eql(1)
-      expect( schema.warnings.first.category).to eql(:schema)
-      
+      expect( schema.warnings.first.row ).to eql(1)
+      expect( schema.warnings.first.type ).to eql(:malformed_header)
+      expect( schema.warnings.first.content ).to eql('wrong,required')
+      expect( schema.warnings.first.column ).to eql(nil)
+      expect( schema.warnings.first.category ).to eql(:schema)
+      expect( schema.warnings.first.constraints ).to eql('minimum,required')
+
       expect( schema.validate_header(["minimum", "Required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
 
-    end        
-  end  
+    end
+
+    it "should warn if column count is less than field count" do
+      minimum = Csvlint::Field.new("minimum", { "minLength" => 3 } )
+      required = Csvlint::Field.new("required", { "required" => true } )
+      schema = Csvlint::Schema.new("http://example.org", [minimum, required] )
+
+      expect( schema.validate_header(["minimum"]) ).to eql(true)
+      expect( schema.warnings.size ).to eql(1)
+      expect( schema.warnings.first.row ).to eql(1)
+      expect( schema.warnings.first.type ).to eql(:malformed_header)
+      expect( schema.warnings.first.content ).to eql("minimum")
+      expect( schema.warnings.first.column ).to eql(nil)
+      expect( schema.warnings.first.category ).to eql(:schema)
+      expect( schema.warnings.first.constraints ).to eql('minimum,required')
+
+    end
+
+    it "should warn if column count is more than field count" do
+      minimum = Csvlint::Field.new("minimum", { "minLength" => 3 } )
+      schema = Csvlint::Schema.new("http://example.org", [minimum] )
+
+      expect( schema.validate_header(["wrong", "required"]) ).to eql(true)
+      expect( schema.warnings.size ).to eql(1)
+      expect( schema.warnings.first.row ).to eql(1)
+      expect( schema.warnings.first.type ).to eql(:malformed_header)
+      expect( schema.warnings.first.content ).to eql("wrong,required")
+      expect( schema.warnings.first.column ).to eql(nil)
+      expect( schema.warnings.first.category ).to eql(:schema)
+      expect( schema.warnings.first.constraints ).to eql('minimum')
+
+    end
+
+  end
   
   context "when parsing JSON Tables" do
     
