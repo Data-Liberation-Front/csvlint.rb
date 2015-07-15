@@ -105,8 +105,12 @@ module Csvlint
           'http://www.w3.org/2001/XMLSchema#float'   => lambda { |value, constraints| Float value },
           'http://www.w3.org/2001/XMLSchema#double'   => lambda { |value, constraints| Float value },
           'http://www.w3.org/2001/XMLSchema#anyURI'  => lambda do |value, constraints|
-            u = URI.parse value
-            raise ArgumentError unless u.kind_of?(URI::HTTP) || u.kind_of?(URI::HTTPS)
+            begin
+              u = URI.parse value
+              raise ArgumentError unless u.kind_of?(URI::HTTP) || u.kind_of?(URI::HTTPS)
+            rescue URI::InvalidURIError
+              raise ArgumentError
+            end
             u
           end,
           'http://www.w3.org/2001/XMLSchema#boolean' => lambda do |value, constraints|
