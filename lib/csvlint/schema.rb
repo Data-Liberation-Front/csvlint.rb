@@ -62,7 +62,7 @@ module Csvlint
         json = JSON.parse( open(uri).read )
         return Schema.from_json_table(uri,json)
       rescue
-        return nil
+        return Schema.new(nil, [], "malformed", "malformed")
       end
     end
 

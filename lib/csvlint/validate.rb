@@ -14,6 +14,7 @@ module Csvlint
     }
 
     def initialize(source, dialect = nil, schema = nil, options = {})
+
       @source = source
       @formats = []
       @schema = schema
@@ -31,9 +32,10 @@ module Csvlint
       @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
-      @extension = parse_extension(source)
+      @extension = parse_extension(source) unless @source.nil?
       reset
       validate
+
     end
 
     def validate
@@ -248,6 +250,7 @@ module Csvlint
     private
 
     def parse_extension(source)
+      # byebug
       case source
       when File
         return File.extname( source.path )
@@ -255,11 +258,16 @@ module Csvlint
         return ""
       when StringIO
         return ""
-      when Tempfile
+        when Tempfile
+          # this is triggered when the revalidate dialect use case happens
         return ""
       else
-        parsed = URI.parse(source)
-        File.extname(parsed.path)
+        begin
+          parsed = URI.parse(source)
+          File.extname(parsed.path)
+        rescue URI::InvalidURIError
+          return ""
+        end
       end
     end
 
