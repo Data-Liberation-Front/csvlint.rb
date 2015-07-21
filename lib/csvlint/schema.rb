@@ -22,7 +22,7 @@ module Csvlint
       return valid?
     end
 
-    def validate_row(values, row=nil, all_errors)
+    def validate_row(values, row=nil, all_errors=[])
       reset
       if values.length < fields.length
         fields[values.size..-1].each_with_index do |field, i|
