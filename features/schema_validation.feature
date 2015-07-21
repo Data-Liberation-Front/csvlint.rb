@@ -64,6 +64,7 @@ Feature: Schema Validation
   Scenario: Schema with valid regex
     Given I have a CSV with the following content:
     """
+  "firstname","id","email"
   "Bob","1234","bob@example.org"
   "Alice","5","alice@example.com"
     """
@@ -84,6 +85,7 @@ Feature: Schema Validation
   Scenario: Schema with invalid regex
     Given I have a CSV with the following content:
     """
+  "firstname","id","email"
   "Bob","1234","bob@example.org"
   "Alice","5","alice@example.com"
     """
