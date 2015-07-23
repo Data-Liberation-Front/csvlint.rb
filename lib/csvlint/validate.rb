@@ -4,7 +4,30 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :data
+
+    # instance variables
+    # [
+        # :@source, inferred type: *String*
+        # :@formats, inferred type: *Array*
+    # :@schema, inferred type:
+        # :@supplied_dialect, inferred type: *Boolean*
+    # :@dialect, inferred type: *Hash*
+    # :@csv_header, inferred type: *boolean*
+        # :@limit_lines, inferred type:
+        # :@csv_options, inferred type: *Hash*
+    # :@extension, inferred type: *String*
+        # :@errors, inferred type: *Array*
+        # :@warnings, inferred type: *Array*
+        # :@info_messages, inferred type: *Array*
+    # :@encoding, inferred type: *String*
+    # :@content_type, inferred type: *String*
+    # :@headers, inferred type: *Hash*
+        # :@expected_columns, inferred type: *Fixnum*
+        # :@col_counts, inferred type: *Array*
+    # :@data, inferred type: *Array*
+    # :@line_breaks inferred type: *String*
+    # ]
 
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
@@ -33,12 +56,16 @@ module Csvlint
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source) unless @source.nil?
+      # byebug
       reset
       validate
-
     end
 
     def validate
+      # infers a type of io based on the @source instance variable passed to initialise
+      # passes this variable to validate_metadata & parse_csv
+      # catches cases of unexpected input and builds erros and warnings appropriately
+
       single_col = false
       io = nil
       begin
@@ -91,7 +118,7 @@ module Csvlint
 
       end
       build_info_messages(:assumed_header, :structure) if assumed_header
-    end
+    end # endOf validate_metadata
 
     # analyses the provided csv and builds errors, warnings and info messages
     def parse_csv(io)
@@ -150,14 +177,15 @@ module Csvlint
              build_errors(:line_breaks, :structure)
            else
              build_errors(type, :structure, current_line, nil, wrapper.line)
-           end
-         end
-      end
+           end # end malformed CSV try & catch
+         end # end internal switch
+        end # endOf loop
       rescue ArgumentError => ae
         build_errors(:invalid_encoding, :structure, current_line, wrapper.line) unless reported_invalid_encoding
         reported_invalid_encoding = true
-      end
-    end
+      end # end of switch
+      # byebug - will access about 19 instance variables
+    end # end parse_csv method
 
     def validate_header(header)
       names = Set.new
