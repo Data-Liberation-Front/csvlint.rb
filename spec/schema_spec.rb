@@ -136,6 +136,15 @@ describe Csvlint::Schema do
       expect( schema.warnings.first.constraints ).to eql(["minimum"])
 
     end
+    
+    it "should not warn if columns are correct but in different order" do
+      field1 = Csvlint::Field.new("field1")
+      field2 = Csvlint::Field.new("field2")
+      schema = Csvlint::Schema.new("http://example.org", [field1, field2] )
+      
+      expect( schema.validate_header(["field2", "field1"]) ).to eql(true)
+      expect( schema.warnings.size ).to eql(0)
+    end
 
   end
   

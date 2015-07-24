@@ -19,7 +19,7 @@ module Csvlint
 
       expected_header = @fields.map{ |f| f.name }
 
-      if header != expected_header
+      if header.to_set != expected_header.to_set
         build_warnings(:malformed_header, :schema, 1, nil, header, expected_header)
       end
       
