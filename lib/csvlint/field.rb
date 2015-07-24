@@ -14,8 +14,11 @@ module Csvlint
       reset
     end
 
-    def validate_column(value, row=nil, column=nil)
+    def validate_column(value, row=nil, column=nil, all_errors=[])
       reset
+      unless all_errors.any?{|error| ((error.type == :invalid_regex) && (error.column == column))}
+        validate_regex(value, row, column)
+      end
       validate_length(value, row, column)
       validate_values(value, row, column)
       parsed = validate_type(value, row, column)
@@ -39,11 +42,7 @@ module Csvlint
         end
       end
 
-      def validate_values(value, row, column)
-        # If a pattern exists, raise an invalid regex error if it is not in
-        # valid regex form, else, if the value of the relevant field in the csv
-        # does not match the given regex pattern in the schema, raise a
-        # pattern error.
+      def validate_regex(value, row, column)
         pattern = constraints["pattern"]
         if pattern
           begin
@@ -51,10 +50,17 @@ module Csvlint
             build_errors(:pattern, :schema, row, column, value,
             { "pattern" => constraints["pattern"] } ) if !value.nil? && !value.match( constraints["pattern"] )
           rescue RegexpError
-            build_errors(:invalid_regex, :schema, row, column, value,
+            build_errors(:invalid_regex, :schema, nil, column, ("#{name}: Constraints: Pattern: #{pattern}"),
               { "pattern" => constraints["pattern"] })
           end
         end
+      end
+
+      def validate_values(value, row, column)
+        # If a pattern exists, raise an invalid regex error if it is not in
+        # valid regex form, else, if the value of the relevant field in the csv
+        # does not match the given regex pattern in the schema, raise a
+        # pattern error.
         if constraints["unique"] == true
           if @uniques.include? value
             build_errors(:unique, :schema, row, column, value, { "unique" => true })

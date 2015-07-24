@@ -98,6 +98,7 @@ module Csvlint
       @expected_columns = 0
       current_line = 0
       reported_invalid_encoding = false
+      all_errors = []
       @col_counts = []
 
       @csv_options[:encoding] = @encoding
@@ -133,8 +134,9 @@ module Csvlint
                build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.size == 0
                # Builds errors and warnings related to the provided schema file
                if @schema
-                 @schema.validate_row(row, current_line)
+                 @schema.validate_row(row, current_line, all_errors)
                  @errors += @schema.errors
+                 all_errors += @schema.errors
                  @warnings += @schema.warnings
                else
                  build_errors(:ragged_rows, :structure, current_line, nil, wrapper.line) if !row.empty? && row.size != @expected_columns
