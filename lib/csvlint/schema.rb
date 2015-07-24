@@ -17,12 +17,12 @@ module Csvlint
     def validate_header(header)
       reset
 
-      found_header = header.to_csv(:row_sep => '')
-      expected_header = @fields.map{ |f| f.name }.to_csv(:row_sep => '')
-      if found_header != expected_header
-        build_warnings(:malformed_header, :schema, 1, nil, found_header, expected_header)
-      end
+      expected_header = @fields.map{ |f| f.name }
 
+      if header.to_set != expected_header.to_set
+        build_warnings(:malformed_header, :schema, 1, nil, header, expected_header)
+      end
+      
       return valid?
     end
         
