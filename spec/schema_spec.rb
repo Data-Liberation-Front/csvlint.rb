@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'byebug'
 
 describe Csvlint::Schema do
   
@@ -99,8 +100,8 @@ describe Csvlint::Schema do
       expect( schema.warnings.first.content ).to eql('wrong,required')
       expect( schema.warnings.first.column ).to eql(nil)
       expect( schema.warnings.first.category ).to eql(:schema)
-      expect( schema.warnings.first.constraints ).to eql('minimum,required')
-
+      expect schema.warnings.first.constraints.has_value?('minimum,required')
+      # expect( schema.warnings.first.constraints.values ).to eql(['minimum,required'])
       expect( schema.validate_header(["minimum", "Required"]) ).to eql(true)
       expect( schema.warnings.size ).to eql(1)
 
@@ -118,7 +119,8 @@ describe Csvlint::Schema do
       expect( schema.warnings.first.content ).to eql("minimum")
       expect( schema.warnings.first.column ).to eql(nil)
       expect( schema.warnings.first.category ).to eql(:schema)
-      expect( schema.warnings.first.constraints ).to eql('minimum,required')
+      expect schema.warnings.first.constraints.has_value?('minimum,required')
+      # expect( schema.warnings.first.constraints.values ).to eql(['minimum,required'])
 
     end
 
@@ -133,7 +135,9 @@ describe Csvlint::Schema do
       expect( schema.warnings.first.content ).to eql("wrong,required")
       expect( schema.warnings.first.column ).to eql(nil)
       expect( schema.warnings.first.category ).to eql(:schema)
-      expect( schema.warnings.first.constraints ).to eql('minimum')
+      # byebug
+      # expect( schema.warnings.first.constraints.values ).to eql('minimum')
+      expect( schema.warnings.first.constraints.has_value?('minimum'))
 
     end
 
