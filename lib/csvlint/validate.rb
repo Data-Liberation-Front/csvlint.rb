@@ -252,7 +252,6 @@ module Csvlint
     private
 
     def parse_extension(source)
-      # byebug
       case source
       when File
         return File.extname( source.path )
