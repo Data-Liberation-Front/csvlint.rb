@@ -19,10 +19,16 @@ module Csvlint
       reset
 
       if @type == :csvw
-        expected_header = ""
         header.each_with_index do |found,i|
-          expected_titles = @fields[i].title
-          build_warnings(:malformed_header, :schema, 1, nil, found, "expectedHeader" => expected_titles.join("|")) unless expected_titles.include? found
+          if @fields && @fields[i]
+            if @fields[i].title
+              expected_titles = @fields[i].title
+              build_warnings(:malformed_header, :schema, 1, nil, found, "expectedHeader" => expected_titles.join("|")) unless expected_titles.include? found
+            else
+              expected_title = @fields[i].name
+              build_warnings(:malformed_header, :schema, 1, nil, found, "expectedHeader" => expected_title) unless found == expected_title
+            end
+          end
         end
       else
         found_header = header.to_csv(:row_sep => '')
@@ -41,9 +47,11 @@ module Csvlint
           build_warnings(:missing_column, :schema, row, values.size+i+1)
         end
       end
-      if values.length > fields.length
-        values[fields.size..-1].each_with_index do |data_column, i|
-          build_warnings(:extra_column, :schema, row, fields.size+i+1)
+      unless @type == :csvw && fields.empty?
+        if values.length > fields.length
+          values[fields.size..-1].each_with_index do |data_column, i|
+            build_warnings(:extra_column, :schema, row, fields.size+i+1)
+          end
         end
       end
 

@@ -44,7 +44,7 @@ File.open(File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature
 			file.puts "\t\tGiven I have a CSV file called \"csvw/#{entry["action"]}\""
 			file.puts "\t\tAnd it has a Link header holding \"#{entry["httpLink"]}\"" if entry["httpLink"]
 			file.puts "\t\tAnd it is stored at the url \"#{action_uri}\""
-			if entry["option"] and entry["option"]["metadata"]
+			if entry["option"] && entry["option"]["metadata"]
 				# no need to store the file here, as it will be listed in the 'implicit' list, which all get stored
 				metadata = URI.join(BASE_URI, entry["option"]["metadata"])
 				file.puts "\t\tAnd I have a metadata file called \"csvw/#{entry["option"]["metadata"]}\""
