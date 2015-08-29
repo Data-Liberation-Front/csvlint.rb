@@ -29,6 +29,14 @@ When(/^I ask if there are warnings$/) do
   @warnings = @validator.warnings
 end
 
+Then(/^there should be warnings$/) do
+  expect( @warnings.count ).to be > 0
+end
+
+Then(/^there should not be warnings$/) do
+  expect( @warnings.count ).to eq(0)
+end
+
 Then(/^there should be (\d+) warnings$/) do |count|
   expect( @warnings.count ).to eq( count.to_i )
 end

@@ -2,11 +2,17 @@ Given(/^I have a CSV with the following content:$/) do |string|
   @csv = string.to_s
 end
 
+Given(/^it has a Link header holding "(.*?)"$/) do |link|
+  @link = link
+end
+
 Given(/^it is stored at the url "(.*?)"$/) do |url|
   @url = url
   content_type = @content_type || "text/csv"
   charset = @encoding || "UTF-8"
-  stub_request(:get, url).to_return(:status => 200, :body => @csv, :headers => {"Content-Type" => "#{content_type}; charset=#{charset}"})
+  headers = {"Content-Type" => "#{content_type}; charset=#{charset}"}
+  headers["Link"] = @link if @link
+  stub_request(:get, url).to_return(:status => 200, :body => @csv, :headers => headers)
 end
 
 Given(/^it is stored at the url "(.*?)" with no character set$/) do |url|
