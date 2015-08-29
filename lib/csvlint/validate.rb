@@ -52,7 +52,7 @@ module Csvlint
         build_warnings(:check_options, :structure) if @expected_columns == 1
         check_consistency
       rescue OpenURI::HTTPError, Errno::ENOENT
-        build_errors(:not_found)
+        build_errors(:not_found, nil, nil, nil, @source)
       ensure
         io.close if io && io.respond_to?(:close)
       end
@@ -134,7 +134,7 @@ module Csvlint
                build_errors(:blank_rows, :structure, current_line, nil, wrapper.line) if row.reject{ |c| c.nil? || c.empty? }.size == 0
                # Builds errors and warnings related to the provided schema file
                if @schema
-                 @schema.validate_row(row, current_line, all_errors)
+                 @schema.validate_row(row, current_line, all_errors, @source)
                  @errors += @schema.errors
                  all_errors += @schema.errors
                  @warnings += @schema.warnings
@@ -172,7 +172,7 @@ module Csvlint
         end
       end
       if @schema
-        @schema.validate_header(header)
+        @schema.validate_header(header, @source)
         @errors += @schema.errors
         @warnings += @schema.warnings
       end

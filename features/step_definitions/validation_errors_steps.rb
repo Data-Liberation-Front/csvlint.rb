@@ -16,17 +16,28 @@ end
 When(/^I carry out CSVW validation$/) do
   @csv_options ||= default_csv_options
 
+  json = JSON.parse(@schema_json)
   if @schema_json
     if @schema_type == :json_table
-      @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", JSON.parse(@schema_json) )
+      @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", json )
     else
-      @schema = Csvlint::Schema.from_csvw_metadata( @schema_url || "http://example.org ", JSON.parse(@schema_json) )
+      @schema = Csvlint::Schema.from_csvw_metadata( @schema_url || "http://example.org ", json )
     end
   end
 
-  @validator = Csvlint::Validator.new( @url, @csv_options, @schema )
-  @errors = @validator.errors
-  @warnings = @validator.warnings
+  if @url.nil?
+    @errors = []
+    @warnings = []
+    @schema.tables.keys.each do |table_url|
+      validator = Csvlint::Validator.new( table_url, @csv_options, @schema )
+      @errors += validator.errors
+      @warnings += validator.warnings
+    end
+  else
+    validator = Csvlint::Validator.new( @url, @csv_options, @schema )
+    @errors = validator.errors
+    @warnings = validator.warnings
+  end
 end
 
 Then(/^there should be errors$/) do
@@ -35,6 +46,7 @@ end
 
 Then(/^there should not be errors$/) do
   expect( @errors.count ).to eq(0)
+  STDERR.puts @errors.inspect if @errors.count > 0
 end
 
 Then(/^there should be (\d+) error$/) do |count|

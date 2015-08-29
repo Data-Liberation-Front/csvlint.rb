@@ -162,7 +162,6 @@ describe Csvlint::Schema do
       json = JSON.parse( @example )
       schema = Csvlint::Schema.from_json_table("http://example.org", json)
 
-      expect( schema.type ).to eql :json_table
       expect( schema.uri ).to eql("http://example.org")
       expect( schema.title ).to eql("Schema title")
       expect( schema.description ).to eql("schema")
@@ -176,7 +175,6 @@ describe Csvlint::Schema do
 
     it "should create a schema from a JSON Table URL" do
       schema = Csvlint::Schema.load_from_json("http://example.com/example.json")
-      expect( schema.type ).to eql :json_table
       expect( schema.uri ).to eql("http://example.com/example.json")
       expect( schema.fields.length ).to eql(3)
       expect( schema.fields[0].name ).to eql("ID")
@@ -204,31 +202,9 @@ describe Csvlint::Schema do
       stub_request(:get, "http://example.com/metadata.json").to_return(:status => 200, :body => @example)
     end
 
-    it "should create a schema from pre-parsed CSVW metadata" do
-      json = JSON.parse( @example )
-      schema = Csvlint::Schema.from_csvw_metadata("http://example.com/metadata.json", json)
-
-      expect( schema.type ).to eql :csvw
-      expect( schema.uri ).to eql("http://example.com/metadata.json")
-      expect( schema.title ).to eql nil
-      expect( schema.description ).to eql nil
-      expect( schema.fields.length ).to eql(3)
-      expect( schema.fields[0].constraints["pattern"]).to eql(".+")
-      expect( schema.fields[1].name ).to eql("Id")
-      expect( schema.fields[1].constraints["required"] ).to eql(true)
-      expect( schema.fields[1].constraints["minLength"] ).to eql(3)
-      expect( schema.fields[1].title ).to eql nil
-      expect( schema.fields[1].description ).to eql nil
-    end
-
-    it "should create a schema from a CSVW metadata URL" do
+    it "should create a table group from a CSVW metadata URL" do
       schema = Csvlint::Schema.load_from_json("http://example.com/metadata.json")
-      expect( schema.type ).to eql :csvw
-      expect( schema.uri ).to eql("http://example.com/metadata.json")
-      expect( schema.fields.length ).to eql(3)
-      expect( schema.fields[1].name ).to eql("Id")
-      expect( schema.fields[1].constraints["required"] ).to eql(true)
-      expect( schema.fields[1].constraints["minLength"] ).to eql(3)
+      expect( schema.class ).to eq(Csvlint::CsvwTableGroup)
     end
   end
 

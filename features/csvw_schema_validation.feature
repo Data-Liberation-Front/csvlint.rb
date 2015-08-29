@@ -70,8 +70,8 @@ Feature: CSVW Schema Validation
   }
 }
     """
-    When I ask if there are warnings
-    Then there should be 1 warnings
+    When I ask if there are errors
+    Then there should be 1 error
 
   Scenario: Schema with valid regex
     Given I have a CSV with the following content:
@@ -95,8 +95,8 @@ Feature: CSVW Schema Validation
   }
 }
     """
-    When I ask if there are errors
-    Then there should be 0 error
+    When I ask if there are warnings
+    Then there should be 0 warnings
 
   Scenario: Schema with invalid regex
     Given I have a CSV with the following content:
@@ -113,13 +113,13 @@ Feature: CSVW Schema Validation
   "url": "http://example.com/example1.csv",
   "tableSchema": {
     "columns": [
-            { "name": "Name", "required": true, "datatype": { "base": "string", "format": "((" } },
-            { "name": "Id", "required": true, "datatype": { "base": "string", "minLength": 1 } },
-            { "name": "Email", "required": true }
+            { "name": "firstname", "required": true, "datatype": { "base": "string", "format": "((" } },
+            { "name": "id", "required": true, "datatype": { "base": "string", "minLength": 1 } },
+            { "name": "email", "required": true }
       ]
   }
 }
     """
-    When I ask if there are errors
-    Then there should be 1 error
-    And that error should have the type "invalid_regex"
+    When I ask if there are warnings
+    Then there should be 1 warnings
+    And that warning should have the type "invalid_regex"

@@ -23,5 +23,6 @@ end
 
 Given(/^I have a file called "(.*?)" at the url "(.*?)"$/) do |filename,url|
   content = File.read( File.join( File.dirname(__FILE__), "..", "fixtures", filename ) )
-  stub_request(:get, url).to_return(:status => 200, :body => content)
+  content_type = filename =~ /.csv$/ ? "text/csv" : "application/csvm+json"
+  stub_request(:get, url).to_return(:status => 200, :body => content, :headers => {"Content-Type" => "#{content_type}; charset=UTF-8"})
 end
