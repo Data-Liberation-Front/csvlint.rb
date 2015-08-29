@@ -170,15 +170,61 @@ describe Csvlint::Schema do
       expect( schema.fields[0].constraints["required"] ).to eql(true)
       expect( schema.fields[0].title ).to eql("id")
       expect( schema.fields[0].description ).to eql("house identifier")
+      expect( schema.fields[2].constraints["pattern"]).to eql("[A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2}")
     end
 
     it "should create a schema from a JSON Table URL" do
-      schema = Csvlint::Schema.load_from_json_table("http://example.com/example.json")
+      schema = Csvlint::Schema.load_from_json("http://example.com/example.json")
       expect( schema.uri ).to eql("http://example.com/example.json")
       expect( schema.fields.length ).to eql(3)
       expect( schema.fields[0].name ).to eql("ID")
       expect( schema.fields[0].constraints["required"] ).to eql(true)
 
+    end
+  end
+
+  context "when parsing CSVW metadata" do
+
+    before(:each) do
+      @example=<<-EOL
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "http://example.com/example1.csv",
+  "tableSchema": {
+    "columns": [
+            { "name": "Name", "required": true, "datatype": { "base": "string", "format": ".+" } },
+            { "name": "Id", "required": true, "datatype": { "base": "string", "minLength": 3 } },
+            { "name": "Email", "required": true }
+      ]
+  }
+}
+  EOL
+      stub_request(:get, "http://example.com/metadata.json").to_return(:status => 200, :body => @example)
+    end
+
+    it "should create a schema from a pre-parsed JSON table" do
+      json = JSON.parse( @example )
+      schema = Csvlint::Schema.from_csvw_metadata("http://example.com/metadata.json", json)
+
+      expect( schema.uri ).to eql("http://example.com/metadata.json")
+      expect( schema.title ).to eql nil
+      expect( schema.description ).to eql nil
+      expect( schema.fields.length ).to eql(3)
+      expect( schema.fields[0].constraints["pattern"]).to eql(".+")
+      expect( schema.fields[1].name ).to eql("Id")
+      expect( schema.fields[1].constraints["required"] ).to eql(true)
+      expect( schema.fields[1].constraints["minLength"] ).to eql(3)
+      expect( schema.fields[1].title ).to eql nil
+      expect( schema.fields[1].description ).to eql nil
+    end
+
+    it "should create a schema from a JSON Table URL" do
+      schema = Csvlint::Schema.load_from_json("http://example.com/metadata.json")
+      expect( schema.uri ).to eql("http://example.com/metadata.json")
+      expect( schema.fields.length ).to eql(3)
+      expect( schema.fields[1].name ).to eql("Id")
+      expect( schema.fields[1].constraints["required"] ).to eql(true)
+      expect( schema.fields[1].constraints["minLength"] ).to eql(3)
     end
   end
 

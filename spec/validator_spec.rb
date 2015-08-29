@@ -10,7 +10,7 @@ describe Csvlint::Validator do
     it "should provide sensible defaults for CSV parsing" do
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       opts = validator.instance_variable_get("@csv_options")
-      opts.should include({
+      expect(opts).to include({
         :col_sep => ",",
         :row_sep => :auto,
         :quote_char => '"',
@@ -25,7 +25,7 @@ describe Csvlint::Validator do
         "delimiter" => "\t",
         "quoteChar" => "'"
       })
-      opts.should include({
+      expect(opts).to include({
         :col_sep => "\t",
         :row_sep => "\n",
         :quote_char => "'",
@@ -173,7 +173,7 @@ describe Csvlint::Validator do
         validator.build_formats(row)
         formats = validator.instance_variable_get("@formats")
         
-        formats[0].keys.first.should == type
+        expect(formats[0].keys.first).to eql type
       end
     end
     
@@ -184,8 +184,8 @@ describe Csvlint::Validator do
       validator.build_formats(row)
       formats = validator.instance_variable_get("@formats")
       
-      formats[0].keys.first.should == :numeric
-      formats[1].keys.first.should == :numeric
+      expect(formats[0].keys.first).to eql :numeric
+      expect(formats[1].keys.first).to eql :numeric
     end
   
     it "should ignore blank arrays" do
@@ -194,7 +194,7 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       validator.build_formats(row)
       formats = validator.instance_variable_get("@formats") 
-      formats.should == []
+      expect(formats).to eql []
     end
     
     it "should work correctly for single columns" do
@@ -212,7 +212,7 @@ describe Csvlint::Validator do
       
       formats = validator.instance_variable_get("@formats")
       
-      formats.should == [{:string => 3}]
+      expect(formats).to eql [{:string => 3}]
     end
   
     it "should return formats correctly if a row is blank" do
@@ -229,7 +229,7 @@ describe Csvlint::Validator do
       
       formats = validator.instance_variable_get("@formats") 
             
-      formats.should == [
+      expect(formats).to eql [
         {:string => 1},
         {:numeric => 1},
         {:string => 1},
@@ -254,7 +254,7 @@ describe Csvlint::Validator do
       warnings = validator.instance_variable_get("@warnings") 
       warnings.delete_if { |h| h.type != :inconsistent_values }
       
-      warnings.count.should == 1
+      expect(warnings.count).to eql 1
     end
     
   end
@@ -268,7 +268,7 @@ describe Csvlint::Validator do
     it "can get line break symbol" do
 
       validator = Csvlint::Validator.new("http://example.com/crlf.csv")
-      validator.line_breaks.should == "\r\n"
+      expect(validator.line_breaks).to eql "\r\n"
       
     end
     

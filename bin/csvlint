@@ -79,12 +79,11 @@ end
 schema = nil
 if options[:schema_file]
   begin
-    schemafile = File.read( options[:schema_file] )
+    schema = Csvlint::Schema.load_from_json(options[:schema_file])
   rescue Errno::ENOENT
     puts "#{options[:schema_file]} not found"
     exit 1
   end
-  schema = Csvlint::Schema.from_json_table(nil, JSON.parse(schemafile))
 end
 
 validator = Csvlint::Validator.new( source, nil, schema )

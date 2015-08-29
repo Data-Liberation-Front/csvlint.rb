@@ -57,13 +57,26 @@ module Csvlint
       return Schema.new( uri , fields, json["title"], json["description"] )
     end
 
-    # Difference in functionality between from_json_table and load_from_json_table
-    # needs to be specified
+    def Schema.from_csvw_metadata(uri, json)
+      fields = []
+      json["tableSchema"]["columns"].each do |field_desc|
+        constraints = {}
+        constraints["required"] = field_desc["required"]
+        constraints["minLength"] = field_desc["datatype"]["minLength"] if field_desc["datatype"]
+        constraints["pattern"] = field_desc["datatype"]["format"] if field_desc["datatype"]
+        fields << Csvlint::Field.new( field_desc["name"] , constraints , field_desc["titles"] )
+      end if json["tableSchema"]
+      return Schema.new(uri, fields)
+    end
 
-    def Schema.load_from_json_table(uri)
+    def Schema.load_from_json(uri)
       begin
         json = JSON.parse( open(uri).read )
-        return Schema.from_json_table(uri,json)
+        if json["@context"]
+          return Schema.from_csvw_metadata(uri,json)
+        else
+          return Schema.from_json_table(uri,json)
+        end
       rescue
         return Schema.new(nil, [], "malformed", "malformed")
       end

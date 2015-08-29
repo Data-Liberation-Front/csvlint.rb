@@ -154,9 +154,9 @@ There are also information messages available:
 ## Schema Validation
 
 The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON. The structure currently 
-follows JSON Table Schema with some extensions.
+follows JSON Table Schema with some extensions and rudinmentary [CSV on the Web Metadata](http://www.w3.org/TR/tabular-metadata/).
 
-An example schema file is:
+An example JSON Table Schema schema file is:
 
 	{
 		"fields": [
@@ -178,9 +178,33 @@ An example schema file is:
         ]
 	}
 
+An equivalent CSV on the Web Metadata file is:
+
+	{
+		"@context": "http://www.w3.org/ns/csvw",
+		"url": "http://example.com/example1.csv",
+		"tableSchema": {
+			"columns": [
+				{ 
+					"name": "id", 
+					"required": true
+				},
+				{
+					"name": "price",
+					"required": true,
+					"datatype": { "base": "string", "minLength": 1 }
+				},
+				{
+					"name": "postcode",
+					"required": true
+				}
+			]
+		}
+	}
+
 Parsing and validating with a schema:
 
-	schema = Csvlint::Schema.load_from_json_table(uri)
+	schema = Csvlint::Schema.load_from_json(uri)
 	validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, schema )
 
 Supported constraints:
