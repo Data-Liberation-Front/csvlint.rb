@@ -4,9 +4,10 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :uri, :fields, :title, :description
+    attr_reader :type, :uri, :fields, :title, :description
 
-    def initialize(uri, fields=[], title=nil, description=nil)
+    def initialize(uri, fields=[], title=nil, description=nil, type: :json_table)
+      @type = type
       @uri = uri
       @fields = fields
       @title = title
@@ -17,10 +18,18 @@ module Csvlint
     def validate_header(header)
       reset
 
-      found_header = header.to_csv(:row_sep => '')
-      expected_header = @fields.map{ |f| f.name }.to_csv(:row_sep => '')
-      if found_header != expected_header
-        build_warnings(:malformed_header, :schema, 1, nil, found_header, "expectedHeader" => expected_header)
+      if @type == :csvw
+        expected_header = ""
+        header.each_with_index do |found,i|
+          expected_titles = @fields[i].title
+          build_warnings(:malformed_header, :schema, 1, nil, found, "expectedHeader" => expected_titles.join("|")) unless expected_titles.include? found
+        end
+      else
+        found_header = header.to_csv(:row_sep => '')
+        expected_header = @fields.map{ |f| f.name }.to_csv(:row_sep => '')
+        if found_header != expected_header
+          build_warnings(:malformed_header, :schema, 1, nil, found_header, "expectedHeader" => expected_header)
+        end
       end
       return valid?
     end
@@ -63,10 +72,16 @@ module Csvlint
         constraints = {}
         constraints["required"] = field_desc["required"]
         constraints["minLength"] = field_desc["datatype"]["minLength"] if field_desc["datatype"]
-        constraints["pattern"] = field_desc["datatype"]["format"] if field_desc["datatype"]
-        fields << Csvlint::Field.new( field_desc["name"] , constraints , field_desc["titles"] )
+        if field_desc["datatype"]
+          if field_desc["datatype"]["base"] == "date"
+            constraints["datePattern"] = field_desc["datatype"]["format"]
+          else
+            constraints["pattern"] = field_desc["datatype"]["format"]
+          end
+        end
+        fields << Csvlint::Field.new( field_desc["name"] , constraints , Array(field_desc["titles"]) )
       end if json["tableSchema"]
-      return Schema.new(uri, fields)
+      return Schema.new(uri, fields, type: :csvw)
     end
 
     def Schema.load_from_json(uri)
