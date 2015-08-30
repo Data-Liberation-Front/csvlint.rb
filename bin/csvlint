@@ -41,7 +41,9 @@ def print_error(index, error, dump, color)
   if error.row || error.column
     location = "#{error.row ? "Row" : "Column"}: #{location}"
   end
-  output_string = "#{index+1}. #{error.type}. #{location}"
+  output_string = "#{index+1}. #{error.type}"
+  output_string += ". #{location}" unless location.empty?
+  output_string += ". #{error.content}" if error.content
 
   if $stdout.tty?
     puts output_string.colorize(color)

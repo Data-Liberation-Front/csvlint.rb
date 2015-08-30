@@ -34,6 +34,8 @@ module Csvlint
       @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source) unless @source.nil?
       reset
+      @errors += @schema.errors unless @schema.nil?
+      @warnings += @schema.warnings unless @schema.nil?
       validate
 
     end

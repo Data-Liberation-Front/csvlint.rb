@@ -6,7 +6,7 @@ module Csvlint
 
     attr_reader :about_url, :datatype, :default, :lang, :name, :null, :number, :ordered, :property_url, :required, :separator, :source_number, :suppress_output, :text_direction, :titles, :value_url, :virtual, :annotations
 
-    def initialize(number, name, about_url: nil, datatype: "xsd:string", default: "", lang: "und", null: "", ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [])
+    def initialize(number, name, about_url: nil, datatype: "xsd:string", default: "", lang: "und", null: "", ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
       @number = number
       @name = name
       @about_url = about_url
@@ -26,15 +26,7 @@ module Csvlint
       @virtual = virtual
       @annotations = annotations
       reset
-      if @datatype["base"] == "xsd:string" && @datatype["format"]
-        begin
-          @datatype["format"] = Regexp.new(@datatype["format"])
-        rescue RegexpError
-          build_warnings(:invalid_regex, :schema, nil, number, ("#{name}: datatype: format: #{@datatype["format"]}"),
-            { "format" => @datatype["format"] })
-          @datatype["format"] = nil
-        end
-      end
+      @warnings += warnings
     end
 
     def validate(string_value, row=nil)
@@ -50,18 +42,27 @@ module Csvlint
       return [string_value]
     end
 
-    def CsvwColumn.from_json(number, json)
+    def CsvwColumn.from_json(number, column_desc, base_url=nil, lang="und", inherited_properties={})
       titles = {}
-      titles["und"] = Array(json["titles"]) if json["titles"]
-      datatype = json["datatype"] || "xsd:string"
-      if datatype.instance_of? Hash
-        if datatype["base"]
-          datatype["base"] = "xsd:#{datatype["base"]}" unless datatype["base"] =~ /^http(s)/
-        else
-          datatype["base"] = "xsd:string"
+      titles["und"] = Array(column_desc["titles"]) if column_desc["titles"]
+      annotations = {}
+      warnings = []
+      column_desc.each do |property,value|
+        unless VALID_PROPERTIES.include? property
+          v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
+          if warning.nil?
+            if type == :annotation
+              annotations[property] = v
+            else
+              inherited_properties[property] = v
+            end
+          else
+            warnings << Csvlint::ErrorMessage.new(warning, :metadata, nil, nil, "#{property}: #{value}", nil)
+          end
         end
       end
-      return CsvwColumn.new(number, json["name"], datatype: datatype, titles: titles, property_url: json["propertyUrl"], required: json["required"] == true)
+      datatype = inherited_properties["datatype"] || "xsd:string"
+      return CsvwColumn.new(number, column_desc["name"], datatype: datatype, titles: titles, property_url: column_desc["propertyUrl"], required: column_desc["required"] == true, annotations: annotations, warnings: warnings)
     end
 
     private
@@ -71,7 +72,7 @@ module Csvlint
         end
       end
 
-      VALID_PROPERTIES = []
+      VALID_PROPERTIES = [ 'name', 'titles' ]
 
   end
 end

@@ -23,6 +23,7 @@ module Csvlint
     end
 
     def validate_header(header)
+      reset
       return true
     end
 
@@ -37,24 +38,41 @@ module Csvlint
       return valid?
     end
 
-    def CsvwTable.from_json(url, table_desc, table_group_desc={})
-      columns = []
-      if table_desc["tableSchema"]
-        table_schema = table_desc["tableSchema"]
-        if table_schema.instance_of? String
-          table_schema_url = URI.join(url, table_schema)
-          table_schema = JSON.parse( open(table_schema_url).read )
+    def CsvwTable.from_json(table_desc, base_url=nil, lang="und", inherited_properties={})
+      annotations = {}
+      warnings = []
+      table_properties = {}
+      table_desc.each do |property,value|
+        unless VALID_PROPERTIES.include? property
+          v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
+          if warning.nil?
+            if type == :annotation
+              annotations[property] = v
+            elsif type == :table
+              table_properties[property] = v
+            elsif type == :column
+              warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "#{property}", nil)
+            else
+              inherited_properties[property] = v
+            end
+          else
+            warnings << Csvlint::ErrorMessage.new(warning, :metadata, nil, nil, "#{property}: #{value}", nil)
+          end
         end
+      end
+      columns = []
+      table_schema = table_properties["tableSchema"] || inherited_properties["tableSchema"]
+      if table_schema
         table_schema["columns"].each_with_index do |column_desc,i|
-          column = Csvlint::CsvwColumn.from_json(i+1, column_desc)
+          column = Csvlint::CsvwColumn.from_json(i+1, column_desc, base_url, lang, inherited_properties)
           columns << column
         end
       end
-      return CsvwTable.new(URI.join(url, table_desc["url"]), columns: columns)
+      return CsvwTable.new(URI.join(base_url, table_desc["url"]), columns: columns, annotations: annotations)
     end
 
     private
-      VALID_PROPERTIES = []
+      VALID_PROPERTIES = [ 'url' ]
 
   end
 end

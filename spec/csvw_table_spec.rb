@@ -79,7 +79,7 @@ AF,1962,9989846
 
     it "should create a table from pre-parsed CSVW metadata" do
       json = JSON.parse( @metadata )
-      table = Csvlint::CsvwTable.from_json("http://w3c.github.io/csvw/tests/countries.json", json["tables"][0], json)
+      table = Csvlint::CsvwTable.from_json(json["tables"][0], "http://w3c.github.io/csvw/tests/countries.json")
 
       expect(table).to be_a(Csvlint::CsvwTable)
       expect(table.url.to_s).to eq("http://w3c.github.io/csvw/tests/countries.csv")

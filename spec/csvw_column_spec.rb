@@ -50,7 +50,7 @@ describe Csvlint::CsvwColumn do
       expect(column.titles).to eq({})
       expect(column.value_url).to eq(nil)
       expect(column.virtual).to eq(false)
-      expect(column.annotations).to eql([])
+      expect(column.annotations).to eql({})
     end
 
     it "should override default values" do
@@ -82,7 +82,7 @@ describe Csvlint::CsvwColumn do
       expect(column.titles).to eql({ "und" => [ "countryCode" ]})
       expect(column.value_url).to eq(nil)
       expect(column.virtual).to eq(false)
-      expect(column.annotations).to eql([])
+      expect(column.annotations).to eql({})
     end
 
     it "should include the datatype" do
@@ -94,6 +94,19 @@ describe Csvlint::CsvwColumn do
       expect(column.name).to eq("Id")
       expect(column.required).to eq(true)
       expect(column.datatype).to eql({ "base" => "xsd:string", "minLength" => 3 })
+    end
+
+    it "should generate warnings for invalid null values" do
+      @desc=<<-EOL
+      {
+        "name": "countryCode",
+        "null": true
+      }
+      EOL
+      json = JSON.parse( @desc )
+      column = Csvlint::CsvwColumn.from_json(1, json)
+      expect(column.warnings.length).to eq(1)
+      expect(column.warnings[0].type).to eq(:invalid_value)
     end
   end
 end

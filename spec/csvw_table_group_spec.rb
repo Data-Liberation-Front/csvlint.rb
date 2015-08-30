@@ -2,6 +2,57 @@ require 'spec_helper'
 
 describe Csvlint::CsvwTableGroup do
 
+  it "should inherit null to all columns" do
+    @metadata=<<-EOL
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "null": true,
+  "tables": [{
+    "url": "test040.csv",
+    "tableSchema": {
+      "columns": [{
+        "titles": "null"
+      }, {
+        "titles": "lang"
+      }, {
+        "titles": "textDirection"
+      }, {
+        "titles": "separator"
+      }, {
+        "titles": "ordered"
+      }, {
+        "titles": "default"
+      }, {
+        "titles": "datatype"
+      }, {
+        "titles": "aboutUrl"
+      }, {
+        "titles": "propertyUrl"
+      }, {
+        "titles": "valueUrl"
+      }]
+    }
+  }]
+}
+    EOL
+    json = JSON.parse( @metadata )
+    table_group = Csvlint::CsvwTableGroup.from_json("http://w3c.github.io/csvw/tests/test040-metadata.json", json)
+
+    expect(table_group.class).to eq(Csvlint::CsvwTableGroup)
+    expect(table_group.annotations.length).to eq(0)
+    expect(table_group.warnings.length).to eq(1)
+    expect(table_group.warnings[0].type).to eq(:invalid_value)
+    expect(table_group.warnings[0].category).to eq(:metadata)
+    expect(table_group.warnings[0].content).to eq("null: true")
+
+    expect(table_group.tables.length).to eq(1)
+    expect(table_group.tables["http://w3c.github.io/csvw/tests/test040.csv"]).to be_a(Csvlint::CsvwTable)
+
+    table = table_group.tables["http://w3c.github.io/csvw/tests/test040.csv"]
+    expect(table.columns.length).to eq(10)
+    expect(table.columns[0].null).to eq("")
+  end
+
   context "when parsing CSVW table group metadata" do
 
     before(:each) do
