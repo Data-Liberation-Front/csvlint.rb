@@ -6,7 +6,7 @@ module Csvlint
 
     attr_reader :columns, :table_direction, :foreign_keys, :id, :notes, :schema, :suppress_output, :transformations, :url, :annotations
 
-    def initialize(url, columns: [], table_direction: :auto, foreign_keys: [], id: nil, notes: [], schema: nil, suppress_output: false, transformations: [], annotations: [])
+    def initialize(url, columns: [], table_direction: :auto, foreign_keys: [], id: nil, notes: [], schema: nil, suppress_output: false, transformations: [], annotations: [], warnings: [])
       @url = url
       @columns = columns
       @table_direction = table_direction
@@ -18,6 +18,7 @@ module Csvlint
       @transformations = transformations
       @annotations = annotations
       reset
+      @warnings += warnings
       @errors += columns.map{|c| c.errors}.flatten
       @warnings += columns.map{|c| c.warnings}.flatten
     end
@@ -45,7 +46,7 @@ module Csvlint
       table_desc.each do |property,value|
         unless VALID_PROPERTIES.include? property
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
-          if warning.nil?
+          if warning.nil? || warning.empty?
             if type == :annotation
               annotations[property] = v
             elsif type == :table
@@ -56,7 +57,7 @@ module Csvlint
               inherited_properties[property] = v
             end
           else
-            warnings << Csvlint::ErrorMessage.new(warning, :metadata, nil, nil, "#{property}: #{value}", nil)
+            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) }
           end
         end
       end
@@ -68,7 +69,7 @@ module Csvlint
           columns << column
         end
       end
-      return CsvwTable.new(URI.join(base_url, table_desc["url"]), columns: columns, annotations: annotations)
+      return CsvwTable.new(URI.join(base_url, table_desc["url"]), columns: columns, annotations: annotations, warnings: warnings)
     end
 
     private

@@ -9,14 +9,14 @@ describe Csvlint::CsvwColumn do
   end
 
   it "should generate errors for string values that aren't long enough" do
-    column = Csvlint::CsvwColumn.new(1, "foo", datatype: { "base" => "xsd:string", "minLength" => 4 })
+    column = Csvlint::CsvwColumn.new(1, "foo", datatype: { "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 4 })
     valid = column.validate("bar", 2)
     expect(valid).to eq(false)
     expect(column.errors.length).to eq(1)
   end
 
   it "shouldn't generate errors for string values that are long enough" do
-    column = Csvlint::CsvwColumn.new(1, "foo", datatype: { "base" => "xsd:string", "minLength" => 4 })
+    column = Csvlint::CsvwColumn.new(1, "foo", datatype: { "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 4 })
     valid = column.validate("barn", 2)
     expect(valid).to eq(true)
     expect(column.errors.length).to eq(0)
@@ -36,7 +36,7 @@ describe Csvlint::CsvwColumn do
       expect(column.number).to eq(1)
       expect(column.name).to eq("countryCode")
       expect(column.about_url).to eq(nil)
-      expect(column.datatype).to eq("xsd:string")
+      expect(column.datatype).to eq({ "@id" => "http://www.w3.org/2001/XMLSchema#string" })
       expect(column.default).to eq("")
       expect(column.lang).to eq("und")
       expect(column.null).to eq("")
@@ -68,7 +68,7 @@ describe Csvlint::CsvwColumn do
       expect(column.number).to eq(2)
       expect(column.name).to eq("countryCode")
       expect(column.about_url).to eq(nil)
-      expect(column.datatype).to eq("xsd:string")
+      expect(column.datatype).to eq({ "@id" => "http://www.w3.org/2001/XMLSchema#string" })
       expect(column.default).to eq("")
       expect(column.lang).to eq("und")
       expect(column.null).to eq("")
@@ -93,7 +93,7 @@ describe Csvlint::CsvwColumn do
       column = Csvlint::CsvwColumn.from_json(1, json)
       expect(column.name).to eq("Id")
       expect(column.required).to eq(true)
-      expect(column.datatype).to eql({ "base" => "xsd:string", "minLength" => 3 })
+      expect(column.datatype).to eql({ "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 3 })
     end
 
     it "should generate warnings for invalid null values" do

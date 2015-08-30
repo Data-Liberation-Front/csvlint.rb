@@ -50,18 +50,18 @@ module Csvlint
       column_desc.each do |property,value|
         unless VALID_PROPERTIES.include? property
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
-          if warning.nil?
+          if warning.nil? || warning.empty?
             if type == :annotation
               annotations[property] = v
             else
               inherited_properties[property] = v
             end
           else
-            warnings << Csvlint::ErrorMessage.new(warning, :metadata, nil, nil, "#{property}: #{value}", nil)
+            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) }
           end
         end
       end
-      datatype = inherited_properties["datatype"] || "xsd:string"
+      datatype = inherited_properties.include?("datatype") ? inherited_properties["datatype"] : { "@id" => "http://www.w3.org/2001/XMLSchema#string" }
       return CsvwColumn.new(number, column_desc["name"], datatype: datatype, titles: titles, property_url: column_desc["propertyUrl"], required: column_desc["required"] == true, annotations: annotations, warnings: warnings)
     end
 

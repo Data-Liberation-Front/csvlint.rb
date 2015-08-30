@@ -46,6 +46,7 @@ module Csvlint
         base_url = URI.join(url, context[1]["@base"]) if context[1]["@base"]
         lang = context[1]["@language"] if context[1]["@language"]
       end
+      json.except!("@context")
       tables = {}
       annotations = {}
       inherited_properties = {}
@@ -56,7 +57,7 @@ module Csvlint
       json.each do |property,value|
         unless VALID_PROPERTIES.include? property
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
-          if warning.nil?
+          if warning.nil? || warning.empty?
             if type == :annotation
               annotations[property] = v
             elsif type == :column
@@ -65,7 +66,7 @@ module Csvlint
               inherited_properties[property] = v
             end
           else
-            warnings << Csvlint::ErrorMessage.new(warning, :metadata, nil, nil, "#{property}: #{value}", nil)
+            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) }
           end
         end
       end
