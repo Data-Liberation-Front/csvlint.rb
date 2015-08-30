@@ -51,6 +51,7 @@ end
 
 Then(/^there should be (\d+) error$/) do |count|
   expect( @errors.count ).to eq( count.to_i )
+  STDERR.puts @errors.inspect if @errors.count > 0 && @errors.count != count.to_i
 end
 
 Then(/^that error should have the type "(.*?)"$/) do |type|
