@@ -40,7 +40,12 @@ module Csvlint
     def CsvwTable.from_json(url, table_desc, table_group_desc={})
       columns = []
       if table_desc["tableSchema"]
-        table_desc["tableSchema"]["columns"].each_with_index do |column_desc,i|
+        table_schema = table_desc["tableSchema"]
+        if table_schema.instance_of? String
+          table_schema_url = URI.join(url, table_schema)
+          table_schema = JSON.parse( open(table_schema_url).read )
+        end
+        table_schema["columns"].each_with_index do |column_desc,i|
           column = Csvlint::CsvwColumn.from_json(i+1, column_desc)
           columns << column
         end

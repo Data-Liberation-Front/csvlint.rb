@@ -16,8 +16,8 @@ end
 When(/^I carry out CSVW validation$/) do
   @csv_options ||= default_csv_options
 
-  json = JSON.parse(@schema_json)
   if @schema_json
+    json = JSON.parse(@schema_json)
     if @schema_type == :json_table
       @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", json )
     else
