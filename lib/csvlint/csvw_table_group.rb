@@ -39,21 +39,35 @@ module Csvlint
     end
 
     def CsvwTableGroup.from_json(url, json)
-      base_url = url
-      lang = "und"
-      context = json["@context"]
-      if context.instance_of?(Array) && context[1]
-        base_url = URI.join(url, context[1]["@base"]) if context[1]["@base"]
-        lang = context[1]["@language"] if context[1]["@language"]
-      end
-      json.except!("@context")
+      warnings = []
       tables = {}
       annotations = {}
       inherited_properties = {}
-      warnings = []
+      base_url = url
+      lang = "und"
+
+      context = json["@context"]
+      if context.instance_of?(Array) && context[1]
+        context[1].each do |property,value|
+          v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
+          if warning.nil? || warning.empty?
+            if type == :context
+              base_url = v if property == "@base"
+              lang = v if property == "@language"
+            else
+              warnings += Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "@context: #{property}", nil)
+            end
+          else
+            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "@context: #{property}: #{value}", nil) }
+          end
+        end
+      end
+      json.except!("@context")
+
       if json["url"]
         json = { "tables" => [ json ] }
       end
+
       json.each do |property,value|
         unless VALID_PROPERTIES.include? property
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
@@ -70,12 +84,30 @@ module Csvlint
           end
         end
       end
+
+      id = json["@id"]
+      raise Csvlint::CsvwMetadataError.new("$.@id"), "@id starts with _:" if id =~ /^_:/
+      raise Csvlint::CsvwMetadataError.new("$.@type"), "@type of table group is not 'TableGroup'" if json["@type"] && json["@type"] != 'TableGroup'
+
+      raise Csvlint::CsvwMetadataError.new("$"), "no tables" unless json["tables"]
+      raise Csvlint::CsvwMetadataError.new("$.tables"), "tables is not an array" unless json["tables"].instance_of? Array
       json["tables"].each do |table_desc|
-        table_url = URI.join(url, table_desc["url"]).to_s
-        table = Csvlint::CsvwTable.from_json(table_desc, base_url, lang, inherited_properties)
-        tables[table_url] = table
+        if table_desc.instance_of? Hash
+          table_url = table_desc["url"]
+          unless table_url.instance_of? String
+            warnings << Csvlint::ErrorMessage.new(:invalid_url, :metadata, nil, nil, "url: #{table_url}", nil)
+            table_url = ""
+          end
+          table_url = URI.join(url, table_url).to_s
+          table_desc["url"] = table_url
+          table = Csvlint::CsvwTable.from_json(table_desc, base_url, lang, inherited_properties)
+          tables[table_url] = table
+        else
+          warnings << Csvlint::ErrorMessage.new(:invalid_table_description, :metadata, nil, nil, "#{table_desc}", nil)
+        end
       end
-      return CsvwTableGroup.new(url, id: json["@id"], tables: tables, notes: json["notes"] || [], annotations: annotations, warnings: warnings)
+
+      return CsvwTableGroup.new(url, id: id, tables: tables, notes: json["notes"] || [], annotations: annotations, warnings: warnings)
     end
 
     private

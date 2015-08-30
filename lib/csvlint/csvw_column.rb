@@ -4,11 +4,12 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :about_url, :datatype, :default, :lang, :name, :null, :number, :ordered, :property_url, :required, :separator, :source_number, :suppress_output, :text_direction, :titles, :value_url, :virtual, :annotations
+    attr_reader :id, :about_url, :datatype, :default, :lang, :name, :null, :number, :ordered, :property_url, :required, :separator, :source_number, :suppress_output, :text_direction, :titles, :value_url, :virtual, :annotations
 
-    def initialize(number, name, about_url: nil, datatype: "xsd:string", default: "", lang: "und", null: "", ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
+    def initialize(number, name, id: nil, about_url: nil, datatype: "xsd:string", default: "", lang: "und", null: "", ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
       @number = number
       @name = name
+      @id = id
       @about_url = about_url
       @datatype = datatype
       @default = default
@@ -47,6 +48,7 @@ module Csvlint
       titles["und"] = Array(column_desc["titles"]) if column_desc["titles"]
       annotations = {}
       warnings = []
+
       column_desc.each do |property,value|
         unless VALID_PROPERTIES.include? property
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
@@ -61,8 +63,14 @@ module Csvlint
           end
         end
       end
+
+      id = column_desc["@id"]
+      raise Csvlint::CsvwMetadataError.new("columns[#{number}].@id"), "@id starts with _:" if id =~ /^_:/
+      raise Csvlint::CsvwMetadataError.new("columns[#{number}].@type"), "@type of column is not 'Column'" if column_desc["@type"] && column_desc["@type"] != 'Column'
+
       datatype = inherited_properties.include?("datatype") ? inherited_properties["datatype"] : { "@id" => "http://www.w3.org/2001/XMLSchema#string" }
-      return CsvwColumn.new(number, column_desc["name"], datatype: datatype, titles: titles, property_url: column_desc["propertyUrl"], required: column_desc["required"] == true, annotations: annotations, warnings: warnings)
+
+      return CsvwColumn.new(number, column_desc["name"], id: id, datatype: datatype, titles: titles, property_url: column_desc["propertyUrl"], required: column_desc["required"] == true, annotations: annotations, warnings: warnings)
     end
 
     private

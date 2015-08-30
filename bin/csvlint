@@ -105,6 +105,12 @@ schema = nil
 if options[:schema]
   begin
     schema = Csvlint::Schema.load_from_json(options[:schema])
+  rescue JSON::ParserError => e
+    puts "invalid metadata: malformed JSON"
+    exit 1
+  rescue Csvlint::CsvwMetadataError => e
+    puts "invalid metadata: #{e.message} at #{e.path}"
+    exit 1
   rescue Errno::ENOENT
     puts "#{options[:schema]} not found"
     exit 1
@@ -113,6 +119,11 @@ end
 
 valid = true
 if source.nil?
+  unless schema.instance_of? Csvlint::CsvwTableGroup
+    puts "No CSV data to validate."
+    puts opts
+    exit 1
+  end
   schema.tables.keys.each do |source|
     begin
       source = source.sub("file:","")

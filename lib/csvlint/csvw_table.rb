@@ -23,9 +23,14 @@ module Csvlint
       @warnings += columns.map{|c| c.warnings}.flatten
     end
 
-    def validate_header(header)
+    def validate_header(headers)
       reset
-      return true
+      headers.each_with_index do |header,i|
+        unless columns[i]
+          build_errors(:malformed_header, :schema, 1, nil, header, nil)
+        end
+      end unless columns.empty?
+      return valid?
     end
 
     def validate_row(values, row=nil)
@@ -43,6 +48,8 @@ module Csvlint
       annotations = {}
       warnings = []
       table_properties = {}
+      columns = []
+
       table_desc.each do |property,value|
         unless VALID_PROPERTIES.include? property
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
@@ -61,15 +68,25 @@ module Csvlint
           end
         end
       end
-      columns = []
+
+      id = table_desc["@id"]
+      raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].@id"), "@id starts with _:" if id =~ /^_:/
+      raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].@type"), "@type of table is not 'Table'" if table_desc["@type"] && table_desc["@type"] != 'Table'
+
       table_schema = table_properties["tableSchema"] || inherited_properties["tableSchema"]
       if table_schema
+        raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.columns"), "schema columns is not an array" unless table_schema["columns"].instance_of? Array
         table_schema["columns"].each_with_index do |column_desc,i|
-          column = Csvlint::CsvwColumn.from_json(i+1, column_desc, base_url, lang, inherited_properties)
-          columns << column
+          if column_desc.instance_of? Hash
+            column = Csvlint::CsvwColumn.from_json(i+1, column_desc, base_url, lang, inherited_properties)
+            columns << column
+          else
+            warnings << Csvlint::ErrorMessage.new(:invalid_column_description, :metadata, nil, nil, "#{column_desc}", nil)
+          end
         end
       end
-      return CsvwTable.new(URI.join(base_url, table_desc["url"]), columns: columns, annotations: annotations, warnings: warnings)
+
+      return CsvwTable.new(URI.join(base_url, table_desc["url"]), id: id, columns: columns, annotations: annotations, warnings: warnings)
     end
 
     private

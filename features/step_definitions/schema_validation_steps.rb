@@ -15,6 +15,7 @@ end
 
 Given(/^the (schema|metadata) is stored at the url "(.*?)"$/) do |schema_type,schema_url|
   @schema_url = schema_url
+  stub_request(:get, @schema_url).to_return(:status => 200, :body => @schema_json.to_str)
 end
 
 Given(/^there is a file at "(.*?)" with the content:$/) do |url, content|

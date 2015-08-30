@@ -16,27 +16,33 @@ end
 When(/^I carry out CSVW validation$/) do
   @csv_options ||= default_csv_options
 
-  if @schema_json
-    json = JSON.parse(@schema_json)
-    if @schema_type == :json_table
-      @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", json )
-    else
-      @schema = Csvlint::Schema.from_csvw_metadata( @schema_url || "http://example.org ", json )
+  begin
+    if @schema_json
+      json = JSON.parse(@schema_json)
+      if @schema_type == :json_table
+        @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", json )
+      else
+        @schema = Csvlint::Schema.from_csvw_metadata( @schema_url || "http://example.org ", json )
+      end
     end
-  end
 
-  if @url.nil?
-    @errors = []
-    @warnings = []
-    @schema.tables.keys.each do |table_url|
-      validator = Csvlint::Validator.new( table_url, @csv_options, @schema )
-      @errors += validator.errors
-      @warnings += validator.warnings
+    if @url.nil?
+      @errors = []
+      @warnings = []
+      @schema.tables.keys.each do |table_url|
+        validator = Csvlint::Validator.new( table_url, @csv_options, @schema )
+        @errors += validator.errors
+        @warnings += validator.warnings
+      end
+    else
+      validator = Csvlint::Validator.new( @url, @csv_options, @schema )
+      @errors = validator.errors
+      @warnings = validator.warnings
     end
-  else
-    validator = Csvlint::Validator.new( @url, @csv_options, @schema )
-    @errors = validator.errors
-    @warnings = validator.warnings
+  rescue JSON::ParserError => e
+    @errors = [e]
+  rescue Csvlint::CsvwMetadataError => e
+    @errors = [e]
   end
 end
 

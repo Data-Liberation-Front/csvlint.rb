@@ -26,7 +26,16 @@ module Csvlint
         }
       end
 
+      def CsvwPropertyChecker.language_property(type)
+        return lambda { |value, base_url, lang|
+          return value, nil, type if value =~ BCP47_REGEX
+          return nil, :invalid_value, type
+        }
+      end
+
       PROPERTIES = {
+        # context properties
+        "@language" => language_property(:context),
         # inherited properties
         "null" => string_property(:inherited),
         "default" => string_property(:inherited),
@@ -34,10 +43,7 @@ module Csvlint
           return value, nil, :inherited if value.instance_of?(String) || value.nil?
           return nil, :invalid_value, :inherited
         },
-        "lang" => lambda { |value, base_url, lang|
-          return value, nil, :inherited if value =~ BCP47_REGEX
-          return nil, :invalid_value, :inherited
-        },
+        "lang" => language_property(:inherited),
         "datatype" => lambda { |value, base_url, lang|
           value = value.clone
           warnings = []
@@ -81,27 +87,84 @@ module Csvlint
         # column level properties
         "virtual" => boolean_property(:column),
         # table level properties
-        "transformations" => lambda { |value, base_url, lang| return value, nil, :table },
-        "tableDirection" => lambda { |value, base_url, lang| return value, nil, :table },
+        "transformations" => lambda { |value, base_url, lang| 
+          transformations = []
+          warnings = []
+          if value.instance_of? Array
+            value.each_with_index do |transformation,i|
+              if transformation.instance_of? Hash
+                transformation = transformation.clone
+                transformation.each do |p,v|
+                  if p == "@id"
+                    raise Csvlint::CsvwMetadataError.new("transformations[#{i}].@id"), "@id starts with _:" if v =~ /^_:/
+                  elsif p == "@type"
+                    raise Csvlint::CsvwMetadataError.new("transformations[#{i}].@type"), "@type of transformation is not 'Template'" if v != 'Template'
+                  elsif p == "url"
+                  elsif p == "titles"
+                  else
+                    v, warning, type = check_property(p, v, base_url, lang)
+                    unless type == :transformation && (warning.nil? || warning.empty?)
+                      value.except!(p)
+                      warnings << :invalid_property unless type == :transformation
+                      warnings += Array(warning)
+                    end
+                  end
+                end
+                transformations << transformation
+              else
+                warnings << :invalid_transformation
+              end
+            end
+          else
+            warnings << :invalid_value
+          end
+          return transformations, warnings, :table 
+        },
+        "tableDirection" => lambda { |value, base_url, lang| 
+          value = value.to_sym
+          return value, nil, :table if [:ltr, :rtl, :auto].include? value
+          return :auto, :invalid_value, :table
+        },
         "tableSchema" => lambda { |value, base_url, lang| 
           if value.instance_of? String
-            table_schema_url = URI.join(base_url, value)
-            table_schema = JSON.parse( open(table_schema_url).read )
-            return table_schema, nil, :table
+            schema_url = URI.join(base_url, value)
+            schema = JSON.parse( open(schema_url).read )
           else
-            return value, nil, :table 
+            schema = value.clone
           end
+          warnings = []
+          schema.each do |p,v|
+            if p == "@id"
+              raise Csvlint::CsvwMetadataError.new("tableSchema.@id"), "@id starts with _:" if v =~ /^_:/
+            elsif p == "@type"
+              raise Csvlint::CsvwMetadataError.new("tableSchema.@type"), "@type of schema is not 'Schema'" if v != 'Schema'
+            else
+              v, warning, type = check_property(p, v, base_url, lang)
+              unless (type == :schema || type == :inherited) && (warning.nil? || warning.empty?)
+                schema.except!(p)
+                warnings << :invalid_property unless (type == :schema || type == :inherited)
+                warnings += Array(warning)
+              end
+            end
+          end
+          return schema, warnings, :table 
         },
         "dialect" => lambda { |value, base_url, lang| 
           value = value.clone
           if value.instance_of? Hash
             warnings = []
             value.each do |p,v|
-              v, warning, type = check_property(p, v, base_url, lang)
-              unless type == :dialect && (warning.nil? || warning.empty?)
-                value.except!(p)
-                warnings << :invalid_property unless type == :dialect
-                warnings += Array(warning)
+              if p == "@id"
+                raise Csvlint::CsvwMetadataError.new("dialect.@id"), "@id starts with _:" if v =~ /^_:/
+              elsif p == "@type"
+                raise Csvlint::CsvwMetadataError.new("dialect.@type"), "@type of dialect is not 'Dialect'" if v != 'Dialect'
+              else
+                v, warning, type = check_property(p, v, base_url, lang)
+                unless type == :dialect && (warning.nil? || warning.empty?)
+                  value.except!(p)
+                  warnings << :invalid_property unless type == :dialect
+                  warnings += Array(warning)
+                end
               end
             end
             return value, warnings, :table 
@@ -110,7 +173,51 @@ module Csvlint
           end
         },
         # dialect properties
-        "commentPrefix" => string_property(:dialect)
+        "commentPrefix" => string_property(:dialect),
+        "header" => boolean_property(:dialect),
+        "trim" => lambda { |value, base_url, lang| 
+          value = :true if value == true || value == "true"
+          value = :false if value == false || value == "false"
+          value = :start if value == "start"
+          value = :end if value == "end"
+          return value, nil, :dialect if [:true, :false, :start, :end].include? value
+          return true, :invalid_value, :dialect
+        },
+        # schema properties
+        "columns" => lambda { |value, base_url, lang| return value, nil, :schema },
+        "primaryKey" => lambda { |value, base_url, lang| return value, nil, :schema },
+        "foreignKeys" => lambda { |value, base_url, lang| 
+          foreignKeys = []
+          warnings = []
+          if value.instance_of? Array
+            value.each_with_index do |foreignKey,i|
+              if foreignKey.instance_of? Hash
+                foreignKey = foreignKey.clone
+                foreignKey.each do |p,v|
+                  v, warning, type = check_property(p, v, base_url, lang)
+                  unless type == :foreignKey && (warning.nil? || warning.empty?)
+                    value.except!(p)
+                    warnings << :invalid_property unless type == :foreignKey
+                    warnings += Array(warning)
+                  end
+                end
+                foreignKeys << foreignKey
+              else
+                warnings << :invalid_foreignKey
+              end
+            end
+          else
+            warnings << :invalid_value
+          end
+          return foreignKeys, warnings, :schema 
+        },
+        # transformation properties
+        "targetFormat" => lambda { |value, base_url, lang| return value, nil, :transformation },
+        "scriptFormat" => lambda { |value, base_url, lang| return value, nil, :transformation },
+        "source" => lambda { |value, base_url, lang| return value, nil, :transformation },
+        # foreignKey properties
+        "columnReference" => lambda { |value, base_url, lang| return value, nil, :foreignKey },
+        "reference" => lambda { |value, base_url, lang| return value, nil, :foreignKey }
       }
 
       NAMESPACES = {
