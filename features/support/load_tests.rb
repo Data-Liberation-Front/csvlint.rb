@@ -37,10 +37,15 @@ File.open(File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature
 	manifest["entries"].each do |entry|
 		action_uri, action_file = cache_file(entry["action"])
 		metadata = nil
+		provided_files = []
+		missing_files = []
 		file.puts "\t# #{entry["id"]}"
 		file.puts "\t# #{entry["comment"]}"
 		file.puts "\tScenario: #{entry["id"]} #{entry["name"].gsub("<", "less than")}"
-		if entry["action"].end_with?(".csv")
+		if entry["action"].end_with?(".json")
+			file.puts "\t\tGiven I have a metadata file called \"csvw/#{entry["action"]}\""
+			file.puts "\t\tAnd the metadata is stored at the url \"#{action_uri}\""
+		else
 			file.puts "\t\tGiven I have a CSV file called \"csvw/#{entry["action"]}\""
 			file.puts "\t\tAnd it has a Link header holding \"#{entry["httpLink"]}\"" if entry["httpLink"]
 			file.puts "\t\tAnd it is stored at the url \"#{action_uri}\""
@@ -50,16 +55,23 @@ File.open(File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature
 				file.puts "\t\tAnd I have a metadata file called \"csvw/#{entry["option"]["metadata"]}\""
 				file.puts "\t\tAnd the metadata is stored at the url \"#{metadata}\""
 			end
-		else
-			file.puts "\t\tGiven I have a metadata file called \"csvw/#{entry["action"]}\""
-			file.puts "\t\tAnd the metadata is stored at the url \"#{action_uri}\""
+			provided_files << action_uri.to_s
+			missing_files = [				  
+  				URI.join(action_uri, '/.well-known/csvm').to_s,
+  				"#{action_uri}-metadata.json",
+  				URI.join(action_uri, 'csv-metadata.json').to_s
+			]
 		end
 		entry["implicit"].each do |implicit|
 			implicit_uri, implicit_file = cache_file(implicit)
+			provided_files << implicit_uri.to_s
 			unless implicit_uri == metadata
 				file.puts "\t\tAnd I have a file called \"csvw/#{implicit}\" at the url \"#{implicit_uri}\""
 			end
 		end if entry["implicit"]
+		missing_files.each do |uri|
+			file.puts "\t\tAnd there is no file at the url \"#{uri}\"" unless provided_files.include? uri
+		end
 		file.puts "\t\tWhen I carry out CSVW validation"
 		if entry["type"] == "csvt:WarningValidationTest"
 			file.puts "\t\tThen there should not be errors"

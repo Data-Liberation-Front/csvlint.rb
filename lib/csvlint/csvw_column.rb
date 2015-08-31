@@ -53,31 +53,33 @@ module Csvlint
     def CsvwColumn.from_json(number, column_desc, base_url=nil, lang="und", inherited_properties={})
       annotations = {}
       warnings = []
+      column_properties = {}
 
       column_desc.each do |property,value|
-        unless VALID_PROPERTIES.include? property
+        if property == "@type"
+          raise Csvlint::CsvwMetadataError.new("columns[#{number}].@type"), "@type of column is not 'Column'" if value != 'Column'
+        else
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
-          if warning.nil? || warning.empty?
-            if type == :annotation
-              annotations[property] = v
-            else
-              inherited_properties[property] = v
-            end
+          warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) } unless warning.nil? || warning.empty?
+          if type == :annotation
+            annotations[property] = v
+          elsif type == :common || type == :column
+            column_properties[property] = v
+          elsif type == :inherited
+            inherited_properties[property] = v
           else
-            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) }
+            warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "column: #{property}", nil)
           end
         end
       end
 
-      id = column_desc["@id"]
-      raise Csvlint::CsvwMetadataError.new("columns[#{number}].@id"), "@id starts with _:" if id =~ /^_:/
-      raise Csvlint::CsvwMetadataError.new("columns[#{number}].@type"), "@type of column is not 'Column'" if column_desc["@type"] && column_desc["@type"] != 'Column'
-
-      titles = inherited_properties["titles"]
+      id = column_properties["@id"]
+      name = column_properties["name"]
+      titles = column_properties["titles"]
 
       datatype = inherited_properties.include?("datatype") ? inherited_properties["datatype"] : { "@id" => "http://www.w3.org/2001/XMLSchema#string" }
 
-      return CsvwColumn.new(number, column_desc["name"], id: id, datatype: datatype, titles: titles, property_url: column_desc["propertyUrl"], required: column_desc["required"] == true, annotations: annotations, warnings: warnings)
+      return CsvwColumn.new(number, name, id: id, datatype: datatype, titles: titles, property_url: column_desc["propertyUrl"], required: column_desc["required"] == true, annotations: annotations, warnings: warnings)
     end
 
     private
@@ -86,8 +88,6 @@ module Csvlint
           build_errors(:min_length, :schema, row, number, value, { "minLength" => datatype["minLength"] }) if value.length < datatype["minLength"]
         end
       end
-
-      VALID_PROPERTIES = [ 'name' ]
 
   end
 end

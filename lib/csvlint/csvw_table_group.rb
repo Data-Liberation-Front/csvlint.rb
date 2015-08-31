@@ -43,6 +43,7 @@ module Csvlint
       tables = {}
       annotations = {}
       inherited_properties = {}
+      common_properties = {}
       base_url = url
       lang = "und"
 
@@ -66,27 +67,26 @@ module Csvlint
 
       if json["url"]
         json = { "tables" => [ json ] }
-      end
+      end unless json["tables"]
 
       json.each do |property,value|
         unless VALID_PROPERTIES.include? property
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
-          if warning.nil? || warning.empty?
-            if type == :annotation
-              annotations[property] = v
-            elsif type == :column
-              warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "#{property}", nil)
-            else
-              inherited_properties[property] = v
-            end
+          warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) } unless warning.nil? || warning.empty?
+          if type == :annotation
+            annotations[property] = v
+          elsif type == :common
+            common_properties[property] = v
+          elsif type == :column
+            warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "#{property}", nil)
           else
-            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) }
+            inherited_properties[property] = v
           end
         end
       end
 
-      id = json["@id"]
-      raise Csvlint::CsvwMetadataError.new("$.@id"), "@id starts with _:" if id =~ /^_:/
+      id = common_properties["@id"]
+
       raise Csvlint::CsvwMetadataError.new("$.@type"), "@type of table group is not 'TableGroup'" if json["@type"] && json["@type"] != 'TableGroup'
 
       raise Csvlint::CsvwMetadataError.new("$"), "no tables property" unless json["tables"]
@@ -112,7 +112,7 @@ module Csvlint
     end
 
     private
-      VALID_PROPERTIES = ['tables', 'notes', '@context', '@id', '@type']
+      VALID_PROPERTIES = ['tables', 'notes', '@type']
 
   end
 end

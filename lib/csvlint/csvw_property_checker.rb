@@ -12,6 +12,13 @@ module Csvlint
     end
 
     private
+      def CsvwPropertyChecker.array_property(type)
+        return lambda { |value, base_url, lang|
+          return value, nil, type if value.instance_of? Array
+          return false, :invalid_value, type
+        } 
+      end
+
       def CsvwPropertyChecker.boolean_property(type)
         return lambda { |value, base_url, lang|
           return value, nil, type if value == true || value == false
@@ -26,6 +33,14 @@ module Csvlint
         }
       end
 
+      def CsvwPropertyChecker.link_property(type)
+        return lambda { |value, base_url, lang|
+          raise Csvlint::CsvwMetadataError, "@id #{value} starts with _:" if value.to_s =~ /^_:/
+          return URI.join(base_url, value), nil, type if value.instance_of? String
+          return base_url, :invalid_value, type
+        }
+      end
+
       def CsvwPropertyChecker.language_property(type)
         return lambda { |value, base_url, lang|
           return value, nil, type if value =~ BCP47_REGEX
@@ -35,16 +50,32 @@ module Csvlint
 
       def CsvwPropertyChecker.natural_language_property(type)
         return lambda { |value, base_url, lang| 
+          warnings = []
           if value.instance_of? String
             return { lang => [ value ] }, nil, type
           elsif value.instance_of? Array
-            return { lang => value }, nil, type
+            valid_titles = []
+            value.each do |title|
+              if title.instance_of? String
+                valid_titles << title
+              else
+                warnings << :invalid_value
+              end
+            end
+            return { lang => valid_titles }, warnings, type
           elsif value.instance_of? Hash
             value = value.clone
-            warnings = []
             value.each do |l,v|
               if l =~ BCP47_REGEX
-                value[l] = Array(v)
+                valid_titles = []
+                Array(v).each do |title|
+                  if title.instance_of? String
+                    valid_titles << title
+                  else
+                    warnings << :invalid_value
+                  end
+                end
+                value[l] = valid_titles
               else
                 value.except!(l)
                 warnings << :invalid_language
@@ -67,6 +98,10 @@ module Csvlint
       PROPERTIES = {
         # context properties
         "@language" => language_property(:context),
+        # common properties
+        "@id" => link_property(:common),
+        "notes" => array_property(:common),
+        "suppressOutput" => boolean_property(:common),
         # inherited properties
         "null" => string_property(:inherited),
         "default" => string_property(:inherited),
@@ -118,6 +153,10 @@ module Csvlint
         # column level properties
         "virtual" => boolean_property(:column),
         "titles" => natural_language_property(:column),
+        "name" => lambda { |value, base_url, lang|
+          return value, nil, :column if value.instance_of? String
+          return nil, :invalid_value, :column
+        },
         # table level properties
         "transformations" => lambda { |value, base_url, lang| 
           transformations = []
@@ -185,6 +224,7 @@ module Csvlint
           end
           return schema, warnings, :table 
         },
+        "url" => link_property(:table),
         "dialect" => lambda { |value, base_url, lang| 
           if value.instance_of? Hash
             value = value.clone

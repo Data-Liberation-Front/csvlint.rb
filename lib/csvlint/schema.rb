@@ -65,7 +65,7 @@ module Csvlint
       begin
         json = JSON.parse( open(uri).read )
         if json["@context"]
-          uri = uri =~ /http(s)?/ ? uri : "file://#{File.expand_path(uri)}"
+          uri = "file:#{File.expand_path(uri)}" unless uri.to_s =~ /^http(s)?/
           return Schema.from_csvw_metadata(uri,json)
         else
           return Schema.from_json_table(uri,json)
@@ -73,6 +73,8 @@ module Csvlint
       rescue Csvlint::CsvwMetadataError => e
         raise e
       rescue JSON::ParserError => e
+        raise e
+      rescue OpenURI::HTTPError => e
         raise e
       rescue => e
         STDERR.puts e.class

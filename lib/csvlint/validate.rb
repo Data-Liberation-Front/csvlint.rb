@@ -14,7 +14,7 @@ module Csvlint
     }
 
     def initialize(source, dialect = nil, schema = nil, options = {})
-
+      reset
       @source = source
       @formats = []
       @schema = schema
@@ -26,14 +26,14 @@ module Csvlint
         "delimiter" => ",",
         "skipInitialSpace" => true,
         "lineTerminator" => :auto,
-        "quoteChar" => '"'
+        "quoteChar" => '"',
+        "trim" => :true
       }.merge(dialect || {})
 
       @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source) unless @source.nil?
-      reset
       @errors += @schema.errors unless @schema.nil?
       @warnings += @schema.warnings unless @schema.nil?
       validate
@@ -46,6 +46,7 @@ module Csvlint
       begin
         io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
+        locate_schema if @schema.nil?
         parse_csv(io)
         sum = @col_counts.inject(:+)
         unless sum.nil?
@@ -165,6 +166,7 @@ module Csvlint
 
     def validate_header(header)
       names = Set.new
+      header.map{|h| h.strip! } if @dialect["trim"] == :true
       header.each_with_index do |name,i|
         build_warnings(:empty_column_name, :schema, nil, i+1) if name == ""
         if names.include?(name)
@@ -249,6 +251,47 @@ module Csvlint
           end
         end
       end
+    end
+
+    def locate_schema
+      source = @source.instance_of? File ? "file:#{File.expand_path(@source)}" : @source
+      if @headers["link"]
+        
+      end
+      paths = []
+      if source =~ /^http(s)?/
+        begin
+          well_known_uri = URI.join(source, "/.well-known/csvm")
+          well_known = open(well_known_uri).read
+          # TODO
+        rescue OpenURI::HTTPError
+        end
+      end
+      paths = ["{+url}-metadata.json", "csv-metadata.json"] if paths.empty?
+      paths.each do |template|
+        begin
+          template = URITemplate.new(template)
+          path = template.expand('url' => source)
+          url = URI.join(source, path)
+          url = File.new(url.to_s.sub(/^file:/, "")) if url.to_s =~ /^file:/
+          schema = Schema.load_from_json(url)
+          if schema.instance_of? Csvlint::CsvwTableGroup
+            if schema.tables[source]
+              return schema
+            else
+              build_warnings(:schema_mismatch, :context, nil, nil, source, schema)
+            end
+          end
+        rescue Errno::ENOENT
+        rescue OpenURI::HTTPError
+        rescue=> e
+          STDERR.puts e.class
+          STDERR.puts e.message
+          STDERR.puts e.backtrace
+          raise e
+        end
+      end
+      return nil
     end
 
     private

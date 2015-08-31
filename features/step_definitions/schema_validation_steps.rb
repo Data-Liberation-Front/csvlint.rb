@@ -27,3 +27,7 @@ Given(/^I have a file called "(.*?)" at the url "(.*?)"$/) do |filename,url|
   content_type = filename =~ /.csv$/ ? "text/csv" : "application/csvm+json"
   stub_request(:get, url).to_return(:status => 200, :body => content, :headers => {"Content-Type" => "#{content_type}; charset=UTF-8"})
 end
+
+Given(/^there is no file at the url "(.*?)"$/) do |url|
+  stub_request(:get, url).to_return(:status => 404)
+end

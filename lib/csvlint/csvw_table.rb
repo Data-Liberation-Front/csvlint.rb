@@ -54,31 +54,30 @@ module Csvlint
       warnings = []
       table_properties = {}
       columns = []
+      notes = []
 
       table_desc.each do |property,value|
-        unless VALID_PROPERTIES.include? property
+        if property =="@type"
+          raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].@type"), "@type of table is not 'Table'" unless value == 'Table'
+        elsif property == "notes"
+          notes = value
+        else
           v, warning, type = CsvwPropertyChecker.check_property(property, value, base_url, lang)
-          if warning.nil? || warning.empty?
-            if type == :annotation
-              annotations[property] = v
-            elsif type == :table
-              table_properties[property] = v
-            elsif type == :column
-              warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "#{property}", nil)
-            else
-              inherited_properties[property] = v
-            end
+          warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) } unless warning.nil? || warning.empty?
+          if type == :annotation
+            annotations[property] = v
+          elsif type == :table || type == :common
+            table_properties[property] = v
+          elsif type == :column
+            warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "#{property}", nil)
           else
-            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) }
+            inherited_properties[property] = v
           end
         end
       end
 
-      url = URI.join(base_url, table_desc["url"])
-
-      id = table_desc["@id"]
-      raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].@id"), "@id starts with _:" if id =~ /^_:/
-      raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].@type"), "@type of table is not 'Table'" if table_desc["@type"] && table_desc["@type"] != 'Table'
+      id = table_properties["@id"]
+      url = table_properties["url"]
 
       table_schema = table_properties["tableSchema"] || inherited_properties["tableSchema"]
       column_names = []
@@ -113,12 +112,8 @@ module Csvlint
 
       end
 
-
-      return CsvwTable.new(url, id: id, columns: columns, foreign_keys: foreign_keys, primary_key: primary_key, annotations: annotations, warnings: warnings)
+      return CsvwTable.new(url, id: id, columns: columns, foreign_keys: foreign_keys, notes: notes, primary_key: primary_key, annotations: annotations, warnings: warnings)
     end
-
-    private
-      VALID_PROPERTIES = [ 'url' ]
 
   end
 end

@@ -8,6 +8,7 @@ require 'active_support/core_ext/date/conversions'
 require 'active_support/core_ext/time/conversions'
 require 'mime/types'
 require 'open_uri_redirections'
+require 'uri_template'
 
 require 'csvlint/error_message'
 require 'csvlint/error_collector'
