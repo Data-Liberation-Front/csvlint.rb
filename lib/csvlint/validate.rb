@@ -4,7 +4,7 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
+    attr_reader :encoding, :content_type, :extension, :headers, :link_headers, :line_breaks, :dialect, :csv_header, :schema, :data
 
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
@@ -21,32 +21,22 @@ module Csvlint
 
       @supplied_dialect = dialect != nil
 
-      @dialect = {
-        "header" => true,
-        "delimiter" => ",",
-        "skipInitialSpace" => true,
-        "lineTerminator" => :auto,
-        "quoteChar" => '"',
-        "trim" => :true
-      }.merge(dialect || {})
-
-      @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
-      @csv_options = dialect_to_csv_options(@dialect)
       @extension = parse_extension(source) unless @source.nil?
       @errors += @schema.errors unless @schema.nil?
       @warnings += @schema.warnings unless @schema.nil?
-      validate
+      validate(dialect)
 
     end
 
-    def validate
+    def validate(dialect = nil)
       single_col = false
       io = nil
       begin
         io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
-        locate_schema if @schema.nil?
+        locate_schema unless @schema.instance_of?(Csvlint::Schema)
+        set_dialect(dialect)
         parse_csv(io)
         sum = @col_counts.inject(:+)
         unless sum.nil?
@@ -64,6 +54,7 @@ module Csvlint
     def validate_metadata(io)
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
+      @link_headers = io.metas["link"] rescue nil
       @headers = io.meta rescue nil
       assumed_header = undeclared_header = !@supplied_dialect
       if @headers
@@ -94,6 +85,25 @@ module Csvlint
 
       end
       build_info_messages(:assumed_header, :structure) if assumed_header
+    end
+
+    def set_dialect(dialect)
+      begin
+        schema_dialect = @schema.tables[@source_url].dialect || {}
+      rescue
+        schema_dialect = {}
+      end
+      @dialect = {
+        "header" => true,
+        "delimiter" => ",",
+        "skipInitialSpace" => true,
+        "lineTerminator" => :auto,
+        "quoteChar" => '"',
+        "trim" => :true
+      }.merge(schema_dialect).merge(dialect || {})
+
+      @csv_header = @dialect["header"]
+      @csv_options = dialect_to_csv_options(@dialect)
     end
 
     # analyses the provided csv and builds errors, warnings and info messages
@@ -254,14 +264,50 @@ module Csvlint
     end
 
     def locate_schema
-      source = @source.instance_of? File ? "file:#{File.expand_path(@source)}" : @source
-      if @headers["link"]
-        
+      @source_url = nil
+      case @source
+      when StringIO
+        return
+      when File
+        @source_url = "file:#{File.expand_path(@source)}"
+      else
+        @source_url = @source
       end
+      unless @schema.nil?
+        if @schema.tables[@source_url]
+          return
+        else
+          @schema = nil
+        end
+      end
+      link_schema = nil
+      @link_headers.each do |link_header|
+        match = LINK_HEADER_REGEXP.match(link_header)
+        uri = match["uri"].gsub(/(^\<|\>$)/, "")
+        rel = match["rel-relationship"].gsub(/(^\"|\"$)/, "")
+        param = match["param"]
+        param_value = match["param-value"].gsub(/(^\"|\"$)/, "")
+        if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
+          begin
+            url = URI.join(@source_url, uri)
+            schema = Schema.load_from_json(url)
+            if schema.instance_of? Csvlint::CsvwTableGroup
+              if schema.tables[@source_url]
+                link_schema = schema
+              # else
+              #   build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
+              end
+            end
+          rescue OpenURI::HTTPError          
+          end
+        end
+      end if @link_headers
+      return @schema = link_schema if link_schema
+
       paths = []
-      if source =~ /^http(s)?/
+      if @source_url =~ /^http(s)?/
         begin
-          well_known_uri = URI.join(source, "/.well-known/csvm")
+          well_known_uri = URI.join(@source_url, "/.well-known/csvm")
           well_known = open(well_known_uri).read
           # TODO
         rescue OpenURI::HTTPError
@@ -271,15 +317,15 @@ module Csvlint
       paths.each do |template|
         begin
           template = URITemplate.new(template)
-          path = template.expand('url' => source)
-          url = URI.join(source, path)
+          path = template.expand('url' => @source_url)
+          url = URI.join(@source_url, path)
           url = File.new(url.to_s.sub(/^file:/, "")) if url.to_s =~ /^file:/
           schema = Schema.load_from_json(url)
           if schema.instance_of? Csvlint::CsvwTableGroup
-            if schema.tables[source]
-              return schema
-            else
-              build_warnings(:schema_mismatch, :context, nil, nil, source, schema)
+            if schema.tables[@source_url]
+              return @schema = schema
+            # else
+            #   build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
             end
           end
         rescue Errno::ENOENT
@@ -291,7 +337,7 @@ module Csvlint
           raise e
         end
       end
-      return nil
+      return @schema = nil
     end
 
     private
@@ -347,5 +393,19 @@ module Csvlint
       :dateTime_short => /\A\d\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d\d:\d\d\z/,   # "01 Jan 00:00"
       :dateTime_time => /\A\d\d:\d\d\z/,                                                # "00:00"
     }.freeze
+
+    URI_REGEXP = /(?<uri>.*?)/
+    TOKEN_REGEXP = /([^\(\)\<\>@,;:\\"\/\[\]\?=\{\} \t]+)/
+    QUOTED_STRING_REGEXP = /("[^"]*")/
+    SGML_NAME_REGEXP = /([A-Za-z][-A-Za-z0-9\.]*)/
+    RELATIONSHIP_REGEXP = Regexp.new("(?<relationship>#{SGML_NAME_REGEXP}|(\"#{SGML_NAME_REGEXP}(\\s+#{SGML_NAME_REGEXP})*\"))")
+    REL_REGEXP = Regexp.new("(?<rel>\\s*rel\\s*=\\s*(?<rel-relationship>#{RELATIONSHIP_REGEXP}))")
+    REV_REGEXP = Regexp.new("(?<rev>\\s*rev\\s*=\\s*#{RELATIONSHIP_REGEXP})")
+    TITLE_REGEXP = Regexp.new("(?<title>\\s*title\\s*=\\s*#{QUOTED_STRING_REGEXP})")
+    ANCHOR_REGEXP = Regexp.new("(?<anchor>\\s*anchor\\s*=\\s*\\<#{URI_REGEXP}\\>)")
+    LINK_EXTENSION_REGEXP = Regexp.new("(?<link-extension>(?<param>#{TOKEN_REGEXP})(\\s*=\\s*(?<param-value>#{TOKEN_REGEXP}|#{QUOTED_STRING_REGEXP}))?)")
+    LINK_PARAM_REGEXP = Regexp.new("(#{REL_REGEXP}|#{REV_REGEXP}|#{TITLE_REGEXP}|#{ANCHOR_REGEXP}|#{LINK_EXTENSION_REGEXP})")
+    LINK_HEADER_REGEXP = Regexp.new("\<#{URI_REGEXP}\>(\\s*;\\s*#{LINK_PARAM_REGEXP})*")
+
   end
 end

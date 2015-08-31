@@ -6,7 +6,7 @@ module Csvlint
 
     attr_reader :id, :about_url, :datatype, :default, :lang, :name, :null, :number, :ordered, :property_url, :required, :separator, :source_number, :suppress_output, :text_direction, :titles, :value_url, :virtual, :annotations
 
-    def initialize(number, name, id: nil, about_url: nil, datatype: "xsd:string", default: "", lang: "und", null: "", ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
+    def initialize(number, name, id: nil, about_url: nil, datatype: "xsd:string", default: "", lang: "und", null: [""], ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
       @number = number
       @name = name
       @id = id
@@ -39,21 +39,26 @@ module Csvlint
 
     def validate(string_value, row=nil)
       reset
-      values = parse(string_value, row)
-      values.each do |value|
+      value = parse(string_value, row)
+      # STDERR.puts "#{name} - #{string_value} - #{value.inspect} - #{null}"
+      Array(value).each do |value|
+        validate_required(value, row)
         validate_length(value, row)
-      end
+      end unless value.nil?
+      validate_required(value, row) if value.nil?
       return valid?
     end
 
     def parse(string_value, row=nil)
-      return [string_value]
+      return nil if null.include? string_value
+      return string_value
     end
 
     def CsvwColumn.from_json(number, column_desc, base_url=nil, lang="und", inherited_properties={})
       annotations = {}
       warnings = []
       column_properties = {}
+      inherited_properties = inherited_properties.clone
 
       column_desc.each do |property,value|
         if property == "@type"
@@ -73,16 +78,24 @@ module Csvlint
         end
       end
 
-      id = column_properties["@id"]
-      name = column_properties["name"]
-      titles = column_properties["titles"]
-
-      datatype = inherited_properties.include?("datatype") ? inherited_properties["datatype"] : { "@id" => "http://www.w3.org/2001/XMLSchema#string" }
-
-      return CsvwColumn.new(number, name, id: id, datatype: datatype, titles: titles, property_url: column_desc["propertyUrl"], required: column_desc["required"] == true, annotations: annotations, warnings: warnings)
+      return CsvwColumn.new(number, column_properties["name"], 
+        id: column_properties["@id"], 
+        datatype: inherited_properties["datatype"] || { "@id" => "http://www.w3.org/2001/XMLSchema#string" }, 
+        titles: column_properties["titles"], 
+        property_url: column_desc["propertyUrl"], 
+        required: inherited_properties["required"] || false, 
+        null: inherited_properties["null"] || [""],
+        virtual: column_properties["virtual"] || false,
+        annotations: annotations, 
+        warnings: warnings
+      )
     end
 
     private
+      def validate_required(value, row)
+        build_errors(:required, :schema, row, number, value, { "required" => @required }) if @required && value.nil?
+      end
+
       def validate_length(value, row)
         if datatype["minLength"]
           build_errors(:min_length, :schema, row, number, value, { "minLength" => datatype["minLength"] }) if value.length < datatype["minLength"]

@@ -12,6 +12,7 @@ Feature: CSVW Schema Validation
 {
   "@context": "http://www.w3.org/ns/csvw",
   "url": "http://example.com/example1.csv",
+  "dialect": { "header": false },
   "tableSchema": {
     "columns": [
             { "name": "Name", "required": true },
@@ -36,6 +37,7 @@ Feature: CSVW Schema Validation
 {
   "@context": "http://www.w3.org/ns/csvw",
   "url": "http://example.com/example1.csv",
+  "dialect": { "header": false },
   "tableSchema": {
     "columns": [
             { "name": "Name", "required": true },
@@ -63,9 +65,9 @@ Feature: CSVW Schema Validation
   "url": "http://example.com/example1.csv",
   "tableSchema": {
     "columns": [
-            { "name": "name", "required": true },
-            { "name": "id", "required": true, "datatype": { "base": "string", "minLength": 3 } },
-            { "name": "email", "required": true }
+            { "titles": "name", "required": true },
+            { "titles": "id", "required": true, "datatype": { "base": "string", "minLength": 1 } },
+            { "titles": "email", "required": true }
       ]
   }
 }
@@ -88,9 +90,9 @@ Feature: CSVW Schema Validation
   "url": "http://example.com/example1.csv",
   "tableSchema": {
     "columns": [
-            { "name": "firstname", "required": true, "datatype": { "base": "string", "format": "^[A-Za-z0-9_]*$" } },
-            { "name": "id", "required": true, "datatype": { "base": "string", "minLength": 1 } },
-            { "name": "email", "required": true }
+            { "titles": "firstname", "required": true, "datatype": { "base": "string", "format": "^[A-Za-z0-9_]*$" } },
+            { "titles": "id", "required": true, "datatype": { "base": "string", "minLength": 1 } },
+            { "titles": "email", "required": true }
       ]
   }
 }
@@ -113,9 +115,9 @@ Feature: CSVW Schema Validation
   "url": "http://example.com/example1.csv",
   "tableSchema": {
     "columns": [
-            { "name": "firstname", "required": true, "datatype": { "base": "string", "format": "((" } },
-            { "name": "id", "required": true, "datatype": { "base": "string", "minLength": 1 } },
-            { "name": "email", "required": true }
+            { "titles": "firstname", "required": true, "datatype": { "base": "string", "format": "((" } },
+            { "titles": "id", "required": true, "datatype": { "base": "string", "minLength": 1 } },
+            { "titles": "email", "required": true }
       ]
   }
 }

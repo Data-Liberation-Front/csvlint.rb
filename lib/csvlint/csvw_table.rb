@@ -4,11 +4,12 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :columns, :table_direction, :foreign_keys, :id, :notes, :primary_key, :schema, :suppress_output, :transformations, :url, :annotations
+    attr_reader :columns, :dialect, :table_direction, :foreign_keys, :id, :notes, :primary_key, :schema, :suppress_output, :transformations, :url, :annotations
 
-    def initialize(url, columns: [], table_direction: :auto, foreign_keys: [], id: nil, notes: [], primary_key: nil, schema: nil, suppress_output: false, transformations: [], annotations: [], warnings: [])
+    def initialize(url, columns: [], dialect: {}, table_direction: :auto, foreign_keys: [], id: nil, notes: [], primary_key: nil, schema: nil, suppress_output: false, transformations: [], annotations: [], warnings: [])
       @url = url
       @columns = columns
+      @dialect = dialect
       @table_direction = table_direction
       @foreign_keys = foreign_keys
       @id = id
@@ -55,6 +56,7 @@ module Csvlint
       table_properties = {}
       columns = []
       notes = []
+      inherited_properties = inherited_properties.clone
 
       table_desc.each do |property,value|
         if property =="@type"
@@ -76,18 +78,19 @@ module Csvlint
         end
       end
 
-      id = table_properties["@id"]
-      url = table_properties["url"]
-
       table_schema = table_properties["tableSchema"] || inherited_properties["tableSchema"]
       column_names = []
       foreign_keys = []
       primary_key = nil
       if table_schema
         raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.columns"), "schema columns is not an array" unless table_schema["columns"].instance_of? Array
+        virtual_columns = false
         table_schema["columns"].each_with_index do |column_desc,i|
           if column_desc.instance_of? Hash
             column = Csvlint::CsvwColumn.from_json(i+1, column_desc, base_url, lang, inherited_properties)
+            raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.columns[#{i}].virtual"), "virtual columns before non-virtual column #{column.name || i}" if virtual_columns && !column.virtual
+            virtual_columns = virtual_columns || column.virtual
+            raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.columns"), "multiple columns named #{column.name}" if column_names.include? column.name
             column_names << column.name unless column.name.nil?
             columns << column
           else
@@ -112,7 +115,16 @@ module Csvlint
 
       end
 
-      return CsvwTable.new(url, id: id, columns: columns, foreign_keys: foreign_keys, notes: notes, primary_key: primary_key, annotations: annotations, warnings: warnings)
+      return CsvwTable.new(table_properties["url"], 
+        id: table_properties["@id"], 
+        columns: columns, 
+        dialect: table_properties["dialect"],
+        foreign_keys: foreign_keys, 
+        notes: notes, 
+        primary_key: primary_key, 
+        annotations: annotations, 
+        warnings: warnings
+      )
     end
 
   end

@@ -5,13 +5,65 @@ module Csvlint
       if PROPERTIES.include? property
         return PROPERTIES[property].call(value, base_url, lang)
       elsif property =~ /^([a-z]+):/ && NAMESPACES.include?(property.split(":")[0])
-        return value, nil, :annotation
+        value, warnings = check_common_property_value(value, base_url, lang)
+        return value, warnings, :annotation
       else
         return value, :invalid_property, nil
       end
     end
 
     private
+      def CsvwPropertyChecker.check_common_property_value(value, base_url, lang)
+        case value
+        when Hash
+          value = value.clone
+          warnings = []
+          value.each do |p,v|
+            case p
+            when "@context"
+              raise Csvlint::CsvwMetadataError.new(p), "common property has @context property"
+            when "@list"
+              raise Csvlint::CsvwMetadataError.new(p), "common property has @list property"
+            when "@set"
+              raise Csvlint::CsvwMetadataError.new(p), "common property has @set property"
+            when "@type"
+              if value["@value"] && BUILT_IN_DATATYPES.include?(v)
+              elsif !value["@value"] && BUILT_IN_TYPES.include?(v)
+              elsif v =~ /^([a-z]+):/ && NAMESPACES.include?(v.split(":")[0])
+              else
+                # must be an absolute URI
+                begin
+                  abs = URI.join(base_url, v)
+                  raise Csvlint::CsvwMetadataError.new(p), "common property has invalid @type" unless abs.to_s == v.to_s
+                rescue
+                  raise Csvlint::CsvwMetadataError.new(p), "common property has invalid @type"
+                end
+              end
+            when "@id"
+              begin
+                v = URI.join(base_url, v)
+              rescue
+                raise Csvlint::CsvwMetadataError.new(p), "common property has invalid @id"
+              end
+            when "@value"
+              raise Csvlint::CsvwMetadataError.new(p), "common property with @value has both @language and @type" if value["@type"] && value["@language"]
+              raise Csvlint::CsvwMetadataError.new(p), "common property with @value has properties other than @language or @type" unless value.except("@type").except("@language").except("@value").empty?
+            when "@language"
+              raise Csvlint::CsvwMetadataError.new(p), "common property with @language lacks a @value" unless value["@value"]
+              raise Csvlint::CsvwMetadataError.new(p), "common property has invalid @language" unless v =~ BCP47_LANGUAGE_REGEXP || v.nil?
+            end
+            if v.instance_of? Hash
+              v, w = check_common_property_value(v, base_url, lang)
+              warnings += Array(w)
+            end
+            value[p] = v
+          end
+          return value, warnings
+        else
+          return value, nil
+        end
+      end
+
       def CsvwPropertyChecker.array_property(type)
         return lambda { |value, base_url, lang|
           return value, nil, type if value.instance_of? Array
@@ -35,7 +87,7 @@ module Csvlint
 
       def CsvwPropertyChecker.link_property(type)
         return lambda { |value, base_url, lang|
-          raise Csvlint::CsvwMetadataError, "@id #{value} starts with _:" if value.to_s =~ /^_:/
+          raise Csvlint::CsvwMetadataError.new(), "@id #{value} starts with _:" if value.to_s =~ /^_:/
           return URI.join(base_url, value), nil, type if value.instance_of? String
           return base_url, :invalid_value, type
         }
@@ -43,7 +95,7 @@ module Csvlint
 
       def CsvwPropertyChecker.language_property(type)
         return lambda { |value, base_url, lang|
-          return value, nil, type if value =~ BCP47_REGEX
+          return value, nil, type if value =~ BCP47_REGEXP
           return nil, :invalid_value, type
         }
       end
@@ -66,7 +118,7 @@ module Csvlint
           elsif value.instance_of? Hash
             value = value.clone
             value.each do |l,v|
-              if l =~ BCP47_REGEX
+              if l =~ BCP47_REGEXP
                 valid_titles = []
                 Array(v).each do |title|
                   if title.instance_of? String
@@ -103,7 +155,25 @@ module Csvlint
         "notes" => array_property(:common),
         "suppressOutput" => boolean_property(:common),
         # inherited properties
-        "null" => string_property(:inherited),
+        "null" => lambda { |value, base_url, lang|
+          case value
+          when String
+            return [value], nil, :inherited
+          when Array
+            values = []
+            warnings = []
+            value.each do |v|
+              if v.instance_of? String
+                values << v
+              else
+                warnings << :invalid_value
+              end
+            end
+            return values, warnings, :inherited
+          else
+            return [""], :invalid_value, :inherited
+          end
+        },
         "default" => string_property(:inherited),
         "separator" => lambda { |value, base_url, lang|
           return value, nil, :inherited if value.instance_of?(String) || value.nil?
@@ -154,7 +224,7 @@ module Csvlint
         "virtual" => boolean_property(:column),
         "titles" => natural_language_property(:column),
         "name" => lambda { |value, base_url, lang|
-          return value, nil, :column if value.instance_of? String
+          return value, nil, :column if value.instance_of?(String) && value =~ NAME_REGEXP
           return nil, :invalid_value, :column
         },
         # table level properties
@@ -365,20 +435,24 @@ module Csvlint
         "schema" => "http://schema.org/"
       }
 
-      BCP47_REGULAR_REGEX = "(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)"
-      BCP47_IRREGULAR_REGEX = "(en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)"
-      BCP47_GRANDFATHERED_REGEX = "(?<grandfathered>" + BCP47_IRREGULAR_REGEX + "|" + BCP47_REGULAR_REGEX + ")"
-      BCP47_PRIVATE_USE_REGEX = "(?<privateUse>x(-[A-Za-z0-9]{1,8})+)"
-      BCP47_SINGLETON_REGEX = "[0-9A-WY-Za-wy-z]"
-      BCP47_EXTENSION_REGEX = "(?<extension>" + BCP47_SINGLETON_REGEX + "(-[A-Za-z0-9]{2,8})+)"
-      BCP47_VARIANT_REGEX = "(?<variant>[A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3})"
-      BCP47_REGION_REGEX = "(?<region>[A-Za-z]{2}|[0-9]{3})"
-      BCP47_SCRIPT_REGEX = "(?<script>[A-Za-z]{4})"
-      BCP47_EXTLANG_REGEX = "(?<extlang>[A-Za-z]{3}(-[A-Za-z]{3}){0,2})"
-      BCP47_LANGUAGE_REGEX = "(?<language>([A-Za-z]{2,3}(-" + BCP47_EXTLANG_REGEX + ")?)|[A-Za-z]{4}|[A-Za-z]{5,8})"
-      BCP47_LANGTAG_REGEX = "(" + BCP47_LANGUAGE_REGEX + "(-" + BCP47_SCRIPT_REGEX + ")?" + "(-" + BCP47_REGION_REGEX + ")?" + "(-" + BCP47_VARIANT_REGEX + ")*" + "(-" + BCP47_EXTENSION_REGEX + ")*" + "(-" + BCP47_PRIVATE_USE_REGEX + ")?" + ")"
-      BCP47_LANGUAGETAG_REGEX = "^(" + BCP47_GRANDFATHERED_REGEX + "|" + BCP47_LANGTAG_REGEX + "|" + BCP47_PRIVATE_USE_REGEX + ")$"
-      BCP47_REGEX = Regexp.new(BCP47_LANGUAGETAG_REGEX)
+      BCP47_REGULAR_REGEXP = "(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)"
+      BCP47_IRREGULAR_REGEXP = "(en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)"
+      BCP47_GRANDFATHERED_REGEXP = "(?<grandfathered>" + BCP47_IRREGULAR_REGEXP + "|" + BCP47_REGULAR_REGEXP + ")"
+      BCP47_PRIVATE_USE_REGEXP = "(?<privateUse>x(-[A-Za-z0-9]{1,8})+)"
+      BCP47_SINGLETON_REGEXP = "[0-9A-WY-Za-wy-z]"
+      BCP47_EXTENSION_REGEXP = "(?<extension>" + BCP47_SINGLETON_REGEXP + "(-[A-Za-z0-9]{2,8})+)"
+      BCP47_VARIANT_REGEXP = "(?<variant>[A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3})"
+      BCP47_REGION_REGEXP = "(?<region>[A-Za-z]{2}|[0-9]{3})"
+      BCP47_SCRIPT_REGEXP = "(?<script>[A-Za-z]{4})"
+      BCP47_EXTLANG_REGEXP = "(?<extlang>[A-Za-z]{3}(-[A-Za-z]{3}){0,2})"
+      BCP47_LANGUAGE_REGEXP = "(?<language>([A-Za-z]{2,3}(-" + BCP47_EXTLANG_REGEXP + ")?)|[A-Za-z]{4}|[A-Za-z]{5,8})"
+      BCP47_LANGTAG_REGEXP = "(" + BCP47_LANGUAGE_REGEXP + "(-" + BCP47_SCRIPT_REGEXP + ")?" + "(-" + BCP47_REGION_REGEXP + ")?" + "(-" + BCP47_VARIANT_REGEXP + ")*" + "(-" + BCP47_EXTENSION_REGEXP + ")*" + "(-" + BCP47_PRIVATE_USE_REGEXP + ")?" + ")"
+      BCP47_LANGUAGETAG_REGEXP = "^(" + BCP47_GRANDFATHERED_REGEXP + "|" + BCP47_LANGTAG_REGEXP + "|" + BCP47_PRIVATE_USE_REGEXP + ")$"
+      BCP47_REGEXP = Regexp.new(BCP47_LANGUAGETAG_REGEXP)
+
+      NAME_REGEXP = /^([A-Za-z0-9]|(%[A-F0-9][A-F0-9]))([A-Za-z0-9_]|(%[A-F0-9][A-F0-9]))*$/
+
+      BUILT_IN_TYPES = ["TableGroup", "Table", "Schema", "Column", "Dialect", "Template", "Datatype"]
 
       BUILT_IN_DATATYPES = {
         "number" => "http://www.w3.org/2001/XMLSchema#double",

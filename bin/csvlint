@@ -109,7 +109,7 @@ if options[:schema]
     puts "invalid metadata: malformed JSON"
     exit 1
   rescue Csvlint::CsvwMetadataError => e
-    puts "invalid metadata: #{e.message} at #{e.path}"
+    puts "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
     exit 1
   rescue Errno::ENOENT
     puts "#{options[:schema]} not found"
