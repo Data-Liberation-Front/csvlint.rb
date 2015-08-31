@@ -39,7 +39,7 @@ File.open(File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature
 		metadata = nil
 		file.puts "\t# #{entry["id"]}"
 		file.puts "\t# #{entry["comment"]}"
-		file.puts "\tScenario: #{entry["name"].gsub("<", "less than")}"
+		file.puts "\tScenario: #{entry["id"]} #{entry["name"].gsub("<", "less than")}"
 		if entry["action"].end_with?(".csv")
 			file.puts "\t\tGiven I have a CSV file called \"csvw/#{entry["action"]}\""
 			file.puts "\t\tAnd it has a Link header holding \"#{entry["httpLink"]}\"" if entry["httpLink"]

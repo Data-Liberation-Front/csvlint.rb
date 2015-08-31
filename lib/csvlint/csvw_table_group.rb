@@ -89,8 +89,9 @@ module Csvlint
       raise Csvlint::CsvwMetadataError.new("$.@id"), "@id starts with _:" if id =~ /^_:/
       raise Csvlint::CsvwMetadataError.new("$.@type"), "@type of table group is not 'TableGroup'" if json["@type"] && json["@type"] != 'TableGroup'
 
-      raise Csvlint::CsvwMetadataError.new("$"), "no tables" unless json["tables"]
-      raise Csvlint::CsvwMetadataError.new("$.tables"), "tables is not an array" unless json["tables"].instance_of? Array
+      raise Csvlint::CsvwMetadataError.new("$"), "no tables property" unless json["tables"]
+      raise Csvlint::CsvwMetadataError.new("$.tables"), "empty tables property" if json["tables"].empty?
+      raise Csvlint::CsvwMetadataError.new("$.tables"), "tables property is not an array" unless json["tables"].instance_of? Array
       json["tables"].each do |table_desc|
         if table_desc.instance_of? Hash
           table_url = table_desc["url"]

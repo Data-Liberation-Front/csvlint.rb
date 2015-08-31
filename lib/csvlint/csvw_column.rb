@@ -30,6 +30,13 @@ module Csvlint
       @warnings += warnings
     end
 
+    def validate_header(header)
+      reset
+      valid_headers = @titles ? @titles.map{ |l,v| v}.flatten : []
+      build_errors(:invalid_header, :schema, 1, @number, header, @titles) unless valid_headers.include? header
+      return valid?
+    end
+
     def validate(string_value, row=nil)
       reset
       values = parse(string_value, row)
@@ -44,8 +51,6 @@ module Csvlint
     end
 
     def CsvwColumn.from_json(number, column_desc, base_url=nil, lang="und", inherited_properties={})
-      titles = {}
-      titles["und"] = Array(column_desc["titles"]) if column_desc["titles"]
       annotations = {}
       warnings = []
 
@@ -68,6 +73,8 @@ module Csvlint
       raise Csvlint::CsvwMetadataError.new("columns[#{number}].@id"), "@id starts with _:" if id =~ /^_:/
       raise Csvlint::CsvwMetadataError.new("columns[#{number}].@type"), "@type of column is not 'Column'" if column_desc["@type"] && column_desc["@type"] != 'Column'
 
+      titles = inherited_properties["titles"]
+
       datatype = inherited_properties.include?("datatype") ? inherited_properties["datatype"] : { "@id" => "http://www.w3.org/2001/XMLSchema#string" }
 
       return CsvwColumn.new(number, column_desc["name"], id: id, datatype: datatype, titles: titles, property_url: column_desc["propertyUrl"], required: column_desc["required"] == true, annotations: annotations, warnings: warnings)
@@ -80,7 +87,7 @@ module Csvlint
         end
       end
 
-      VALID_PROPERTIES = [ 'name', 'titles' ]
+      VALID_PROPERTIES = [ 'name' ]
 
   end
 end
