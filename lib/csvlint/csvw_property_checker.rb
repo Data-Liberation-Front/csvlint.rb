@@ -51,6 +51,10 @@ module Csvlint
             when "@language"
               raise Csvlint::CsvwMetadataError.new(p), "common property with @language lacks a @value" unless value["@value"]
               raise Csvlint::CsvwMetadataError.new(p), "common property has invalid @language" unless v =~ BCP47_LANGUAGE_REGEXP || v.nil?
+            else
+              if p[0] == "@"
+                raise Csvlint::CsvwMetadataError.new(p), "common property has property other than @id, @type, @value or @language beginning with @"
+              end
             end
             if v.instance_of? Hash
               v, w = check_common_property_value(v, base_url, lang)
@@ -200,12 +204,16 @@ module Csvlint
             value = { "@id" => BUILT_IN_DATATYPES["string"] }
             warnings << :invalid_value
           end
-          if value["base"] == BUILT_IN_DATATYPES["string"] && value["format"]
-            begin
-              value["format"] = Regexp.new(value["format"])
-            rescue RegexpError
-              value["format"] = nil
-              warnings << :invalid_regex
+          if value["format"]
+            if REGEXP_FORMAT_DATATYPES.include?(value["base"])
+              begin
+                value["format"] = Regexp.new(value["format"])
+              rescue RegexpError
+                value["format"] = nil
+                warnings << :invalid_regex
+              end
+            elsif NUMERIC_FORMAT_DATATYPES.include?(value["base"])
+              value["format"] = { "pattern" => value["format"] } if value["format"].instance_of? String
             end
           end
           return value, warnings, :inherited
@@ -453,6 +461,45 @@ module Csvlint
       NAME_REGEXP = /^([A-Za-z0-9]|(%[A-F0-9][A-F0-9]))([A-Za-z0-9_]|(%[A-F0-9][A-F0-9]))*$/
 
       BUILT_IN_TYPES = ["TableGroup", "Table", "Schema", "Column", "Dialect", "Template", "Datatype"]
+
+      REGEXP_FORMAT_DATATYPES = [
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral",
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML",
+        "http://www.w3.org/ns/csvw#JSON",
+        "http://www.w3.org/2001/XMLSchema#anyAtomicType",
+        "http://www.w3.org/2001/XMLSchema#anyURI",
+        "http://www.w3.org/2001/XMLSchema#base64Binary",
+        "http://www.w3.org/2001/XMLSchema#duration",
+        "http://www.w3.org/2001/XMLSchema#dayTimeDuration",
+        "http://www.w3.org/2001/XMLSchema#yearMonthDuration",
+        "http://www.w3.org/2001/XMLSchema#hexBinary",
+        "http://www.w3.org/2001/XMLSchema#QName",
+        "http://www.w3.org/2001/XMLSchema#string",
+        "http://www.w3.org/2001/XMLSchema#normalizedString",
+        "http://www.w3.org/2001/XMLSchema#token",
+        "http://www.w3.org/2001/XMLSchema#language",
+        "http://www.w3.org/2001/XMLSchema#Name",
+        "http://www.w3.org/2001/XMLSchema#NMTOKEN"
+      ]
+
+      NUMERIC_FORMAT_DATATYPES = [
+        "http://www.w3.org/2001/XMLSchema#decimal",
+        "http://www.w3.org/2001/XMLSchema#integer",
+        "http://www.w3.org/2001/XMLSchema#long",
+        "http://www.w3.org/2001/XMLSchema#int",
+        "http://www.w3.org/2001/XMLSchema#short",
+        "http://www.w3.org/2001/XMLSchema#byte",
+        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
+        "http://www.w3.org/2001/XMLSchema#positiveInteger",
+        "http://www.w3.org/2001/XMLSchema#unsignedLong",
+        "http://www.w3.org/2001/XMLSchema#unsignedInt",
+        "http://www.w3.org/2001/XMLSchema#unsignedShort",
+        "http://www.w3.org/2001/XMLSchema#unsignedByte",
+        "http://www.w3.org/2001/XMLSchema#nonPositiveInteger",
+        "http://www.w3.org/2001/XMLSchema#negativeInteger",
+        "http://www.w3.org/2001/XMLSchema#double",
+        "http://www.w3.org/2001/XMLSchema#float"
+      ]
 
       BUILT_IN_DATATYPES = {
         "number" => "http://www.w3.org/2001/XMLSchema#double",

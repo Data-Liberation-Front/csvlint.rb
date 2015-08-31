@@ -50,7 +50,7 @@ describe Csvlint::CsvwTableGroup do
 
     table = table_group.tables["http://w3c.github.io/csvw/tests/test040.csv"]
     expect(table.columns.length).to eq(10)
-    expect(table.columns[0].null).to eq("")
+    expect(table.columns[0].null).to eq([""])
   end
 
   context "when parsing CSVW table group metadata" do

@@ -34,6 +34,8 @@ Then(/^there should be warnings$/) do
 end
 
 Then(/^there should not be warnings$/) do
+  # this test is only used for CSVW testing, and :inconsistent_values warnings don't count in CSVW
+  @warnings.delete_if { |w| w.type == :inconsistent_values }
   expect( @warnings.count ).to eq(0)
 end
 

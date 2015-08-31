@@ -4,6 +4,9 @@ describe Csvlint::Validator do
     
   before do
     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :body => "")
+    stub_request(:get, "http://example.com/.well-known/csvm").to_return(:status => 404)
+    stub_request(:get, "http://example.com/example.csv-metadata.json").to_return(:status => 404)
+    stub_request(:get, "http://example.com/csv-metadata.json").to_return(:status => 404)
   end
   
   context "csv dialect" do
@@ -93,6 +96,7 @@ describe Csvlint::Validator do
     it "should warn if column names aren't unique" do      
       data = StringIO.new( "minimum, minimum" )
       validator = Csvlint::Validator.new(data)
+      validator.reset
       expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
       expect( validator.warnings.size ).to eql(1)
       expect( validator.warnings.first.type).to eql(:duplicate_column_name)
@@ -263,6 +267,7 @@ describe Csvlint::Validator do
    
     before :all do
       stub_request(:get, "http://example.com/crlf.csv").to_return(:status => 200, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','windows-line-endings.csv')))
+      stub_request(:get, "http://example.com/crlf.csv-metadata.json").to_return(:status => 404)
     end
     
     it "can get line break symbol" do
@@ -299,6 +304,7 @@ describe Csvlint::Validator do
   
   it "should follow redirects to SSL" do
     stub_request(:get, "http://example.com/redirect").to_return(:status => 301, :headers=>{"Location" => "https://example.com/example.csv"})
+    stub_request(:get, "http://example.com/redirect-metadata.json").to_return(:status => 404)
     stub_request(:get, "https://example.com/example.csv").to_return(:status => 200, 
         :headers=>{"Content-Type" => "text/csv; header=present"}, 
         :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))

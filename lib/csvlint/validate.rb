@@ -52,6 +52,7 @@ module Csvlint
     end
 
     def validate_metadata(io)
+      @csv_header = true
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
       @link_headers = io.metas["link"] rescue nil
@@ -102,7 +103,7 @@ module Csvlint
         "trim" => :true
       }.merge(schema_dialect).merge(dialect || {})
 
-      @csv_header = @dialect["header"]
+      @csv_header = @csv_header && @dialect["header"]
       @csv_options = dialect_to_csv_options(@dialect)
     end
 
