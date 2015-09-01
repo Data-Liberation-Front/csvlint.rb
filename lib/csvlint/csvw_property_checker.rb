@@ -68,6 +68,27 @@ module Csvlint
         end
       end
 
+      def CsvwPropertyChecker.convert_value_facet(value, property, datatype)
+        if value[property]
+          if DATE_FORMAT_DATATYPES.include?(datatype)
+            format = Csvlint::CsvwDateFormat.new(nil, datatype)
+            v = format.parse(value[property])
+            if v.nil?
+              value.except!(property)
+              return [":invalid_#{property}".to_sym]
+            else
+              value[property] = v
+              return []
+            end
+          elsif NUMERIC_FORMAT_DATATYPES.include?(datatype)
+            return []
+          else
+            raise Csvlint::CsvwMetadataError.new("datatype.#{property}"), "#{property} is only allowed for numeric, date/time and duration types"
+          end
+        end
+        return []
+      end
+
       def CsvwPropertyChecker.array_property(type)
         return lambda { |value, base_url, lang|
           return value, nil, type if value.instance_of? Array
@@ -204,6 +225,27 @@ module Csvlint
             value = { "@id" => BUILT_IN_DATATYPES["string"] }
             warnings << :invalid_value
           end
+
+          unless STRING_DATATYPES.include?(value["base"]) || BINARY_DATATYPES.include?(value["base"])
+            raise Csvlint::CsvwMetadataError.new("datatype.length"), "datatypes based on #{value["base"]} cannot have a length facet" if value["length"]
+            raise Csvlint::CsvwMetadataError.new("datatype.minLength"), "datatypes based on #{value["base"]} cannot have a minLength facet" if value["minLength"]
+            raise Csvlint::CsvwMetadataError.new("datatype.maxLength"), "datatypes based on #{value["base"]} cannot have a maxLength facet" if value["maxLength"]
+          end
+
+          if value["minimum"]
+            value["minInclusive"] = value["minimum"]
+            value.except!("minimum")
+          end
+          if value["maximum"]
+            value["maxInclusive"] = value["maximum"]
+            value.except!("maximum")
+          end
+
+          warnings += convert_value_facet(value, "minInclusive", value["base"])
+          warnings += convert_value_facet(value, "minExclusive", value["base"])
+          warnings += convert_value_facet(value, "maxInclusive", value["base"])
+          warnings += convert_value_facet(value, "maxExclusive", value["base"])
+
           if value["format"]
             if REGEXP_FORMAT_DATATYPES.include?(value["base"])
               begin
@@ -230,6 +272,18 @@ module Csvlint
               else
                 value.except!("format")
                 warnings << :invalid_boolean_format
+              end
+            elsif DATE_FORMAT_DATATYPES.include?(value["base"])
+              if value["format"].instance_of? String
+                begin
+                  value["format"] = Csvlint::CsvwDateFormat.new(value["format"])
+                rescue Csvlint::CsvDateFormatError
+                  value.except!("format")
+                  warnings << :invalid_date_format
+                end
+              else
+                value.except!("format")
+                warnings << :invalid_date_format
               end
             end
           end
@@ -499,6 +553,23 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#NMTOKEN"
       ]
 
+      STRING_DATATYPES = [
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral",
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML",
+        "http://www.w3.org/ns/csvw#JSON",
+        "http://www.w3.org/2001/XMLSchema#string",
+        "http://www.w3.org/2001/XMLSchema#normalizedString",
+        "http://www.w3.org/2001/XMLSchema#token",
+        "http://www.w3.org/2001/XMLSchema#language",
+        "http://www.w3.org/2001/XMLSchema#Name",
+        "http://www.w3.org/2001/XMLSchema#NMTOKEN"
+      ]
+
+      BINARY_DATATYPES = [
+        "http://www.w3.org/2001/XMLSchema#base64Binary",
+        "http://www.w3.org/2001/XMLSchema#hexBinary"
+      ]
+
       NUMERIC_FORMAT_DATATYPES = [
         "http://www.w3.org/2001/XMLSchema#decimal",
         "http://www.w3.org/2001/XMLSchema#integer",
@@ -516,6 +587,13 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#negativeInteger",
         "http://www.w3.org/2001/XMLSchema#double",
         "http://www.w3.org/2001/XMLSchema#float"
+      ]
+
+      DATE_FORMAT_DATATYPES = [
+        "http://www.w3.org/2001/XMLSchema#date",
+        "http://www.w3.org/2001/XMLSchema#dateTime",
+        "http://www.w3.org/2001/XMLSchema#dateTimeStamp",
+        "http://www.w3.org/2001/XMLSchema#time"
       ]
 
       BUILT_IN_DATATYPES = {

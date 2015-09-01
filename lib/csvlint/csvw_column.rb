@@ -6,7 +6,7 @@ module Csvlint
 
     attr_reader :id, :about_url, :datatype, :default, :lang, :name, :null, :number, :ordered, :property_url, :required, :separator, :source_number, :suppress_output, :text_direction, :titles, :value_url, :virtual, :annotations
 
-    def initialize(number, name, id: nil, about_url: nil, datatype: "xsd:string", default: "", lang: "und", null: [""], ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
+    def initialize(number, name, id: nil, about_url: nil, datatype: { "@id" => "http://www.w3.org/2001/XMLSchema#string" }, default: "", lang: "und", null: [""], ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
       @number = number
       @name = name
       @id = id
@@ -39,25 +39,32 @@ module Csvlint
 
     def validate(string_value, row=nil)
       reset
-      value = parse(string_value || "", row)
-      # STDERR.puts "#{name} - #{string_value.inspect} - #{value.inspect}"
-      Array(value).each do |value|
+      values = parse(string_value || "", row)
+      # STDERR.puts "#{name} - #{string_value.inspect} - #{values.inspect}"
+      values.each do |value|
         validate_required(value, row)
         validate_format(value, row)
         validate_length(value, row)
-      end unless value.nil?
-      validate_required(value, row) if value.nil?
+        validate_value(value, row)
+      end unless values.nil?
+      validate_required(values, row) if values.nil?
       return valid?
     end
 
     def parse(string_value, row=nil)
       return nil if null.include? string_value
-
-      value, warning = DATATYPE_PARSER[@datatype["base"] || @datatype["@id"]].call(string_value, @datatype["format"])
-      return value if warning.nil?
-
-      build_errors(warning, :schema, row, @number, string_value, @datatype)
-      return string_value
+      string_values = @separator.nil? ? [string_value] : string_value.split(@separator)
+      values = []
+      string_values.each do |s|
+        value, warning = DATATYPE_PARSER[@datatype["base"] || @datatype["@id"]].call(s, @datatype["format"])
+        if warning.nil?
+          values << value
+        else
+          build_errors(warning, :schema, row, @number, s, @datatype)
+          values << s
+        end
+      end
+      return values
     end
 
     def CsvwColumn.from_json(number, column_desc, base_url=nil, lang="und", inherited_properties={})
@@ -91,6 +98,7 @@ module Csvlint
         null: inherited_properties["null"] || [""],
         property_url: column_desc["propertyUrl"], 
         required: inherited_properties["required"] || false, 
+        separator: inherited_properties["separator"],
         titles: column_properties["titles"], 
         virtual: column_properties["virtual"] || false,
         annotations: annotations, 
@@ -110,8 +118,14 @@ module Csvlint
       end
 
       def validate_length(value, row)
-        if datatype["minLength"]
-          build_errors(:min_length, :schema, row, number, value, { "minLength" => datatype["minLength"] }) if value.length < datatype["minLength"]
+        if datatype["length"] || datatype["minLength"] || datatype["maxLength"]
+          length = value.length
+          length = value.gsub(/==?$/,"").length * 3 / 4 if datatype["@id"] == "http://www.w3.org/2001/XMLSchema#base64Binary" || datatype["base"] == "http://www.w3.org/2001/XMLSchema#base64Binary"
+          length = value.length / 2 if datatype["@id"] == "http://www.w3.org/2001/XMLSchema#hexBinary" || datatype["base"] == "http://www.w3.org/2001/XMLSchema#hexBinary"
+
+          build_errors(:min_length, :schema, row, number, value, { "minLength" => datatype["minLength"] }) if datatype["minLength"] && length < datatype["minLength"]
+          build_errors(:max_length, :schema, row, number, value, { "maxLength" => datatype["maxLength"] }) if datatype["maxLength"] && length > datatype["maxLength"]
+          build_errors(:length, :schema, row, number, value, { "length" => datatype["length"] }) if datatype["length"] && length != datatype["length"]
         end
       end
 
@@ -119,6 +133,13 @@ module Csvlint
         if datatype["format"]
           build_errors(:format, :schema, row, number, value, { "format" => datatype["format"] }) unless DATATYPE_FORMAT_VALIDATION[datatype["base"]].call(value, datatype["format"])
         end
+      end
+
+      def validate_value(value, row)
+        build_errors(:min_inclusive, :schema, row, number, value, { "minInclusive" => datatype["minInclusive"] }) if datatype["minInclusive"] && value < datatype["minInclusive"]
+        build_errors(:max_inclusive, :schema, row, number, value, { "maxInclusive" => datatype["maxInclusive"] }) if datatype["maxInclusive"] && value > datatype["maxInclusive"]
+        build_errors(:min_exclusive, :schema, row, number, value, { "minExclusive" => datatype["minExclusive"] }) if datatype["minExclusive"] && value <= datatype["minExclusive"]
+        build_errors(:max_exclusive, :schema, row, number, value, { "maxExclusive" => datatype["maxExclusive"] }) if datatype["maxExclusive"] && value >= datatype["maxExclusive"]
       end
 
       REGEXP_VALIDATION = lambda { |value, format| value =~ format }
@@ -180,6 +201,15 @@ module Csvlint
         return v, nil
       }
 
+      def CsvwColumn.create_date_parser(type, warning)
+        return lambda { |value, format|
+          format = Csvlint::CsvwDateFormat.new(nil, type) if format.nil?
+          v = format.parse(value)
+          return nil, warning if v.nil?
+          return v, nil
+        }
+      end
+
       DATATYPE_PARSER = {
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral" => ALL_VALUES_VALID,
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML" => ALL_VALUES_VALID,
@@ -197,9 +227,12 @@ module Csvlint
           end
           return value, :invalid_boolean
         },
-        "http://www.w3.org/2001/XMLSchema#date" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#dateTime" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#dateTimeStamp" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#date" => 
+          create_date_parser("http://www.w3.org/2001/XMLSchema#date", :invalid_date),
+        "http://www.w3.org/2001/XMLSchema#dateTime" => 
+          create_date_parser("http://www.w3.org/2001/XMLSchema#dateTime", :invalid_date_time),
+        "http://www.w3.org/2001/XMLSchema#dateTimeStamp" =>
+          create_date_parser("http://www.w3.org/2001/XMLSchema#dateTimeStamp", :invalid_date_time_stamp),
         "http://www.w3.org/2001/XMLSchema#decimal" => lambda { |value, format|
           return nil, :invalid_decimal if value =~ /(E|^(NaN|INF|-INF)$)/
           return NUMERIC_PARSER.call(value, format)
@@ -287,11 +320,16 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#dayTimeDuration" => ALL_VALUES_VALID,
         "http://www.w3.org/2001/XMLSchema#yearMonthDuration" => ALL_VALUES_VALID,
         "http://www.w3.org/2001/XMLSchema#float" => NUMERIC_PARSER,
-        "http://www.w3.org/2001/XMLSchema#gDay" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#gMonth" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#gMonthDay" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#gYear" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#gYearMonth" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#gDay" =>
+          create_date_parser("http://www.w3.org/2001/XMLSchema#gDay", :invalid_gDay),
+        "http://www.w3.org/2001/XMLSchema#gMonth" =>
+          create_date_parser("http://www.w3.org/2001/XMLSchema#gMonth", :invalid_gMonth),
+        "http://www.w3.org/2001/XMLSchema#gMonthDay" =>
+          create_date_parser("http://www.w3.org/2001/XMLSchema#gMonthDay", :invalid_gMonthDay),
+        "http://www.w3.org/2001/XMLSchema#gYear" =>
+          create_date_parser("http://www.w3.org/2001/XMLSchema#gYear", :invalid_gYear),
+        "http://www.w3.org/2001/XMLSchema#gYearMonth" => 
+          create_date_parser("http://www.w3.org/2001/XMLSchema#gYearMonth", :invalid_gYearMonth),
         "http://www.w3.org/2001/XMLSchema#hexBinary" => ALL_VALUES_VALID,
         "http://www.w3.org/2001/XMLSchema#QName" => ALL_VALUES_VALID,
         "http://www.w3.org/2001/XMLSchema#string" => ALL_VALUES_VALID,
@@ -300,7 +338,8 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#language" => ALL_VALUES_VALID,
         "http://www.w3.org/2001/XMLSchema#Name" => ALL_VALUES_VALID,
         "http://www.w3.org/2001/XMLSchema#NMTOKEN" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#time" => ALL_VALUES_VALID
+        "http://www.w3.org/2001/XMLSchema#time" =>
+          create_date_parser("http://www.w3.org/2001/XMLSchema#time", :invalid_time)
       }
 
   end
