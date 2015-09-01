@@ -209,6 +209,15 @@ module Csvlint
           value = value.clone
           warnings = []
           if value.instance_of? Hash
+            if value["@id"]
+              raise Csvlint::CsvwMetadataError.new("datatype.@id"), "datatype @id must not be the id of a built-in datatype (#{value["@id"]})" if BUILT_IN_DATATYPES.values.include?(value["@id"])
+              v,w,t = PROPERTIES["@id"].call(value["@id"], base_url, lang)
+              unless w.nil?
+                warnings << w
+                value.except!("@id")
+              end
+            end
+
             if value["base"]
               if BUILT_IN_DATATYPES.include? value["base"]
                 value["base"] = BUILT_IN_DATATYPES[value["base"]]
@@ -346,9 +355,21 @@ module Csvlint
           return :auto, :invalid_value, :table
         },
         "tableSchema" => lambda { |value, base_url, lang| 
+          schema_base_url = base_url
+          schema_lang = lang
           if value.instance_of? String
-            schema_url = URI.join(base_url, value)
-            schema = JSON.parse( open(schema_url).read )
+            schema_url = URI.join(base_url, value).to_s
+            schema_base_url = schema_url
+            schema_ref = schema_url.start_with?("file:") ? File.new(schema_url[5..-1]) : schema_url
+            schema = JSON.parse( open(schema_ref).read )
+            schema["@id"] = schema["@id"] ? URI.join(schema_url, schema["@id"]).to_s : schema_url
+            if schema["@context"]
+              if schema["@context"].instance_of?(Array) && schema["@context"].length > 1
+                schema_base_url = schema["@context"][1]["@base"] ? URI.join(schema_base_url, schema["@context"][1]["@base"]).to_s : schema_base_url
+                schema_lang = schema["@context"][1]["@language"] || schema_lang
+              end
+              schema.except!("@context")
+            end
           elsif value.instance_of? Hash
             schema = value.clone
           else
@@ -361,7 +382,7 @@ module Csvlint
             elsif p == "@type"
               raise Csvlint::CsvwMetadataError.new("tableSchema.@type"), "@type of schema is not 'Schema'" if v != 'Schema'
             else
-              v, warning, type = check_property(p, v, base_url, lang)
+              v, warning, type = check_property(p, v, schema_base_url, schema_lang)
               if (type == :schema || type == :inherited) && (warning.nil? || warning.empty?)
                 schema[p] = v
               else
@@ -440,6 +461,7 @@ module Csvlint
           end
           return foreign_keys, warnings, :schema 
         },
+        "rowTitles" => column_reference_property(:schema),
         # transformation properties
         "targetFormat" => lambda { |value, base_url, lang| return value, nil, :transformation },
         "scriptFormat" => lambda { |value, base_url, lang| return value, nil, :transformation },
@@ -473,7 +495,9 @@ module Csvlint
         },
         # foreignKey reference properties
         "resource" => lambda { |value, base_url, lang| return value, nil, :foreign_key_reference },
-        "schemaReference" => lambda { |value, base_url, lang| return value, nil, :foreign_key_reference }
+        "schemaReference" => lambda { |value, base_url, lang| 
+          return URI.join(base_url, value).to_s, nil, :foreign_key_reference 
+        }
       }
 
       NAMESPACES = {

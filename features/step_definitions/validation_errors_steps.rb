@@ -48,7 +48,7 @@ end
 
 Then(/^there should be errors$/) do
   # this test is only used for CSVW testing; :invalid_encoding masks lack of real errors
-  @errors.delete_if { |e| e.instance_of?(Csvlint::ErrorMessage) && [:invalid_encoding].include?(e.type) }
+  @errors.delete_if { |e| e.instance_of?(Csvlint::ErrorMessage) && [:invalid_encoding, :line_breaks].include?(e.type) }
   expect( @errors.count ).to be > 0
 end
 

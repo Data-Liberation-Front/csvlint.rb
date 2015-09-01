@@ -44,6 +44,7 @@ def print_error(index, error, dump, color)
   output_string = "#{index+1}. #{error.type}"
   output_string += ". #{location}" unless location.empty?
   output_string += ". #{error.content}" if error.content
+  output_string += ". #{error.constraints}" if error.constraints && !error.constraints.empty?
 
   if $stdout.tty?
     puts output_string.colorize(color)

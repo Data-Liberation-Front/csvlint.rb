@@ -12,6 +12,8 @@ module Csvlint
       @tables = tables
       @notes = notes
       @annotations = annotations
+      @validated_tables = {}
+      @tables.each { |t,v| @validated_tables[t] = false }
       reset
       @warnings += warnings
       @errors += @tables.map{|url,table| table.errors}.flatten
@@ -31,10 +33,23 @@ module Csvlint
     def validate_row(values, row=nil, all_errors=[], table_url)
       reset
       table_url = "file:#{File.absolute_path(table_url)}" if table_url.instance_of? File
+      @validated_tables[table_url] = true
       table = tables[table_url]
       table.validate_row(values, row)
       @errors += table.errors
       @warnings += table.warnings
+      return valid?
+    end
+
+    def validate_foreign_keys
+      reset
+      unless @validated_tables.has_value?(false)
+        @tables.each do |table_url,table|
+          table.validate_foreign_keys
+          @errors += table.errors
+          @warnings += table.warnings
+        end
+      end
       return valid?
     end
 
@@ -92,6 +107,7 @@ module Csvlint
       raise Csvlint::CsvwMetadataError.new("$"), "no tables property" unless json["tables"]
       raise Csvlint::CsvwMetadataError.new("$.tables"), "empty tables property" if json["tables"].empty?
       raise Csvlint::CsvwMetadataError.new("$.tables"), "tables property is not an array" unless json["tables"].instance_of? Array
+
       json["tables"].each do |table_desc|
         if table_desc.instance_of? Hash
           table_url = table_desc["url"]
@@ -105,6 +121,33 @@ module Csvlint
           tables[table_url] = table
         else
           warnings << Csvlint::ErrorMessage.new(:invalid_table_description, :metadata, nil, nil, "#{table_desc}", nil)
+        end
+      end
+
+      tables.each do |table_url, table|
+        table.foreign_keys.each_with_index do |foreign_key,i|
+          reference = foreign_key["reference"]
+          if reference["resource"]
+            resource = URI.join(url, reference["resource"]).to_s
+            referenced_table = tables[resource]
+          else
+            schema_url = URI.join(url, reference["schemaReference"]).to_s
+            referenced_tables = tables.values.select{ |table| table.schema == schema_url }
+            referenced_table = referenced_tables[0]
+          end
+          foreign_key["referenced_table"] = referenced_table
+          table_columns = {}
+          referenced_table.columns.each do |column|
+            table_columns[column.name] = column if column.name
+          end
+          referenced_columns = []
+          Array(reference["columnReference"]).each do |column_reference|
+            column = table_columns[column_reference]
+            raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_url}')].tableSchema.foreign_keys[#{i}].reference.columnReference"), "column named #{column_reference} does not exist in #{resource}" if column.nil?
+            referenced_columns << column
+          end
+          foreign_key["referenced_columns"] = referenced_columns
+          referenced_table.foreign_key_references << foreign_key
         end
       end
 
