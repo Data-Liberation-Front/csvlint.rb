@@ -39,8 +39,8 @@ module Csvlint
 
     def validate(string_value, row=nil)
       reset
-      value = parse(string_value, row)
-      # STDERR.puts "#{name} - #{string_value} - #{value.inspect} - #{null}"
+      value = parse(string_value || "", row)
+      # STDERR.puts "#{name} - #{string_value.inspect} - #{value.inspect}"
       Array(value).each do |value|
         validate_required(value, row)
         validate_format(value, row)
@@ -52,6 +52,11 @@ module Csvlint
 
     def parse(string_value, row=nil)
       return nil if null.include? string_value
+
+      value, warning = DATATYPE_PARSER[@datatype["base"] || @datatype["@id"]].call(string_value, @datatype["format"])
+      return value if warning.nil?
+
+      build_errors(warning, :schema, row, @number, string_value, @datatype)
       return string_value
     end
 
@@ -118,20 +123,7 @@ module Csvlint
 
       REGEXP_VALIDATION = lambda { |value, format| value =~ format }
 
-      NUMBER_FORMAT_VALIDATION = lambda { |value, format| 
-        if format["groupChar"] && !format["pattern"]
-          return true
-        else
-          group_char = format["groupChar"] || ","
-          decimal_char = format["decimalChar"] || "."
-          
-          return true
-        end
-      }
-
-      BOOLEAN_FORMAT_VALIDATION = lambda { |value, format| true }
-
-      DATE_FORMAT_VALIDATION = lambda { |value, format| true }
+      NO_ADDITIONAL_VALIDATION = lambda { |value, format| true }
 
       DATATYPE_FORMAT_VALIDATION = {
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral" => REGEXP_VALIDATION,
@@ -140,34 +132,34 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#anyAtomicType" => REGEXP_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#anyURI" => REGEXP_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#base64Binary" => REGEXP_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#boolean" => BOOLEAN_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#date" => DATE_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#dateTime" => DATE_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#dateTimeStamp" => DATE_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#decimal" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#integer" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#long" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#int" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#short" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#byte" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#positiveInteger" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#unsignedLong" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#unsignedInt" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#unsignedShort" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#unsignedByte" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#nonPositiveInteger" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#negativeInteger" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#double" => NUMBER_FORMAT_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#boolean" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#date" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#dateTime" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#dateTimeStamp" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#decimal" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#integer" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#long" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#int" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#short" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#byte" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#positiveInteger" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#unsignedLong" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#unsignedInt" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#unsignedShort" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#unsignedByte" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#nonPositiveInteger" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#negativeInteger" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#double" => NO_ADDITIONAL_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#duration" => REGEXP_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#dayTimeDuration" => REGEXP_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#yearMonthDuration" => REGEXP_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#float" => NUMBER_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#gDay" => DATE_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#gMonth" => DATE_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#gMonthDay" => DATE_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#gYear" => DATE_FORMAT_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#gYearMonth" => DATE_FORMAT_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#float" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#gDay" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#gMonth" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#gMonthDay" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#gYear" => NO_ADDITIONAL_VALIDATION,
+        "http://www.w3.org/2001/XMLSchema#gYearMonth" => NO_ADDITIONAL_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#hexBinary" => REGEXP_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#QName" => REGEXP_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#string" => REGEXP_VALIDATION,
@@ -176,7 +168,139 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#language" => REGEXP_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#Name" => REGEXP_VALIDATION,
         "http://www.w3.org/2001/XMLSchema#NMTOKEN" => REGEXP_VALIDATION,
-        "http://www.w3.org/2001/XMLSchema#time" => DATE_FORMAT_VALIDATION
+        "http://www.w3.org/2001/XMLSchema#time" => NO_ADDITIONAL_VALIDATION
+      }
+
+      ALL_VALUES_VALID = lambda { |value, format| return value, nil }
+
+      NUMERIC_PARSER = lambda { |value, format|
+        format = Csvlint::CsvwNumberFormat.new() if format.nil?
+        v = format.parse(value)
+        return nil, :invalid_number if v.nil?
+        return v, nil
+      }
+
+      DATATYPE_PARSER = {
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral" => ALL_VALUES_VALID,
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML" => ALL_VALUES_VALID,
+        "http://www.w3.org/ns/csvw#JSON" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#anyAtomicType" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#anyURI" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#base64Binary" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#boolean" => lambda { |value, format|
+          if format.nil?
+            return true, nil if ["true", "1"].include? value
+            return false, nil if ["false", "0"].include? value
+          else
+            return true, nil if value == format[0]
+            return false, nil if value == format[1]
+          end
+          return value, :invalid_boolean
+        },
+        "http://www.w3.org/2001/XMLSchema#date" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#dateTime" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#dateTimeStamp" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#decimal" => lambda { |value, format|
+          return nil, :invalid_decimal if value =~ /(E|^(NaN|INF|-INF)$)/
+          return NUMERIC_PARSER.call(value, format)
+        },
+        "http://www.w3.org/2001/XMLSchema#integer" => lambda { |value, format|
+          v, w = NUMERIC_PARSER.call(value, format)
+          return v, :invalid_integer unless w.nil?
+          return nil, :invalid_integer unless v.kind_of? Integer
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#long" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
+          return v, :invalid_long unless w.nil?
+          return nil, :invalid_long unless v <= 9223372036854775807 && v >= -9223372036854775808
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#int" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
+          return v, :invalid_int unless w.nil?
+          return nil, :invalid_int unless v <= 2147483647 && v >= -2147483648
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#short" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
+          return v, :invalid_short unless w.nil?
+          return nil, :invalid_short unless v <= 32767 && v >= -32768
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#byte" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
+          return v, :invalid_byte unless w.nil?
+          return nil, :invalid_byte unless v <= 127 && v >= -128
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#nonNegativeInteger" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
+          return v, :invalid_nonNegativeInteger unless w.nil?
+          return nil, :invalid_nonNegativeInteger unless v >= 0
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#positiveInteger" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
+          return v, :invalid_positiveInteger unless w.nil?
+          return nil, :invalid_positiveInteger unless v > 0
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#unsignedLong" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#nonNegativeInteger"].call(value, format)
+          return v, :invalid_unsignedLong unless w.nil?
+          return nil, :invalid_unsignedLong unless v <= 18446744073709551615
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#unsignedInt" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#nonNegativeInteger"].call(value, format)
+          return v, :invalid_unsignedInt unless w.nil?
+          return nil, :invalid_unsignedInt unless v <= 4294967295
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#unsignedShort" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#nonNegativeInteger"].call(value, format)
+          return v, :invalid_unsignedShort unless w.nil?
+          return nil, :invalid_unsignedShort unless v <= 65535
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#unsignedByte" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#nonNegativeInteger"].call(value, format)
+          return v, :invalid_unsignedByte unless w.nil?
+          return nil, :invalid_unsignedByte unless v <= 255
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#nonPositiveInteger" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
+          return v, :invalid_nonPositiveInteger unless w.nil?
+          return nil, :invalid_nonPositiveInteger unless v <= 0
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#negativeInteger" => lambda { |value, format|
+          v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
+          return v, :invalid_negativeInteger unless w.nil?
+          return nil, :invalid_negativeInteger unless v < 0
+          return v, w
+        },
+        "http://www.w3.org/2001/XMLSchema#double" => NUMERIC_PARSER,
+        "http://www.w3.org/2001/XMLSchema#duration" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#dayTimeDuration" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#yearMonthDuration" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#float" => NUMERIC_PARSER,
+        "http://www.w3.org/2001/XMLSchema#gDay" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#gMonth" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#gMonthDay" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#gYear" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#gYearMonth" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#hexBinary" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#QName" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#string" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#normalizedString" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#token" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#language" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#Name" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#NMTOKEN" => ALL_VALUES_VALID,
+        "http://www.w3.org/2001/XMLSchema#time" => ALL_VALUES_VALID
       }
 
   end

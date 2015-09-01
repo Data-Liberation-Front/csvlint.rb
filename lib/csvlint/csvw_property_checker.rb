@@ -209,11 +209,28 @@ module Csvlint
               begin
                 value["format"] = Regexp.new(value["format"])
               rescue RegexpError
-                value["format"] = nil
+                value.except!("format")
                 warnings << :invalid_regex
               end
             elsif NUMERIC_FORMAT_DATATYPES.include?(value["base"])
               value["format"] = { "pattern" => value["format"] } if value["format"].instance_of? String
+              begin
+                value["format"] = Csvlint::CsvwNumberFormat.new(value["format"]["pattern"], value["format"]["groupChar"], value["format"]["decimalChar"] || ".")
+              rescue Csvlint::CsvwNumberFormatError
+                value["format"] = Csvlint::CsvwNumberFormat.new(nil, value["format"]["groupChar"], value["format"]["decimalChar"] || ".")
+                warnings << :invalid_number_format
+              end
+            elsif value["base"] == "http://www.w3.org/2001/XMLSchema#boolean"
+              if value["format"].instance_of? String
+                value["format"] = value["format"].split("|")
+                unless value["format"].length == 2
+                  value.except!("format")
+                  warnings << :invalid_boolean_format
+                end
+              else
+                value.except!("format")
+                warnings << :invalid_boolean_format
+              end
             end
           end
           return value, warnings, :inherited
