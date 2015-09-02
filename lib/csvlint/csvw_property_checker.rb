@@ -746,4 +746,3 @@ module Csvlint
       ]
   end
 end
-                                                                                                                                                                                                                                                            """"""""""""""""""
