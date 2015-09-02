@@ -16,8 +16,8 @@ opts.on("-d", "--dump-errors", "Pretty print error and warning objects.") do |d|
   options[:dump] = d
 end
 
-opts.on("-s", "--schema-file FILENAME", "Schema file") do |s|
-  options[:schema_file] = s
+opts.on("-s", "--schema FILENAME", "Schema file") do |s|
+  options[:schema] = s
 end
 
 opts.on_tail("-h", "--help",
@@ -35,14 +35,15 @@ rescue OptionParser::InvalidOption => e
 end
 
 def print_error(index, error, dump, color)
-
   location = ""
   location += error.row.to_s if error.row
   location += "#{error.row ? "," : ""}#{error.column.to_s}" if error.column
   if error.row || error.column
     location = "#{error.row ? "Row" : "Column"}: #{location}"
   end
-  output_string = "#{index+1}. #{error.type}. #{location}"
+  output_string = "#{index+1}. #{error.type}"
+  output_string += ". #{location}" unless location.empty?
+  output_string += ". #{error.content}" if error.content
 
   if $stdout.tty?
     puts output_string.colorize(color)
@@ -54,6 +55,30 @@ def print_error(index, error, dump, color)
     pp error
   end
 
+end
+
+def validate_csv(source, schema, dump)
+  validator = Csvlint::Validator.new( source, nil, schema )
+
+  if $stdout.tty?
+    puts "#{source.path || source || "CSV"} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+  else
+    puts "#{source.path || source || "CSV"} is #{validator.valid? ? "VALID" : "INVALID"}"
+  end
+
+  if validator.errors.size > 0
+    validator.errors.each_with_index do |error, i|
+      print_error(i, error, dump, :red)
+    end
+  end
+
+  if validator.warnings.size > 0
+    validator.warnings.each_with_index do |error, i|
+      print_error(i, error, dump, :yellow)
+    end
+  end
+
+  return validator.valid?
 end
 
 if ARGV.length == 0 && !$stdin.tty?
@@ -69,7 +94,7 @@ else
         exit 1
       end
     end
-  else
+  elsif !options[:schema]
     puts "No CSV data to validate."
     puts opts
     exit 1
@@ -77,34 +102,40 @@ else
 end
 
 schema = nil
-if options[:schema_file]
+if options[:schema]
   begin
-    schemafile = File.read( options[:schema_file] )
+    schema = Csvlint::Schema.load_from_json(options[:schema])
+  rescue JSON::ParserError => e
+    puts "invalid metadata: malformed JSON"
+    exit 1
+  rescue Csvlint::CsvwMetadataError => e
+    puts "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
+    exit 1
   rescue Errno::ENOENT
-    puts "#{options[:schema_file]} not found"
+    puts "#{options[:schema]} not found"
     exit 1
   end
-  schema = Csvlint::Schema.from_json_table(nil, JSON.parse(schemafile))
 end
 
-validator = Csvlint::Validator.new( source, nil, schema )
-
-if $stdout.tty?
-  puts "#{ARGV[0] || "CSV"} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+valid = true
+if source.nil?
+  unless schema.instance_of? Csvlint::CsvwTableGroup
+    puts "No CSV data to validate."
+    puts opts
+    exit 1
+  end
+  schema.tables.keys.each do |source|
+    begin
+      source = source.sub("file:","")
+      source = File.new( source )
+    rescue Errno::ENOENT
+      puts "#{source} not found"
+      exit 1
+    end unless source =~ /^http(s)?/
+    valid &= validate_csv(source, schema, options[:dump])
+  end
 else
-  puts "#{ARGV[0] || "CSV"} is #{validator.valid? ? "VALID" : "INVALID"}"
+  valid = validate_csv(source, schema, options[:dump])
 end
 
-if validator.errors.size > 0
-  validator.errors.each_with_index do |error, i|
-    print_error(i, error, options[:dump], :red)
-  end
-end
-
-if validator.warnings.size > 0
-  validator.warnings.each_with_index do |error, i|
-    print_error(i, error, options[:dump], :yellow)
-  end
-end
-
-exit 1 unless validator.valid?
+exit 1 unless valid
