@@ -5,6 +5,7 @@ require 'uri'
 BASE_URI = "http://w3c.github.io/csvw/tests/"
 BASE_PATH = File.join(File.dirname(__FILE__), "..", "fixtures", "csvw")
 FEATURE_FILE_PATH = File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature")
+SCRIPT_FILE_PATH = File.join(File.dirname(__FILE__), "..", "..", "tmp", "run-csvw-tests")
 
 Dir.mkdir(BASE_PATH) unless Dir.exist?(BASE_PATH)
 
@@ -26,6 +27,30 @@ def cache_file(filename)
 	end
 	return uri, file
 end
+
+File.open(SCRIPT_FILE_PATH, 'w') do |file|
+	File.chmod(0755, SCRIPT_FILE_PATH)
+	manifest = JSON.parse( open("http://w3c.github.io/csvw/tests/manifest-validation.jsonld").read )
+	manifest["entries"].each do |entry|
+		type = "valid"
+		case entry["type"] 
+		when "csvt:WarningValidationTest" 
+			type = "warnings" 
+		when "csvt:NegativeValidationTest" 
+			type = "errors" 
+		end
+		file.puts "echo \"#{entry["id"].split("#")[-1]}: entry[\"name\"]\""
+		file.puts "echo \"#{type}: #{entry["comment"].gsub("\"", "\\\"").gsub("`", "'")}\""
+		if entry["action"].end_with?(".json")
+			file.puts "csvlint --schema=features/fixtures/csvw/#{entry["action"]}"
+		elsif entry["option"] && entry["option"]["metadata"]
+			file.puts "csvlint features/fixtures/csvw/#{entry["action"]} --schema=features/fixtures/csvw/#{entry["option"]["metadata"]}"
+		else
+			file.puts "csvlint features/fixtures/csvw/#{entry["action"]}"
+		end
+		file.puts "echo"
+	end
+end unless File.exist? SCRIPT_FILE_PATH
 
 File.open(FEATURE_FILE_PATH, 'w') do |file|
 	file.puts "# Auto-generated file based on standard validation CSVW tests from http://w3c.github.io/csvw/tests/manifest-validation.jsonld"

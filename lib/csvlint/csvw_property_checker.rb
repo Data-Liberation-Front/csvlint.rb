@@ -110,6 +110,13 @@ module Csvlint
         }
       end
 
+      def CsvwPropertyChecker.numeric_property(type)
+        return lambda { |value, base_url, lang|
+          return value, nil, type if value.kind_of?(Integer) && value >= 0
+          return nil, :invalid_value, type
+        }
+      end
+
       def CsvwPropertyChecker.link_property(type)
         return lambda { |value, base_url, lang|
           raise Csvlint::CsvwMetadataError.new(), "@id #{value} starts with _:" if value.to_s =~ /^_:/
@@ -254,6 +261,17 @@ module Csvlint
           warnings += convert_value_facet(value, "minExclusive", value["base"])
           warnings += convert_value_facet(value, "maxInclusive", value["base"])
           warnings += convert_value_facet(value, "maxExclusive", value["base"])
+
+          raise Csvlint::CsvwMetadataError.new(""), "datatype cannot specify both minimum/minInclusive (#{value["minInclusive"]}) and minExclusive (#{value["minExclusive"]}" if value["minInclusive"] && value["minExclusive"]
+          raise Csvlint::CsvwMetadataError.new(""), "datatype cannot specify both maximum/maxInclusive (#{value["maxInclusive"]}) and maxExclusive (#{value["maxExclusive"]}" if value["maxInclusive"] && value["maxExclusive"]
+          raise Csvlint::CsvwMetadataError.new(""), "datatype minInclusive (#{value["minInclusive"]}) cannot be more than maxInclusive (#{value["maxInclusive"]}" if value["minInclusive"] && value["maxInclusive"] && value["minInclusive"] > value["maxInclusive"]
+          raise Csvlint::CsvwMetadataError.new(""), "datatype minInclusive (#{value["minInclusive"]}) cannot be more than or equal to maxExclusive (#{value["maxExclusive"]}" if value["minInclusive"] && value["maxExclusive"] && value["minInclusive"] >= value["maxExclusive"]
+          raise Csvlint::CsvwMetadataError.new(""), "datatype minExclusive (#{value["minExclusive"]}) cannot be more than or equal to maxExclusive (#{value["maxExclusive"]}" if value["minExclusive"] && value["maxExclusive"] && value["minExclusive"] > value["maxExclusive"]
+          raise Csvlint::CsvwMetadataError.new(""), "datatype minExclusive (#{value["minExclusive"]}) cannot be more than maxInclusive (#{value["maxInclusive"]}" if value["minExclusive"] && value["maxInclusive"] && value["minExclusive"] >= value["maxInclusive"]
+
+          raise Csvlint::CsvwMetadataError.new(""), "datatype length (#{value["length"]}) cannot be less than minLength (#{value["minLength"]}" if value["length"] && value["minLength"] && value["length"] < value["minLength"]
+          raise Csvlint::CsvwMetadataError.new(""), "datatype length (#{value["length"]}) cannot be more than maxLength (#{value["maxLength"]}" if value["length"] && value["maxLength"] && value["length"] > value["maxLength"]
+          raise Csvlint::CsvwMetadataError.new(""), "datatype minLength (#{value["minLength"]}) cannot be more than maxLength (#{value["maxLength"]}" if value["minLength"] && value["maxLength"] && value["minLength"] > value["maxLength"]
 
           if value["format"]
             if REGEXP_FORMAT_DATATYPES.include?(value["base"])
@@ -422,7 +440,20 @@ module Csvlint
         },
         # dialect properties
         "commentPrefix" => string_property(:dialect),
+        "delimiter" => string_property(:dialect),
+        "doubleQuote" => boolean_property(:dialect),
+        "encoding" => lambda { |value, base_url, lang|
+          return value, nil, :dialect if VALID_ENCODINGS.include? value
+          return nil, :invalid_value, :dialect
+        },
         "header" => boolean_property(:dialect),
+        "headerRowCount" => numeric_property(:dialect),
+        "lineTerminators" => array_property(:dialect),
+        "quoteChar" => string_property(:dialect),
+        "skipBlankRows" => boolean_property(:dialect),
+        "skipColumns" => numeric_property(:dialect),
+        "skipInitialSpace" => boolean_property(:dialect),
+        "skipRows" => numeric_property(:dialect),
         "trim" => lambda { |value, base_url, lang| 
           value = :true if value == true || value == "true"
           value = :false if value == false || value == "false"
@@ -669,6 +700,49 @@ module Csvlint
         "NMTOKEN" => "http://www.w3.org/2001/XMLSchema#NMTOKEN",
         "time" => "http://www.w3.org/2001/XMLSchema#time"
       }
+
+      VALID_ENCODINGS = [
+        "utf-8",
+        "ibm866",
+        "iso-8859-2",
+        "iso-8859-3",
+        "iso-8859-4",
+        "iso-8859-5",
+        "iso-8859-6",
+        "iso-8859-7",
+        "iso-8859-8",
+        "iso-8859-8-i",
+        "iso-8859-10",
+        "iso-8859-13",
+        "iso-8859-14",
+        "iso-8859-15",
+        "iso-8859-16",
+        "koi8-r",
+        "koi8-u",
+        "macintosh",
+        "windows-874",
+        "windows-1250",
+        "windows-1251",
+        "windows-1252",
+        "windows-1253",
+        "windows-1254",
+        "windows-1255",
+        "windows-1256",
+        "windows-1257",
+        "windows-1258",
+        "x-mac-cyrillic",
+        "gb18030",
+        "hz-gb-2312",
+        "big5",
+        "euc-jp",
+        "iso-2022-jp",
+        "shift_jis",
+        "euc-kr",
+        "replacement",
+        "utf-16be",
+        "utf-16le",
+        "x-user-defined"
+      ]
   end
 end
                                                                                                                                                                                                                                                             """"""""""""""""""
