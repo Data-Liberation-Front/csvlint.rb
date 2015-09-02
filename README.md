@@ -278,3 +278,30 @@ validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, opt
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+### Testing
+
+The codebase includes both rspec and cucumber tests, which can be run together using:
+
+    $ rake
+
+or separately:
+
+    $ rake spec
+    $ rake features
+
+When the cucumber tests are first run, a script will create tests based on the latest version of the [CSV on the Web test suite](http://w3c.github.io/csvw/tests/), including creating a local cache of the test files. This requires an internet connection and some patience. Following that download, the tests will run locally; there's also a batch script:
+
+    $ bin/run-csvw-tests
+
+which will run the tests from the command line.
+
+If you need to refresh the CSV on the Web tests:
+
+    $ rm bin/run-csvw-tests
+    $ rm features/csvw_validation_tests.feature
+    $ rmdir features/fixtures/csvw
+
+and then run the cucumber tests again or:
+
+    $ ruby features/support/load_tests.rb
