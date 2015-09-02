@@ -130,10 +130,12 @@ module Csvlint
           if reference["resource"]
             resource = URI.join(url, reference["resource"]).to_s
             referenced_table = tables[resource]
+            raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_url}')].tableSchema.foreign_keys[#{i}].reference.resource"), "foreign key references table that does not exist (#{resource})" if referenced_table.nil?
           else
             schema_url = URI.join(url, reference["schemaReference"]).to_s
             referenced_tables = tables.values.select{ |table| table.schema == schema_url }
             referenced_table = referenced_tables[0]
+            raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_url}')].tableSchema.foreign_keys[#{i}].reference.schemaReference"), "foreign key references schema that is not used (#{schema_url})" if referenced_table.nil?
           end
           foreign_key["referenced_table"] = referenced_table
           table_columns = {}

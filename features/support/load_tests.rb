@@ -4,6 +4,7 @@ require 'uri'
 
 BASE_URI = "http://w3c.github.io/csvw/tests/"
 BASE_PATH = File.join(File.dirname(__FILE__), "..", "fixtures", "csvw")
+FEATURE_FILE_PATH = File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature")
 
 Dir.mkdir(BASE_PATH) unless Dir.exist?(BASE_PATH)
 
@@ -18,14 +19,15 @@ def cache_file(filename)
 				Dir.mkdir(dir) unless Dir.exist?(dir)
 			end
 		end
-		File.open(file, 'w') do |f|
-			f.puts open(uri).read
+		STDERR.puts("storing #{file} locally")
+		File.open(file, 'wb') do |f|
+			f.puts open(uri, 'rb').read
 		end
 	end
 	return uri, file
 end
 
-File.open(File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature"), 'w') do |file|
+File.open(FEATURE_FILE_PATH, 'w') do |file|
 	file.puts "# Auto-generated file based on standard validation CSVW tests from http://w3c.github.io/csvw/tests/manifest-validation.jsonld"
 	file.puts ""
 
@@ -84,4 +86,4 @@ File.open(File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature
 		end
 		file.puts "\t"
 	end
-end
+end unless File.exist? FEATURE_FILE_PATH

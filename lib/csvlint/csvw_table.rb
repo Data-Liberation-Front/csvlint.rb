@@ -189,7 +189,7 @@ module Csvlint
         foreign_keys: foreign_keys || [], 
         notes: notes, 
         primary_key: primary_key_valid && !primary_key_columns.empty? ? primary_key_columns : nil, 
-        schema: table_schema["@id"],
+        schema: table_schema ? table_schema["@id"] : nil,
         annotations: annotations, 
         warnings: warnings
       )

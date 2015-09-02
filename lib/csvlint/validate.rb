@@ -44,6 +44,7 @@ module Csvlint
         end
         build_warnings(:check_options, :structure) if @expected_columns == 1
         check_consistency
+        check_foreign_keys
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found, nil, nil, nil, @source)
       ensure
@@ -264,8 +265,17 @@ module Csvlint
       end
     end
 
+    def check_foreign_keys
+      if @schema.instance_of? Csvlint::CsvwTableGroup
+        @schema.validate_foreign_keys
+        @errors += @schema.errors
+        @warnings += @schema.warnings
+      end
+    end
+
     def locate_schema
       @source_url = nil
+      warn_if_unsuccessful = false
       case @source
       when StringIO
         return
@@ -295,7 +305,8 @@ module Csvlint
             if schema.instance_of? Csvlint::CsvwTableGroup
               if schema.tables[@source_url]
                 link_schema = schema
-              # else
+              else
+                warn_if_unsuccessful = true
               #   build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
               end
             end
@@ -325,7 +336,8 @@ module Csvlint
           if schema.instance_of? Csvlint::CsvwTableGroup
             if schema.tables[@source_url]
               return @schema = schema
-            # else
+            else
+              warn_if_unsuccessful = true
             #   build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
             end
           end
@@ -338,6 +350,7 @@ module Csvlint
           raise e
         end
       end
+      build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema) if warn_if_unsuccessful
       return @schema = nil
     end
 
