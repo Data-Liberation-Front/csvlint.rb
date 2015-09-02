@@ -59,7 +59,7 @@ module Csvlint
       annotations = {}
       inherited_properties = {}
       common_properties = {}
-      base_url = url
+      base_url = URI(url.to_s.strip)
       lang = "und"
 
       context = json["@context"]
@@ -115,7 +115,7 @@ module Csvlint
             warnings << Csvlint::ErrorMessage.new(:invalid_url, :metadata, nil, nil, "url: #{table_url}", nil)
             table_url = ""
           end
-          table_url = URI.join(url, table_url).to_s
+          table_url = URI.join(base_url, table_url).to_s
           table_desc["url"] = table_url
           table = Csvlint::CsvwTable.from_json(table_desc, base_url, lang, inherited_properties)
           tables[table_url] = table
@@ -128,11 +128,11 @@ module Csvlint
         table.foreign_keys.each_with_index do |foreign_key,i|
           reference = foreign_key["reference"]
           if reference["resource"]
-            resource = URI.join(url, reference["resource"]).to_s
+            resource = URI.join(base_url, reference["resource"]).to_s
             referenced_table = tables[resource]
             raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_url}')].tableSchema.foreign_keys[#{i}].reference.resource"), "foreign key references table that does not exist (#{resource})" if referenced_table.nil?
           else
-            schema_url = URI.join(url, reference["schemaReference"]).to_s
+            schema_url = URI.join(base_url, reference["schemaReference"]).to_s
             referenced_tables = tables.values.select{ |table| table.schema == schema_url }
             referenced_table = referenced_tables[0]
             raise Csvlint::CsvwMetadataError.new("$.tables[?(@.url = '#{table_url}')].tableSchema.foreign_keys[#{i}].reference.schemaReference"), "foreign key references schema that is not used (#{schema_url})" if referenced_table.nil?
@@ -153,7 +153,7 @@ module Csvlint
         end
       end
 
-      return CsvwTableGroup.new(url, id: id, tables: tables, notes: json["notes"] || [], annotations: annotations, warnings: warnings)
+      return CsvwTableGroup.new(base_url, id: id, tables: tables, notes: json["notes"] || [], annotations: annotations, warnings: warnings)
     end
 
     private

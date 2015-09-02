@@ -56,8 +56,8 @@ module Csvlint
       @csv_header = true
       @encoding = io.charset rescue nil
       @content_type = io.content_type rescue nil
-      @link_headers = io.metas["link"] rescue nil
       @headers = io.meta rescue nil
+      @link_headers = @headers["link"].split(",") rescue nil
       assumed_header = undeclared_header = !@supplied_dialect
       if @headers
         if @headers["content-type"] =~ /text\/csv/
