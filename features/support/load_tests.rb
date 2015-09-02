@@ -5,7 +5,7 @@ require 'uri'
 BASE_URI = "http://w3c.github.io/csvw/tests/"
 BASE_PATH = File.join(File.dirname(__FILE__), "..", "fixtures", "csvw")
 FEATURE_FILE_PATH = File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature")
-SCRIPT_FILE_PATH = File.join(File.dirname(__FILE__), "..", "..", "tmp", "run-csvw-tests")
+SCRIPT_FILE_PATH = File.join(File.dirname(__FILE__), "..", "..", "bin", "run-csvw-tests")
 
 Dir.mkdir(BASE_PATH) unless Dir.exist?(BASE_PATH)
 

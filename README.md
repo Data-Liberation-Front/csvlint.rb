@@ -202,10 +202,16 @@ An equivalent CSV on the Web Metadata file is:
 		}
 	}
 
-Parsing and validating with a schema:
+Parsing and validating with a schema (of either kind):
 
 	schema = Csvlint::Schema.load_from_json(uri)
 	validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, schema )
+
+### CSV on the Web Validation Support
+
+This gem passes all the validation tests in the [official CSV on the Web test suite](http://w3c.github.io/csvw/tests/) (though there might still be errors or parts of the [CSV on the Web standard](http://www.w3.org/TR/tabular-metadata/) that aren't tested by that test suite).
+
+### JSON Table Schema Support
 
 Supported constraints:
 
