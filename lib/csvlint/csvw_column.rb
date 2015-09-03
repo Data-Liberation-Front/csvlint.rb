@@ -210,6 +210,13 @@ module Csvlint
         }
       end
 
+      def CsvwColumn.create_regexp_based_parser(regexp, warning)
+        return lambda { |value, format|
+          return nil, warning unless value =~ regexp
+          return value, nil
+        }
+      end
+
       DATATYPE_PARSER = {
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral" => ALL_VALUES_VALID,
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML" => ALL_VALUES_VALID,
@@ -316,9 +323,13 @@ module Csvlint
           return v, w
         },
         "http://www.w3.org/2001/XMLSchema#double" => NUMERIC_PARSER,
-        "http://www.w3.org/2001/XMLSchema#duration" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#dayTimeDuration" => ALL_VALUES_VALID,
-        "http://www.w3.org/2001/XMLSchema#yearMonthDuration" => ALL_VALUES_VALID,
+        # regular expressions here taken from XML Schema datatypes spec
+        "http://www.w3.org/2001/XMLSchema#duration" => 
+          create_regexp_based_parser(/-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\.[0-9]+)?S)?|([0-9]+(\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\.[0-9]+)?S)?|([0-9]+(\.[0-9]+)?S))))/, :invalid_duration),
+        "http://www.w3.org/2001/XMLSchema#dayTimeDuration" =>
+          create_regexp_based_parser(/-?P(([0-9]+D(T(([0-9]+H)([0-9]+M)?([0-9]+(\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\.[0-9]+)?S)?|([0-9]+(\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\.[0-9]+)?S)?|([0-9]+(\.[0-9]+)?S))))/, :invalid_dayTimeDuration),
+        "http://www.w3.org/2001/XMLSchema#yearMonthDuration" =>
+          create_regexp_based_parser(/-?P([0-9]+Y([0-9]+M)?|([0-9]+M))/, :invalid_duration),
         "http://www.w3.org/2001/XMLSchema#float" => NUMERIC_PARSER,
         "http://www.w3.org/2001/XMLSchema#gDay" =>
           create_date_parser("http://www.w3.org/2001/XMLSchema#gDay", :invalid_gDay),

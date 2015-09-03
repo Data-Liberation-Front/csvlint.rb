@@ -71,14 +71,15 @@ module Csvlint
               base_url = v if property == "@base"
               lang = v if property == "@language"
             else
-              warnings += Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "@context: #{property}", nil)
+              raise Csvlint::CsvwMetadataError.new("$.@context"), "@context contains properties other than @base or @language (#{property})"
             end
           else
+            raise Csvlint::CsvwMetadataError.new("$.@context"), "@context contains properties other than @base or @language (#{property})" unless ["@base", "@language"].include?(property)
             warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "@context: #{property}: #{value}", nil) }
           end
         end
       end
-      json.except!("@context")
+      json.delete("@context")
 
       if json["url"]
         json = { "tables" => [ json ] }

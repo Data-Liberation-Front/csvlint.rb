@@ -75,7 +75,7 @@ module Csvlint
             format = Csvlint::CsvwDateFormat.new(nil, datatype)
             v = format.parse(value[property])
             if v.nil?
-              value.except!(property)
+              value.delete(property)
               return [":invalid_#{property}".to_sym]
             else
               value[property] = v
@@ -120,7 +120,7 @@ module Csvlint
 
       def CsvwPropertyChecker.link_property(type)
         return lambda { |value, base_url, lang|
-          raise Csvlint::CsvwMetadataError.new(), "@id #{value} starts with _:" if value.to_s =~ /^_:/
+          raise Csvlint::CsvwMetadataError.new(), "URL #{value} starts with _:" if value.to_s =~ /^_:/
           return (base_url.nil? ? URI(value) : URI.join(base_url, value)), nil, type if value.instance_of? String
           return base_url, :invalid_value, type
         }
@@ -162,7 +162,7 @@ module Csvlint
                 end
                 value[l] = valid_titles
               else
-                value.except!(l)
+                value.delete(l)
                 warnings << :invalid_language
               end
             end
@@ -183,6 +183,7 @@ module Csvlint
       PROPERTIES = {
         # context properties
         "@language" => language_property(:context),
+        "@base" => link_property(:context),
         # common properties
         "@id" => link_property(:common),
         "notes" => array_property(:common),
@@ -222,7 +223,7 @@ module Csvlint
               v,w,t = PROPERTIES["@id"].call(value["@id"], base_url, lang)
               unless w.nil?
                 warnings << w
-                value.except!("@id")
+                value.delete("@id")
               end
             end
 
@@ -251,11 +252,11 @@ module Csvlint
 
           if value["minimum"]
             value["minInclusive"] = value["minimum"]
-            value.except!("minimum")
+            value.delete("minimum")
           end
           if value["maximum"]
             value["maxInclusive"] = value["maximum"]
-            value.except!("maximum")
+            value.delete("maximum")
           end
 
           warnings += convert_value_facet(value, "minInclusive", value["base"])
@@ -279,7 +280,7 @@ module Csvlint
               begin
                 value["format"] = Regexp.new(value["format"])
               rescue RegexpError
-                value.except!("format")
+                value.delete("format")
                 warnings << :invalid_regex
               end
             elsif NUMERIC_FORMAT_DATATYPES.include?(value["base"])
@@ -294,11 +295,11 @@ module Csvlint
               if value["format"].instance_of? String
                 value["format"] = value["format"].split("|")
                 unless value["format"].length == 2
-                  value.except!("format")
+                  value.delete("format")
                   warnings << :invalid_boolean_format
                 end
               else
-                value.except!("format")
+                value.delete("format")
                 warnings << :invalid_boolean_format
               end
             elsif DATE_FORMAT_DATATYPES.include?(value["base"])
@@ -306,11 +307,11 @@ module Csvlint
                 begin
                   value["format"] = Csvlint::CsvwDateFormat.new(value["format"])
                 rescue Csvlint::CsvDateFormatError
-                  value.except!("format")
+                  value.delete("format")
                   warnings << :invalid_date_format
                 end
               else
-                value.except!("format")
+                value.delete("format")
                 warnings << :invalid_date_format
               end
             end
@@ -352,7 +353,7 @@ module Csvlint
                   else
                     v, warning, type = check_property(p, v, base_url, lang)
                     unless type == :transformation && (warning.nil? || warning.empty?)
-                      value.except!(p)
+                      value.delete(p)
                       warnings << :invalid_property unless type == :transformation
                       warnings += Array(warning)
                     end
@@ -387,7 +388,7 @@ module Csvlint
                 schema_base_url = schema["@context"][1]["@base"] ? URI.join(schema_base_url, schema["@context"][1]["@base"]).to_s : schema_base_url
                 schema_lang = schema["@context"][1]["@language"] || schema_lang
               end
-              schema.except!("@context")
+              schema.delete("@context")
             end
           elsif value.instance_of? Hash
             schema = value.clone
@@ -405,7 +406,7 @@ module Csvlint
               if (type == :schema || type == :inherited) && (warning.nil? || warning.empty?)
                 schema[p] = v
               else
-                schema.except!(p)
+                schema.delete(p)
                 warnings << :invalid_property unless (type == :schema || type == :inherited)
                 warnings += Array(warning)
               end
@@ -428,7 +429,7 @@ module Csvlint
                 if type == :dialect && (warning.nil? || warning.empty?)
                   value[p] = v
                 else
-                  value.except!(p)
+                  value.delete(p)
                   warnings << :invalid_property unless type == :dialect
                   warnings += Array(warning)
                 end
@@ -477,8 +478,10 @@ module Csvlint
                   v, warning, type = check_property(p, v, base_url, lang)
                   if type == :foreign_key && (warning.nil? || warning.empty?)
                     foreign_key[p] = v
+                  elsif p =~ /:/
+                    raise Csvlint::CsvwMetadataError.new("foreignKey.#{p}"), "foreignKey includes a prefixed (common) property"
                   else
-                    foreign_key.except!(p)
+                    foreign_key.delete(p)
                     warnings << :invalid_property unless type == :foreign_key
                     warnings += Array(warning)
                   end
@@ -510,10 +513,13 @@ module Csvlint
                 if warning.nil? || warning.empty?
                   value[p] = v
                 else
-                  value.except!(p)
+                  value.delete(p)
                   warnings += Array(warning)
                 end
+              elsif p =~ /:/
+                raise Csvlint::CsvwMetadataError.new("foreignKey.reference.#{p}"), "foreignKey reference includes a prefixed (common) property"
               else
+                value.delete(p)
                 warnings << :invalid_property
               end
             end

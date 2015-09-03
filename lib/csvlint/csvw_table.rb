@@ -47,9 +47,13 @@ module Csvlint
       reset
       values.each_with_index do |value,i|
         column = columns[i]
-        column.validate(value, row)
-        @errors += column.errors
-        @warnings += column.warnings
+        if column
+          column.validate(value, row)
+          @errors += column.errors
+          @warnings += column.warnings
+        else
+          build_errors(:too_many_values, :schema, row, nil, value, nil)
+        end
       end unless columns.empty?
       unless @primary_key.nil?
         key = @primary_key.map { |column| column.parse(values[column.number - 1], row) }
