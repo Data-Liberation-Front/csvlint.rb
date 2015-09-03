@@ -39,7 +39,7 @@ File.open(SCRIPT_FILE_PATH, 'w') do |file|
 		when "csvt:NegativeValidationTest" 
 			type = "errors" 
 		end
-		file.puts "echo \"#{entry["id"].split("#")[-1]}: entry[\"name\"]\""
+		file.puts "echo \"#{entry["id"].split("#")[-1]}: #{entry["name"]}\""
 		file.puts "echo \"#{type}: #{entry["comment"].gsub("\"", "\\\"").gsub("`", "'")}\""
 		if entry["action"].end_with?(".json")
 			file.puts "csvlint --schema=features/fixtures/csvw/#{entry["action"]}"
