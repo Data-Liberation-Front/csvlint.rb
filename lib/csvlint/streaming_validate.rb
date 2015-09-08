@@ -32,8 +32,10 @@ module Csvlint
       @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
+
       # This will get factored into Validate
-      # @extension = parse_extension(source) unless @source.nil?
+      # @extension = parse_extension(@string) unless @string.nil?
+
       reset
       validate
 
@@ -112,13 +114,15 @@ module Csvlint
           build_info_messages(:nonrfc_line_breaks, :structure)
         end
 
-        build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)
+        if parse_extension(string) == true
+          build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)
+        end
         # terminating condition which is part of the streaming class no longer having responsibility for detecting row seperating chars
        begin
          row = csv.shift # row is an array from this point onwards
          @data << row
          if row
-           if current_line == 1 && @dialect["header"]
+           if current_line == 1 && @csv_header
              row = row.reject{|col| col.nil? || col.empty?}
              validate_header(row)
              @col_counts << row.size
@@ -237,7 +241,10 @@ module Csvlint
     private
 
     def parse_extension(source)
+
       case source
+      when String
+        return true
       when File
         return File.extname( source.path )
       when IO

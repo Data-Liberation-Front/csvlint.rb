@@ -68,8 +68,6 @@ describe Csvlint::StreamingValidator do
       line_one = "\"Foo\",\"Bar\",\"Baz\"\n"
       line_two = "\"1\",\"2\",\"3\"\n"
       test_one = Csvlint::StreamingValidator.new(line_one)
-      # require 'pry'
-      # binding.pry
       expect (Csvlint::StreamingValidator.new(line_one).valid? && Csvlint::StreamingValidator.new(line_one).valid?)
     end
 
