@@ -74,6 +74,8 @@ describe Csvlint::Validator do
     it "assume header present if not specified in content type" do
       stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
       validator = Csvlint::Validator.new("http://example.com/example.csv")
+      # require 'pry'
+      # binding.pry
       expect( validator.header? ).to eql(true)
       expect( validator.errors.size ).to eql(0)
       expect( validator.info_messages.size ).to eql(1)

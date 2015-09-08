@@ -13,6 +13,8 @@ require 'uri_template'
 require 'csvlint/error_message'
 require 'csvlint/error_collector'
 require 'csvlint/validate'
+require 'csvlint/streaming_validate'
+require 'csvlint/streaming_client'
 require 'csvlint/wrapped_io'
 require 'csvlint/field'
 
