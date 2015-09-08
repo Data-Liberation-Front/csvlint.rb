@@ -10,13 +10,13 @@ describe Csvlint::StreamingValidator do
     it "validates correctly" do
       validator = Csvlint::StreamingValidator.new("\"a\",\"b\",\"c\"\r\n")
 
-      expect(validator.valid?).to be_true
+      expect(validator.valid?).to eql(true)
     end
 
     it "checks for non rfc line breaks" do
       validator = Csvlint::StreamingValidator.new("\"a\",\"b\",\"c\"\n")
 
-      expect(validator.valid?).to be_true
+      expect(validator.valid?).to eql(true)
       expect(validator.info_messages.count).to eq(2)
       expect(validator.info_messages.last.type).to eql(:nonrfc_line_breaks)
     end
@@ -24,7 +24,7 @@ describe Csvlint::StreamingValidator do
     it "checks for blank rows" do
       validator = Csvlint::StreamingValidator.new("\"\",\"\",\"\"\r\n")
 
-      expect(validator.valid?).to be_false
+      expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:blank_rows)
     end
@@ -32,7 +32,7 @@ describe Csvlint::StreamingValidator do
     it "checks for malformed CSVs" do
       validator = Csvlint::StreamingValidator.new("\"a,\"b\",\"c\"\n")
 
-      expect(validator.valid?).to be_false
+      expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
     end
@@ -46,7 +46,7 @@ describe Csvlint::StreamingValidator do
     it "returns line break errors if incorrectly specified" do
       validator = Csvlint::StreamingValidator.new("\"a\",\"b\",\"c\"\n", {"lineTerminator" => "\r\n"})
 
-      expect(validator.valid?).to be_false
+      expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:line_breaks)
     end
