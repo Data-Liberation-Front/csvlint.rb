@@ -29,9 +29,13 @@ describe Csvlint::StreamingValidator do
       expect(validator.errors.first.type).to eql(:blank_rows)
     end
 
+    it "checks for ragged rows" do
+      # passing this to the validator client most likely
+
+    end
+
     it "checks for malformed CSVs" do
       validator = Csvlint::StreamingValidator.new("\"a,\"b\",\"c\"\n")
-
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
@@ -49,6 +53,24 @@ describe Csvlint::StreamingValidator do
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:line_breaks)
+    end
+
+    # it "returns an argument error if arguments aren't a string" do
+    #   # input = ['', '"1","2","3"']
+    #   input = ["\"Foo\",\"Bar\",\"Baz\"", "\"1\",\"2\",\"3\""]
+    #   validator = Csvlint::StreamingValidator.new(input)
+    #   expect(validator.valid?).to eql(false)
+    #   expect(validator.errors.first.type).to eql(:invalid_encoding)
+    #   # breaks because of the new addition line 114
+    # end
+
+    it "validates two strings passed in sequence" do
+      line_one = "\"Foo\",\"Bar\",\"Baz\"\n"
+      line_two = "\"1\",\"2\",\"3\"\n"
+      test_one = Csvlint::StreamingValidator.new(line_one)
+      # require 'pry'
+      # binding.pry
+      expect (Csvlint::StreamingValidator.new(line_one).valid? && Csvlint::StreamingValidator.new(line_one).valid?)
     end
 
   end

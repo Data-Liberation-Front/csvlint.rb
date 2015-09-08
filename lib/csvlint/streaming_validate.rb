@@ -41,20 +41,21 @@ module Csvlint
 
     def validate
       single_col = false
-      io = nil
+      # io = nil # This will get factored into Validate
       begin
-        validate_metadata(@string)
+        validate_metadata(@string) # this shouldn't be called on every string
         parse_csv(@string)
         sum = @col_counts.inject(:+)
         unless sum.nil?
           build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
         end
+        # return expected_columns to calling class
         build_warnings(:check_options, :structure) if @expected_columns == 1
         check_consistency
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
       ensure
-        io.close if io && io.respond_to?(:close)
+        # io.close if io && io.respond_to?(:close) # This will get factored into Validate, or a finishing state in this class
       end
     end
 
@@ -112,8 +113,9 @@ module Csvlint
         end
 
         build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)
+        # terminating condition which is part of the streaming class no longer having responsibility for detecting row seperating chars
        begin
-         row = csv.shift
+         row = csv.shift # row is an array from this point onwards
          @data << row
          if row
            if current_line == 1 && header?
@@ -138,12 +140,13 @@ module Csvlint
            end
          end
        rescue CSV::MalformedCSVError => e
-         type = fetch_error(e)
+         type = fetch_error(e) # refers to ERROR_MATCHER object
          build_errors(type, :structure, current_line, nil, string)
        end
-      rescue ArgumentError => ae
-        build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
-        reported_invalid_encoding = true
+        # the below rescue is no longer necessary with addition of line 114
+      # rescue ArgumentError => ae
+      #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
+      #   reported_invalid_encoding = true
       end
     end
 
