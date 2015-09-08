@@ -118,7 +118,7 @@ module Csvlint
          row = csv.shift # row is an array from this point onwards
          @data << row
          if row
-           if current_line == 1 && header?
+           if current_line == 1 && @dialect["header"]
              row = row.reject{|col| col.nil? || col.empty?}
              validate_header(row)
              @col_counts << row.size
@@ -166,10 +166,6 @@ module Csvlint
         @warnings += @schema.warnings
       end
       return valid?
-    end
-
-    def header?
-      @csv_header
     end
 
     def fetch_error(error)
