@@ -73,6 +73,18 @@ describe Csvlint::StreamingValidator do
       expect (Csvlint::StreamingValidator.new(line_one).valid? && Csvlint::StreamingValidator.new(line_one).valid?)
     end
 
+    it "should handle stringIO input" do
+
+      data = StringIO.new( "1,2,3\r\n" )
+      validator = Csvlint::StreamingValidator.new(data)
+
+      expect( validator.valid? ).to eql(true)
+      expect( validator.info_messages.size ).to eql(1)
+      expect( validator.info_messages.first.type).to eql(:assumed_header)
+      expect( validator.info_messages.first.category).to eql(:structure)
+
+    end
+
   end
 
   # context "csv dialect" do
