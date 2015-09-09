@@ -5,7 +5,6 @@ module Csvlint
     include Csvlint::ErrorCollector
 
     attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
-
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
       "Illegal quoting" => :whitespace,
@@ -13,9 +12,10 @@ module Csvlint
       "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
-    def initialize(string, dialect = nil, schema = nil, options = {})
+    def initialize(stream, dialect = nil, schema = nil, options = {})
+      # suggested alternative initialisation parameters: stream, csv_options
 
-      @string = string
+      @stream = stream
       @formats = []
       @schema = schema
 
@@ -37,7 +37,9 @@ module Csvlint
       # @extension = parse_extension(@string) unless @string.nil?
 
       reset
-      validate
+      # validate
+      # TODO - separating the initialise and validate calls means that many of the specs that use Validator.valid to test that the object created
+      # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
 
     end
 
@@ -45,8 +47,8 @@ module Csvlint
       single_col = false
       # io = nil # This will get factored into Validate
       begin
-        validate_metadata(@string) # this shouldn't be called on every string
-        parse_csv(@string)
+        validate_metadata(@stream) # this shouldn't be called on every string
+        parse_csv(@stream)
         sum = @col_counts.inject(:+)
         unless sum.nil?
           build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
@@ -66,6 +68,7 @@ module Csvlint
       @content_type = io.content_type rescue nil
       @headers = io.meta rescue nil
       assumed_header = undeclared_header = !@supplied_dialect
+
       if @headers
         if @headers["content-type"] =~ /text\/csv/
           @csv_header = true
@@ -114,7 +117,7 @@ module Csvlint
           build_info_messages(:nonrfc_line_breaks, :structure)
         end
 
-        if parse_extension(string) == true
+        if string.class.eql?(String)
           build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)
         end
         # terminating condition which is part of the streaming class no longer having responsibility for detecting row seperating chars
@@ -123,6 +126,7 @@ module Csvlint
          @data << row
          if row
            if current_line == 1 && @csv_header
+             # this conditional should be refactored somewhere
              row = row.reject{|col| col.nil? || col.empty?}
              validate_header(row)
              @col_counts << row.size
@@ -144,6 +148,7 @@ module Csvlint
            end
          end
        rescue CSV::MalformedCSVError => e
+         # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
          type = fetch_error(e) # refers to ERROR_MATCHER object
          build_errors(type, :structure, current_line, nil, string)
        end

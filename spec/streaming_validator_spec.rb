@@ -117,7 +117,7 @@ describe Csvlint::StreamingValidator do
     it "should include info message about missing header when we have assumed a header" do
       data = StringIO.new( "1,2,3\r\n" )
       validator = Csvlint::StreamingValidator.new(data)
-      validator.validate
+      validator.validate_metadata(data) # data is equivalent to validator.stream
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(1)
       expect( validator.info_messages.first.type).to eql(:assumed_header)
