@@ -29,6 +29,45 @@ module Csvlint
         @warnings += warnings
       end
 
+      def self.from_json(number, column_desc, base_url=nil, lang="und", inherited_properties={})
+        annotations = {}
+        warnings = []
+        column_properties = {}
+        inherited_properties = inherited_properties.clone
+
+        column_desc.each do |property,value|
+          if property == "@type"
+            raise Csvlint::Csvw::MetadataError.new("columns[#{number}].@type"), "@type of column is not 'Column'" if value != 'Column'
+          else
+            v, warning, type = Csvw::PropertyChecker.check_property(property, value, base_url, lang)
+            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) } unless warning.nil? || warning.empty?
+            if type == :annotation
+              annotations[property] = v
+            elsif type == :common || type == :column
+              column_properties[property] = v
+            elsif type == :inherited
+              inherited_properties[property] = v
+            else
+              warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "column: #{property}", nil)
+            end
+          end
+        end
+
+        return self.new(number, column_properties["name"],
+          id: column_properties["@id"],
+          datatype: inherited_properties["datatype"] || { "@id" => "http://www.w3.org/2001/XMLSchema#string" },
+          lang: inherited_properties["lang"] || "und",
+          null: inherited_properties["null"] || [""],
+          property_url: column_desc["propertyUrl"],
+          required: inherited_properties["required"] || false,
+          separator: inherited_properties["separator"],
+          titles: column_properties["titles"],
+          virtual: column_properties["virtual"] || false,
+          annotations: annotations,
+          warnings: warnings
+        )
+      end
+
       def validate_header(header)
         reset
         valid_headers = @titles ? @titles.map{ |l,v| v if Column.languages_match(l, lang) }.flatten : []
@@ -66,50 +105,30 @@ module Csvlint
         return values
       end
 
-      def Column.from_json(number, column_desc, base_url=nil, lang="und", inherited_properties={})
-        annotations = {}
-        warnings = []
-        column_properties = {}
-        inherited_properties = inherited_properties.clone
-
-        column_desc.each do |property,value|
-          if property == "@type"
-            raise Csvlint::Csvw::MetadataError.new("columns[#{number}].@type"), "@type of column is not 'Column'" if value != 'Column'
-          else
-            v, warning, type = Csvw::PropertyChecker.check_property(property, value, base_url, lang)
-            warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) } unless warning.nil? || warning.empty?
-            if type == :annotation
-              annotations[property] = v
-            elsif type == :common || type == :column
-              column_properties[property] = v
-            elsif type == :inherited
-              inherited_properties[property] = v
-            else
-              warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "column: #{property}", nil)
-            end
-          end
-        end
-
-        return Column.new(number, column_properties["name"],
-          id: column_properties["@id"],
-          datatype: inherited_properties["datatype"] || { "@id" => "http://www.w3.org/2001/XMLSchema#string" },
-          lang: inherited_properties["lang"] || "und",
-          null: inherited_properties["null"] || [""],
-          property_url: column_desc["propertyUrl"],
-          required: inherited_properties["required"] || false,
-          separator: inherited_properties["separator"],
-          titles: column_properties["titles"],
-          virtual: column_properties["virtual"] || false,
-          annotations: annotations,
-          warnings: warnings
-        )
-      end
-
       private
-        def Column.languages_match(l1, l2)
-          return true if l1 == l2 || l1 == "und" || l2 == "und"
-          return true if l1 =~ Regexp.new("^#{l2}-") || l2 =~ Regexp.new("^#{l1}-")
-          return false
+        class << self
+
+          def create_date_parser(type, warning)
+            return lambda { |value, format|
+              format = Csvlint::Csvw::DateFormat.new(nil, type) if format.nil?
+              v = format.parse(value)
+              return nil, warning if v.nil?
+              return v, nil
+            }
+          end
+
+          def create_regexp_based_parser(regexp, warning)
+            return lambda { |value, format|
+              return nil, warning unless value =~ regexp
+              return value, nil
+            }
+          end
+
+          def languages_match(l1, l2)
+            return true if l1 == l2 || l1 == "und" || l2 == "und"
+            return true if l1 =~ Regexp.new("^#{l2}-") || l2 =~ Regexp.new("^#{l1}-")
+            return false
+          end
         end
 
         def validate_required(value, row)
@@ -199,22 +218,6 @@ module Csvlint
           return nil, :invalid_number if v.nil?
           return v, nil
         }
-
-        def Column.create_date_parser(type, warning)
-          return lambda { |value, format|
-            format = Csvlint::Csvw::DateFormat.new(nil, type) if format.nil?
-            v = format.parse(value)
-            return nil, warning if v.nil?
-            return v, nil
-          }
-        end
-
-        def Column.create_regexp_based_parser(regexp, warning)
-          return lambda { |value, format|
-            return nil, warning unless value =~ regexp
-            return value, nil
-          }
-        end
 
         DATATYPE_PARSER = {
           "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral" => ALL_VALUES_VALID,

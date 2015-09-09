@@ -2,184 +2,189 @@ module Csvlint
   module Csvw
     class PropertyChecker
 
-      def PropertyChecker.check_property(property, value, base_url, lang)
-        if PROPERTIES.include? property
-          return PROPERTIES[property].call(value, base_url, lang)
-        elsif property =~ /^([a-z]+):/ && NAMESPACES.include?(property.split(":")[0])
-          value, warnings = check_common_property_value(value, base_url, lang)
-          return value, warnings, :annotation
-        else
-          return value, :invalid_property, nil
-        end
-      end
+      class << self
 
-      private
-        def PropertyChecker.check_common_property_value(value, base_url, lang)
-          case value
-          when Hash
-            value = value.clone
-            warnings = []
-            value.each do |p,v|
-              case p
-              when "@context"
-                raise Csvlint::Csvw::MetadataError.new(p), "common property has @context property"
-              when "@list"
-                raise Csvlint::Csvw::MetadataError.new(p), "common property has @list property"
-              when "@set"
-                raise Csvlint::Csvw::MetadataError.new(p), "common property has @set property"
-              when "@type"
-                if value["@value"] && BUILT_IN_DATATYPES.include?(v)
-                elsif !value["@value"] && BUILT_IN_TYPES.include?(v)
-                elsif v =~ /^([a-z]+):/ && NAMESPACES.include?(v.split(":")[0])
-                else
-                  # must be an absolute URI
-                  begin
-                    raise Csvlint::Csvw::MetadataError.new(), "common property has invalid @type (#{v})" if URI(v).scheme.nil?
-                  rescue
-                    raise Csvlint::Csvw::MetadataError.new(), "common property has invalid @type (#{v})"
-                  end
-                end
-              when "@id"
-                unless base_url.nil?
-                  begin
-                    v = URI.join(base_url, v)
-                  rescue
-                    raise Csvlint::Csvw::MetadataError.new(), "common property has invalid @id (#{v})"
-                  end
-                end
-              when "@value"
-                raise Csvlint::Csvw::MetadataError.new(), "common property with @value has both @language and @type" if value["@type"] && value["@language"]
-                raise Csvlint::Csvw::MetadataError.new(), "common property with @value has properties other than @language or @type" unless value.except("@type").except("@language").except("@value").empty?
-              when "@language"
-                raise Csvlint::Csvw::MetadataError.new(), "common property with @language lacks a @value" unless value["@value"]
-                raise Csvlint::Csvw::MetadataError.new(), "common property has invalid @language (#{v})" unless v =~ BCP47_LANGUAGE_REGEXP || v.nil?
-              else
-                if p[0] == "@"
-                  raise Csvlint::Csvw::MetadataError.new(), "common property has property other than @id, @type, @value or @language beginning with @ (#{p})"
-                end
-              end
-              if v.instance_of? Hash
-                v, w = check_common_property_value(v, base_url, lang)
-                warnings += Array(w)
-              end
-              value[p] = v
-            end
-            return value, warnings
+        def check_property(property, value, base_url, lang)
+          if PROPERTIES.include? property
+            return PROPERTIES[property].call(value, base_url, lang)
+          elsif property =~ /^([a-z]+):/ && NAMESPACES.include?(property.split(":")[0])
+            value, warnings = check_common_property_value(value, base_url, lang)
+            return value, warnings, :annotation
           else
-            return value, nil
+            return value, :invalid_property, nil
           end
         end
 
-        def PropertyChecker.convert_value_facet(value, property, datatype)
-          if value[property]
-            if DATE_FORMAT_DATATYPES.include?(datatype)
-              format = Csvlint::Csvw::DateFormat.new(nil, datatype)
-              v = format.parse(value[property])
-              if v.nil?
-                value.delete(property)
-                return [":invalid_#{property}".to_sym]
-              else
-                value[property] = v
-                return []
-              end
-            elsif NUMERIC_FORMAT_DATATYPES.include?(datatype)
-              return []
-            else
-              raise Csvlint::Csvw::MetadataError.new("datatype.#{property}"), "#{property} is only allowed for numeric, date/time and duration types"
-            end
-          end
-          return []
-        end
-
-        def PropertyChecker.array_property(type)
-          return lambda { |value, base_url, lang|
-            return value, nil, type if value.instance_of? Array
-            return false, :invalid_value, type
-          }
-        end
-
-        def PropertyChecker.boolean_property(type)
-          return lambda { |value, base_url, lang|
-            return value, nil, type if value == true || value == false
-            return false, :invalid_value, type
-          }
-        end
-
-        def PropertyChecker.string_property(type)
-          return lambda { |value, base_url, lang|
-            return value, nil, type if value.instance_of? String
-            return "", :invalid_value, type
-          }
-        end
-
-        def PropertyChecker.numeric_property(type)
-          return lambda { |value, base_url, lang|
-            return value, nil, type if value.kind_of?(Integer) && value >= 0
-            return nil, :invalid_value, type
-          }
-        end
-
-        def PropertyChecker.link_property(type)
-          return lambda { |value, base_url, lang|
-            raise Csvlint::Csvw::MetadataError.new(), "URL #{value} starts with _:" if value.to_s =~ /^_:/
-            return (base_url.nil? ? URI(value) : URI.join(base_url, value)), nil, type if value.instance_of? String
-            return base_url, :invalid_value, type
-          }
-        end
-
-        def PropertyChecker.language_property(type)
-          return lambda { |value, base_url, lang|
-            return value, nil, type if value =~ BCP47_REGEXP
-            return nil, :invalid_value, type
-          }
-        end
-
-        def PropertyChecker.natural_language_property(type)
-          return lambda { |value, base_url, lang|
-            warnings = []
-            if value.instance_of? String
-              return { lang => [ value ] }, nil, type
-            elsif value.instance_of? Array
-              valid_titles = []
-              value.each do |title|
-                if title.instance_of? String
-                  valid_titles << title
-                else
-                  warnings << :invalid_value
-                end
-              end
-              return { lang => valid_titles }, warnings, type
-            elsif value.instance_of? Hash
+        private
+          def check_common_property_value(value, base_url, lang)
+            case value
+            when Hash
               value = value.clone
-              value.each do |l,v|
-                if l =~ BCP47_REGEXP
-                  valid_titles = []
-                  Array(v).each do |title|
-                    if title.instance_of? String
-                      valid_titles << title
-                    else
-                      warnings << :invalid_value
+              warnings = []
+              value.each do |p,v|
+                case p
+                when "@context"
+                  raise Csvlint::Csvw::MetadataError.new(p), "common property has @context property"
+                when "@list"
+                  raise Csvlint::Csvw::MetadataError.new(p), "common property has @list property"
+                when "@set"
+                  raise Csvlint::Csvw::MetadataError.new(p), "common property has @set property"
+                when "@type"
+                  if value["@value"] && BUILT_IN_DATATYPES.include?(v)
+                  elsif !value["@value"] && BUILT_IN_TYPES.include?(v)
+                  elsif v =~ /^([a-z]+):/ && NAMESPACES.include?(v.split(":")[0])
+                  else
+                    # must be an absolute URI
+                    begin
+                      raise Csvlint::Csvw::MetadataError.new(), "common property has invalid @type (#{v})" if URI(v).scheme.nil?
+                    rescue
+                      raise Csvlint::Csvw::MetadataError.new(), "common property has invalid @type (#{v})"
                     end
                   end
-                  value[l] = valid_titles
+                when "@id"
+                  unless base_url.nil?
+                    begin
+                      v = URI.join(base_url, v)
+                    rescue
+                      raise Csvlint::Csvw::MetadataError.new(), "common property has invalid @id (#{v})"
+                    end
+                  end
+                when "@value"
+                  raise Csvlint::Csvw::MetadataError.new(), "common property with @value has both @language and @type" if value["@type"] && value["@language"]
+                  raise Csvlint::Csvw::MetadataError.new(), "common property with @value has properties other than @language or @type" unless value.except("@type").except("@language").except("@value").empty?
+                when "@language"
+                  raise Csvlint::Csvw::MetadataError.new(), "common property with @language lacks a @value" unless value["@value"]
+                  raise Csvlint::Csvw::MetadataError.new(), "common property has invalid @language (#{v})" unless v =~ BCP47_LANGUAGE_REGEXP || v.nil?
                 else
-                  value.delete(l)
-                  warnings << :invalid_language
+                  if p[0] == "@"
+                    raise Csvlint::Csvw::MetadataError.new(), "common property has property other than @id, @type, @value or @language beginning with @ (#{p})"
+                  end
                 end
+                if v.instance_of? Hash
+                  v, w = check_common_property_value(v, base_url, lang)
+                  warnings += Array(w)
+                end
+                value[p] = v
               end
-              warnings << :invalid_value if value.empty?
-              return value, warnings, type
+              return value, warnings
             else
-              return {}, :invalid_value, type
+              return value, nil
             end
-          }
-        end
+          end
 
-        def PropertyChecker.column_reference_property(type)
-          return lambda { |value, base_url, lang|
-            return Array(value), nil, type
-          }
-        end
+          def convert_value_facet(value, property, datatype)
+            if value[property]
+              if DATE_FORMAT_DATATYPES.include?(datatype)
+                format = Csvlint::Csvw::DateFormat.new(nil, datatype)
+                v = format.parse(value[property])
+                if v.nil?
+                  value.delete(property)
+                  return [":invalid_#{property}".to_sym]
+                else
+                  value[property] = v
+                  return []
+                end
+              elsif NUMERIC_FORMAT_DATATYPES.include?(datatype)
+                return []
+              else
+                raise Csvlint::Csvw::MetadataError.new("datatype.#{property}"), "#{property} is only allowed for numeric, date/time and duration types"
+              end
+            end
+            return []
+          end
+
+          def array_property(type)
+            return lambda { |value, base_url, lang|
+              return value, nil, type if value.instance_of? Array
+              return false, :invalid_value, type
+            }
+          end
+
+          def boolean_property(type)
+            return lambda { |value, base_url, lang|
+              return value, nil, type if value == true || value == false
+              return false, :invalid_value, type
+            }
+          end
+
+          def string_property(type)
+            return lambda { |value, base_url, lang|
+              return value, nil, type if value.instance_of? String
+              return "", :invalid_value, type
+            }
+          end
+
+          def numeric_property(type)
+            return lambda { |value, base_url, lang|
+              return value, nil, type if value.kind_of?(Integer) && value >= 0
+              return nil, :invalid_value, type
+            }
+          end
+
+          def link_property(type)
+            return lambda { |value, base_url, lang|
+              raise Csvlint::Csvw::MetadataError.new(), "URL #{value} starts with _:" if value.to_s =~ /^_:/
+              return (base_url.nil? ? URI(value) : URI.join(base_url, value)), nil, type if value.instance_of? String
+              return base_url, :invalid_value, type
+            }
+          end
+
+          def language_property(type)
+            return lambda { |value, base_url, lang|
+              return value, nil, type if value =~ BCP47_REGEXP
+              return nil, :invalid_value, type
+            }
+          end
+
+          def natural_language_property(type)
+            return lambda { |value, base_url, lang|
+              warnings = []
+              if value.instance_of? String
+                return { lang => [ value ] }, nil, type
+              elsif value.instance_of? Array
+                valid_titles = []
+                value.each do |title|
+                  if title.instance_of? String
+                    valid_titles << title
+                  else
+                    warnings << :invalid_value
+                  end
+                end
+                return { lang => valid_titles }, warnings, type
+              elsif value.instance_of? Hash
+                value = value.clone
+                value.each do |l,v|
+                  if l =~ BCP47_REGEXP
+                    valid_titles = []
+                    Array(v).each do |title|
+                      if title.instance_of? String
+                        valid_titles << title
+                      else
+                        warnings << :invalid_value
+                      end
+                    end
+                    value[l] = valid_titles
+                  else
+                    value.delete(l)
+                    warnings << :invalid_language
+                  end
+                end
+                warnings << :invalid_value if value.empty?
+                return value, warnings, type
+              else
+                return {}, :invalid_value, type
+              end
+            }
+          end
+
+          def column_reference_property(type)
+            return lambda { |value, base_url, lang|
+              return Array(value), nil, type
+            }
+          end
+
+
+      end
 
         PROPERTIES = {
           # context properties

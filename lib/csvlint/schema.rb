@@ -14,6 +14,46 @@ module Csvlint
       reset
     end
 
+    class << self
+
+      def from_json_table(uri, json)
+        fields = []
+        json["fields"].each do |field_desc|
+          fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"],
+            field_desc["title"], field_desc["description"] )
+        end if json["fields"]
+        return Schema.new( uri , fields, json["title"], json["description"] )
+      end
+
+      def from_csvw_metadata(uri, json)
+        return Csvlint::Csvw::TableGroup.from_json(uri, json)
+      end
+
+      def load_from_json(uri)
+        begin
+          json = JSON.parse( open(uri).read )
+          if json["@context"]
+            uri = "file:#{File.expand_path(uri)}" unless uri.to_s =~ /^http(s)?/
+            return Schema.from_csvw_metadata(uri,json)
+          else
+            return Schema.from_json_table(uri,json)
+          end
+        rescue Csvlint::Csvw::MetadataError => e
+          raise e
+        rescue JSON::ParserError => e
+          raise e
+        rescue OpenURI::HTTPError => e
+          raise e
+        rescue => e
+          STDERR.puts e.class
+          STDERR.puts e.message
+          STDERR.puts e.backtrace
+          return Schema.new(nil, [], "malformed", "malformed")
+        end
+      end
+
+    end
+
     def validate_header(header, source_url=nil)
       reset
 
@@ -46,42 +86,6 @@ module Csvlint
       end
 
       return valid?
-    end
-
-    def Schema.from_json_table(uri, json)
-      fields = []
-      json["fields"].each do |field_desc|
-        fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"],
-          field_desc["title"], field_desc["description"] )
-      end if json["fields"]
-      return Schema.new( uri , fields, json["title"], json["description"] )
-    end
-
-    def Schema.from_csvw_metadata(uri, json)
-      return Csvlint::Csvw::TableGroup.from_json(uri, json)
-    end
-
-    def Schema.load_from_json(uri)
-      begin
-        json = JSON.parse( open(uri).read )
-        if json["@context"]
-          uri = "file:#{File.expand_path(uri)}" unless uri.to_s =~ /^http(s)?/
-          return Schema.from_csvw_metadata(uri,json)
-        else
-          return Schema.from_json_table(uri,json)
-        end
-      rescue Csvlint::Csvw::MetadataError => e
-        raise e
-      rescue JSON::ParserError => e
-        raise e
-      rescue OpenURI::HTTPError => e
-        raise e
-      rescue => e
-        STDERR.puts e.class
-        STDERR.puts e.message
-        STDERR.puts e.backtrace      
-        return Schema.new(nil, [], "malformed", "malformed")
-      end
     end
 
   end

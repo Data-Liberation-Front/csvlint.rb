@@ -107,7 +107,7 @@ module Csvlint
         return valid?
       end
 
-      def Table.from_json(table_desc, base_url=nil, lang="und", inherited_properties={})
+      def self.from_json(table_desc, base_url=nil, lang="und", inherited_properties={})
         annotations = {}
         warnings = []
         table_properties = {}
@@ -186,7 +186,7 @@ module Csvlint
 
         end
 
-        return Csvw::Table.new(table_properties["url"],
+        return self.new(table_properties["url"],
           id: table_properties["@id"],
           columns: columns,
           dialect: table_properties["dialect"],

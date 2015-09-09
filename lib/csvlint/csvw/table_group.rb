@@ -53,7 +53,7 @@ module Csvlint
         return valid?
       end
 
-      def TableGroup.from_json(url, json)
+      def self.from_json(url, json)
         warnings = []
         tables = {}
         annotations = {}
@@ -154,7 +154,7 @@ module Csvlint
           end
         end
 
-        return Csvw::TableGroup.new(base_url, id: id, tables: tables, notes: json["notes"] || [], annotations: annotations, warnings: warnings)
+        return self.new(base_url, id: id, tables: tables, notes: json["notes"] || [], annotations: annotations, warnings: warnings)
       end
 
       private
