@@ -9,13 +9,13 @@ describe Csvlint::StreamingValidator do
   context "with a single row" do
     it "validates correctly" do
       validator = Csvlint::StreamingValidator.new("\"a\",\"b\",\"c\"\r\n")
-
+      validator.validate
       expect(validator.valid?).to eql(true)
     end
 
     it "checks for non rfc line breaks" do
       validator = Csvlint::StreamingValidator.new("\"a\",\"b\",\"c\"\n")
-
+      validator.validate
       expect(validator.valid?).to eql(true)
       expect(validator.info_messages.count).to eq(2)
       expect(validator.info_messages.last.type).to eql(:nonrfc_line_breaks)
@@ -23,19 +23,16 @@ describe Csvlint::StreamingValidator do
 
     it "checks for blank rows" do
       validator = Csvlint::StreamingValidator.new("\"\",\"\",\"\"\r\n")
-
+      validator.validate
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:blank_rows)
     end
 
-    it "checks for ragged rows" do
-      # passing this to the validator client most likely
-
-    end
 
     it "checks for malformed CSVs" do
       validator = Csvlint::StreamingValidator.new("\"a,\"b\",\"c\"\n")
+      validator.validate
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
@@ -43,13 +40,13 @@ describe Csvlint::StreamingValidator do
 
     it "returns the content of the string with the error" do
       validator = Csvlint::StreamingValidator.new("\"\",\"\",\"\"\r\n")
-
+      validator.validate
       expect(validator.errors.first.content).to eql("\"\",\"\",\"\"\r\n")
     end
 
     it "returns line break errors if incorrectly specified" do
       validator = Csvlint::StreamingValidator.new("\"a\",\"b\",\"c\"\n", {"lineTerminator" => "\r\n"})
-
+      validator.validate
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:line_breaks)
@@ -75,7 +72,7 @@ describe Csvlint::StreamingValidator do
 
       data = StringIO.new( "1,2,3\r\n" )
       validator = Csvlint::StreamingValidator.new(data)
-
+      validator.validate
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(1)
       expect( validator.info_messages.first.type).to eql(:assumed_header)
@@ -83,6 +80,45 @@ describe Csvlint::StreamingValidator do
 
     end
 
+  end
+
+  context "when validating headers" do
+    it "should warn if column names aren't unique" do
+      data = StringIO.new( "minimum, minimum" )
+      validator = Csvlint::StreamingClient.new(data)
+      expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
+      expect( validator.warnings.size ).to eql(1)
+      expect( validator.warnings.first.type).to eql(:duplicate_column_name)
+      expect( validator.warnings.first.category).to eql(:schema)
+    end
+
+    it "should warn if column names are blank" do
+      data = StringIO.new( "minimum," )
+      validator = Csvlint::StreamingClient.new(data)
+
+      expect( validator.validate_header(["minimum", ""]) ).to eql(true)
+      expect( validator.warnings.size ).to eql(1)
+      expect( validator.warnings.first.type).to eql(:empty_column_name)
+      expect( validator.warnings.first.category).to eql(:schema)
+    end
+
+    it "should include info message about missing header when we have assumed a header" do
+      data = StringIO.new( "1,2,3\r\n" )
+      validator = Csvlint::StreamingClient.new(data)
+
+      expect( validator.valid? ).to eql(true)
+      expect( validator.info_messages.size ).to eql(1)
+      expect( validator.info_messages.first.type).to eql(:assumed_header)
+      expect( validator.info_messages.first.category).to eql(:structure)
+    end
+
+    it "should not include info message about missing header when we are told about the header" do
+      data = StringIO.new( "1,2,3\r\n" )
+      validator = Csvlint::StreamingClient.new(data, "header"=>false)
+
+      expect( validator.valid? ).to eql(true)
+      expect( validator.info_messages.size ).to eql(0)
+    end
   end
 
   # context "csv dialect" do

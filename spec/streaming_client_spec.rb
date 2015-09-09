@@ -9,6 +9,10 @@ describe Csvlint::StreamingClient do
 
   context "correct client wrapping behaviour" do
 
+    it "should only invoke parse_csv on a string" do
+
+    end
+
   end
 
 
