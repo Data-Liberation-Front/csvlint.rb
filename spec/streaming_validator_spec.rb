@@ -80,6 +80,18 @@ describe Csvlint::StreamingValidator do
 
     end
 
+    it "should presume a header unless told otherwise" do
+
+      stream = "1,2,3\r\n"
+      validator = Csvlint::StreamingValidator.new(stream)
+      validator.validate
+
+      expect( validator.valid? ).to eql(true)
+      expect( validator.info_messages.size ).to eql(1)
+      expect( validator.info_messages.first.type).to eql(:assumed_header)
+      expect( validator.info_messages.first.category).to eql(:structure)
+    end
+
   end
 
   context "when validating headers" do
