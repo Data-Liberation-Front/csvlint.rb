@@ -88,7 +88,7 @@ else
     source = ARGV[0]
     unless source =~ /^http(s)?/
       begin
-        source = File.new( source ) unless source =~ /^http(s)?/ 
+        source = File.new( source ) unless source =~ /^http(s)?/
       rescue Errno::ENOENT
         puts "#{source} not found"
         exit 1
@@ -113,7 +113,7 @@ if options[:schema]
       puts output_string
     end
     exit 1
-  rescue Csvlint::CsvwMetadataError => e
+  rescue Csvlint::Csvw::MetadataError => e
     output_string = "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
     if $stdout.tty?
       puts output_string.colorize(:red)
@@ -129,7 +129,7 @@ end
 
 valid = true
 if source.nil?
-  unless schema.instance_of? Csvlint::CsvwTableGroup
+  unless schema.instance_of? Csvlint::Csvw::TableGroup
     puts "No CSV data to validate."
     puts opts
     exit 1

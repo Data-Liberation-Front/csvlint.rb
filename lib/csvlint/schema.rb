@@ -58,7 +58,7 @@ module Csvlint
     end
 
     def Schema.from_csvw_metadata(uri, json)
-      return Csvlint::CsvwTableGroup.from_json(uri, json)
+      return Csvlint::Csvw::TableGroup.from_json(uri, json)
     end
 
     def Schema.load_from_json(uri)
@@ -70,7 +70,7 @@ module Csvlint
         else
           return Schema.from_json_table(uri,json)
         end
-      rescue Csvlint::CsvwMetadataError => e
+      rescue Csvlint::Csvw::MetadataError => e
         raise e
       rescue JSON::ParserError => e
         raise e

@@ -41,7 +41,7 @@ When(/^I carry out CSVW validation$/) do
     end
   rescue JSON::ParserError => e
     @errors = [e]
-  rescue Csvlint::CsvwMetadataError => e
+  rescue Csvlint::Csvw::MetadataError => e
     @errors = [e]
   end
 end

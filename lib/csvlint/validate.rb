@@ -266,7 +266,7 @@ module Csvlint
     end
 
     def check_foreign_keys
-      if @schema.instance_of? Csvlint::CsvwTableGroup
+      if @schema.instance_of? Csvlint::Csvw::TableGroup
         @schema.validate_foreign_keys
         @errors += @schema.errors
         @warnings += @schema.warnings
@@ -302,7 +302,7 @@ module Csvlint
           begin
             url = URI.join(@source_url, uri)
             schema = Schema.load_from_json(url)
-            if schema.instance_of? Csvlint::CsvwTableGroup
+            if schema.instance_of? Csvlint::Csvw::TableGroup
               if schema.tables[@source_url]
                 link_schema = schema
               else
@@ -333,7 +333,7 @@ module Csvlint
           url = URI.join(@source_url, path)
           url = File.new(url.to_s.sub(/^file:/, "")) if url.to_s =~ /^file:/
           schema = Schema.load_from_json(url)
-          if schema.instance_of? Csvlint::CsvwTableGroup
+          if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
               return @schema = schema
             else

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Csvlint::CsvwTable do
+describe Csvlint::Csvw::Table do
 
   context "when parsing CSVW table metadata" do
 
@@ -79,12 +79,12 @@ AF,1962,9989846
 
     it "should create a table from pre-parsed CSVW metadata" do
       json = JSON.parse( @metadata )
-      table = Csvlint::CsvwTable.from_json(json["tables"][0], "http://w3c.github.io/csvw/tests/countries.json")
+      table = Csvlint::Csvw::Table.from_json(json["tables"][0], "http://w3c.github.io/csvw/tests/countries.json")
 
-      expect(table).to be_a(Csvlint::CsvwTable)
+      expect(table).to be_a(Csvlint::Csvw::Table)
       expect(table.url.to_s).to eq("http://w3c.github.io/csvw/tests/countries.csv")
       expect(table.columns.length).to eq(4)
-      expect(table.columns[0]).to be_a(Csvlint::CsvwColumn)
+      expect(table.columns[0]).to be_a(Csvlint::Csvw::Column)
     end
   end
 end

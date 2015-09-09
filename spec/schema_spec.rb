@@ -204,7 +204,7 @@ describe Csvlint::Schema do
 
     it "should create a table group from a CSVW metadata URL" do
       schema = Csvlint::Schema.load_from_json("http://example.com/metadata.json")
-      expect( schema.class ).to eq(Csvlint::CsvwTableGroup)
+      expect( schema.class ).to eq(Csvlint::Csvw::TableGroup)
     end
   end
 

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Csvlint::CsvwTableGroup do
+describe Csvlint::Csvw::TableGroup do
 
   it "should inherit null to all columns" do
     @metadata=<<-EOL
@@ -36,9 +36,9 @@ describe Csvlint::CsvwTableGroup do
 }
     EOL
     json = JSON.parse( @metadata )
-    table_group = Csvlint::CsvwTableGroup.from_json("http://w3c.github.io/csvw/tests/test040-metadata.json", json)
+    table_group = Csvlint::Csvw::TableGroup.from_json("http://w3c.github.io/csvw/tests/test040-metadata.json", json)
 
-    expect(table_group.class).to eq(Csvlint::CsvwTableGroup)
+    expect(table_group.class).to eq(Csvlint::Csvw::TableGroup)
     expect(table_group.annotations.length).to eq(0)
     expect(table_group.warnings.length).to eq(1)
     expect(table_group.warnings[0].type).to eq(:invalid_value)
@@ -46,7 +46,7 @@ describe Csvlint::CsvwTableGroup do
     expect(table_group.warnings[0].content).to eq("null: true")
 
     expect(table_group.tables.length).to eq(1)
-    expect(table_group.tables["http://w3c.github.io/csvw/tests/test040.csv"]).to be_a(Csvlint::CsvwTable)
+    expect(table_group.tables["http://w3c.github.io/csvw/tests/test040.csv"]).to be_a(Csvlint::Csvw::Table)
 
     table = table_group.tables["http://w3c.github.io/csvw/tests/test040.csv"]
     expect(table.columns.length).to eq(10)
@@ -130,12 +130,12 @@ AF,1962,9989846
 
     it "should create a table group from pre-parsed CSVW metadata" do
       json = JSON.parse( @metadata )
-      table_group = Csvlint::CsvwTableGroup.from_json("http://w3c.github.io/csvw/tests/countries.json", json)
+      table_group = Csvlint::Csvw::TableGroup.from_json("http://w3c.github.io/csvw/tests/countries.json", json)
 
-      expect(table_group.class).to eq(Csvlint::CsvwTableGroup)
+      expect(table_group.class).to eq(Csvlint::Csvw::TableGroup)
       expect(table_group.id).to eq(nil)
       expect(table_group.tables.length).to eq(2)
-      expect(table_group.tables["http://w3c.github.io/csvw/tests/countries.csv"]).to be_a(Csvlint::CsvwTable)
+      expect(table_group.tables["http://w3c.github.io/csvw/tests/countries.csv"]).to be_a(Csvlint::Csvw::Table)
       expect(table_group.notes.length).to eq(0)
       expect(table_group.annotations.length).to eq(0)
     end

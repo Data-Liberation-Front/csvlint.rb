@@ -1,22 +1,22 @@
 require 'spec_helper'
 
-describe Csvlint::CsvwColumn do
+describe Csvlint::Csvw::Column do
 
   it "shouldn't generate errors for string values" do
-    column = Csvlint::CsvwColumn.new(1, "foo")
+    column = Csvlint::Csvw::Column.new(1, "foo")
     valid = column.validate("bar", 2)
     expect(valid).to eq(true)
   end
 
   it "should generate errors for string values that aren't long enough" do
-    column = Csvlint::CsvwColumn.new(1, "foo", datatype: { "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 4 })
+    column = Csvlint::Csvw::Column.new(1, "foo", datatype: { "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 4 })
     valid = column.validate("bar", 2)
     expect(valid).to eq(false)
     expect(column.errors.length).to eq(1)
   end
 
   it "shouldn't generate errors for string values that are long enough" do
-    column = Csvlint::CsvwColumn.new(1, "foo", datatype: { "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 4 })
+    column = Csvlint::Csvw::Column.new(1, "foo", datatype: { "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 4 })
     valid = column.validate("barn", 2)
     expect(valid).to eq(true)
     expect(column.errors.length).to eq(0)
@@ -30,9 +30,9 @@ describe Csvlint::CsvwColumn do
       }
       EOL
       json = JSON.parse( @desc )
-      column = Csvlint::CsvwColumn.from_json(1, json)
+      column = Csvlint::Csvw::Column.from_json(1, json)
 
-      expect(column).to be_a(Csvlint::CsvwColumn)
+      expect(column).to be_a(Csvlint::Csvw::Column)
       expect(column.number).to eq(1)
       expect(column.name).to eq("countryCode")
       expect(column.about_url).to eq(nil)
@@ -62,9 +62,9 @@ describe Csvlint::CsvwColumn do
       }
       EOL
       json = JSON.parse( @desc )
-      column = Csvlint::CsvwColumn.from_json(2, json)
+      column = Csvlint::Csvw::Column.from_json(2, json)
 
-      expect(column).to be_a(Csvlint::CsvwColumn)
+      expect(column).to be_a(Csvlint::Csvw::Column)
       expect(column.number).to eq(2)
       expect(column.name).to eq("countryCode")
       expect(column.about_url).to eq(nil)
@@ -90,7 +90,7 @@ describe Csvlint::CsvwColumn do
       { "name": "Id", "required": true, "datatype": { "base": "string", "minLength": 3 } }
       EOL
       json = JSON.parse(@desc)
-      column = Csvlint::CsvwColumn.from_json(1, json)
+      column = Csvlint::Csvw::Column.from_json(1, json)
       expect(column.name).to eq("Id")
       expect(column.required).to eq(true)
       expect(column.datatype).to eql({ "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 3 })
@@ -104,7 +104,7 @@ describe Csvlint::CsvwColumn do
       }
       EOL
       json = JSON.parse( @desc )
-      column = Csvlint::CsvwColumn.from_json(1, json)
+      column = Csvlint::Csvw::Column.from_json(1, json)
       expect(column.warnings.length).to eq(1)
       expect(column.warnings[0].type).to eq(:invalid_value)
     end
