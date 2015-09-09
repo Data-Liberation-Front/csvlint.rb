@@ -9,6 +9,13 @@ describe Csvlint::StreamingClient do
 
   context "correct client wrapping behaviour" do
 
+
+    it "should call parsing for a string" do
+      data = StringIO.new( "\"a\",\"b\",\"c\"\r\n" )
+      validator = Csvlint::StreamingClient.new(data)
+      expect(validator.valid?).to eql(true)
+    end
+
     it "should only invoke parse_csv on a string" do
 
     end

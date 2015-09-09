@@ -57,6 +57,8 @@ module Csvlint
       end
 
       validate_metadata(@source) # this is one shot
+        # require 'pry'
+        # binding.pry
       process_line_breaks(@csv)
       validate
     end
@@ -69,8 +71,20 @@ module Csvlint
       end
     end
 
+
     def validate
-      parse_csv(@csv) # should return column_counts AND expected_columns ?
+      begin
+        chunk = @csv.string
+        require 'pry'
+        binding.pry
+      rescue
+
+      end
+      streamer = Csvlint::StreamingValidator.new(chunk)
+      streamer.validate
+      @col_counts = streamer.col_counts
+      @expected_columns = streamer.expected_columns
+      # parse_csv(@csv) # should return column_counts AND expected_columns ?
       sum = @col_counts.inject(:+)
       unless sum.nil?
         build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
@@ -78,6 +92,7 @@ module Csvlint
       build_warnings(:check_options, :structure) if @expected_columns == 1
       check_consistency
     end
+
 
     def header?
       @csv_state[:csv_header]

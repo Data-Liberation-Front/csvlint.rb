@@ -4,7 +4,7 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data, :col_counts, :expected_columns
     ERROR_MATCHERS = {
       "Missing or stray quote" => :stray_quote,
       "Illegal quoting" => :whitespace,
@@ -12,7 +12,7 @@ module Csvlint
       "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
-    def initialize(stream, dialect = nil, schema = nil, options = {})
+    def initialize(stream, dialect = nil, schema = nil, limit_lines = nil, csv_options = nil)
       # suggested alternative initialisation parameters: stream, csv_options
 
       @stream = stream
@@ -30,20 +30,23 @@ module Csvlint
       }.merge(dialect || {})
 
       @csv_header = @dialect["header"]
-      @limit_lines = options[:limit_lines]
+      @limit_lines = limit_lines
       @csv_options = dialect_to_csv_options(@dialect)
 
       # This will get factored into Validate
       # @extension = parse_extension(@string) unless @string.nil?
 
+
+
       reset
-      # validate
+      validate
       # TODO - separating the initialise and validate calls means that many of the specs that use Validator.valid to test that the object created
       # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
 
     end
 
     def validate
+
       single_col = false
       # io = nil # This will get factored into Validate
       begin
@@ -101,6 +104,7 @@ module Csvlint
 
     # analyses the provided csv and builds errors, warnings and info messages
     def parse_csv(string)
+
       @expected_columns = 0
       current_line = 0
       reported_invalid_encoding = false
@@ -156,6 +160,7 @@ module Csvlint
       # rescue ArgumentError => ae
       #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
       #   reported_invalid_encoding = true
+
       end
     end
 
@@ -245,29 +250,29 @@ module Csvlint
 
     private
 
-    def parse_extension(source)
-
-      case source
-      when String
-        return true
-      when File
-        return File.extname( source.path )
-      when IO
-        return ""
-      when StringIO
-        return ""
-        when Tempfile
-          # this is triggered when the revalidate dialect use case happens
-        return ""
-      else
-        begin
-          parsed = URI.parse(source)
-          File.extname(parsed.path)
-        rescue URI::InvalidURIError
-          return ""
-        end
-      end
-    end
+    # def parse_extension(source)
+    #
+    #   case source
+    #   when String
+    #     return true
+    #   when File
+    #     return File.extname( source.path )
+    #   when IO
+    #     return ""
+    #   when StringIO
+    #     return ""
+    #     when Tempfile
+    #       # this is triggered when the revalidate dialect use case happens
+    #     return ""
+    #   else
+    #     begin
+    #       parsed = URI.parse(source)
+    #       File.extname(parsed.path)
+    #     rescue URI::InvalidURIError
+    #       return ""
+    #     end
+    #   end
+    # end
 
     def uri?(value)
       if value.strip[FORMATS[:uri]]
