@@ -133,31 +133,6 @@ module Csvlint
       end
     end
 
-    def cell_iteration(csv)
-      # explicitly for an enumerable which will invoke `parse_rows` multiple times
-      # explicity requires a CSV object as parameter
-      # enum = csv.each_with_index?
-
-      # begin
-      csv.each_with_index do |row, current_line|
-        begin
-          parse_rows(row, csv.row_sep, current_line)
-        rescue CSV::MalformedCSVError => e
-          # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
-          type = fetch_error(e) # refers to ERROR_MATCHER object
-          # build_errors(type, :structure, "current_line", nil, "row.to_s")
-        end
-      end
-      # rescue CSV::MalformedCSVError => e
-      #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
-      #   type = fetch_error(e) # refers to ERROR_MATCHER object
-      #   build_errors(type, :structure, "current_line", nil, "row.to_s")
-      # end
-    end
-
-
-
-
     def parse_rows(cell, row_sep=nil, current_line=0)
       # the way this method will have to work is that it is only responsible for working on valid CSV rows, therefore
       # any malformed CSV errors must be caught at an earlier venture
