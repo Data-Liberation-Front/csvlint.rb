@@ -307,10 +307,10 @@ module Csvlint
                 link_schema = schema
               else
                 warn_if_unsuccessful = true
-              #   build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
+                build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
               end
             end
-          rescue OpenURI::HTTPError          
+          rescue OpenURI::HTTPError
           end
         end
       end if @link_headers
@@ -338,7 +338,7 @@ module Csvlint
               return @schema = schema
             else
               warn_if_unsuccessful = true
-            #   build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
+              build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
             end
           end
         rescue Errno::ENOENT
