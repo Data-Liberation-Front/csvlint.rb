@@ -60,7 +60,8 @@ module Csvlint
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
       rescue CSV::MalformedCSVError => e
-
+        type = fetch_error(e) # refers to ERROR_MATCHER object
+        build_errors(type, :structure)
       ensure
         # io.close if io && io.respond_to?(:close) # This will get factored into Validate, or a finishing state in this class
       end
@@ -105,8 +106,7 @@ module Csvlint
 
     # analyses the provided csv and builds errors, warnings and info messages
     def parse_csv_content(content)
-      # require 'pry'
-      # binding.pry
+
       if content.kind_of?(CSV)
         row_sep = content.row_sep
         report_line_breaks(row_sep)
@@ -137,10 +137,7 @@ module Csvlint
             # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
             type = fetch_error(e) # refers to ERROR_MATCHER object
             build_errors(type, :structure, "current_line", nil, "row.to_s")
-          ensure
-            # callback
           end
-
         end
       # rescue CSV::MalformedCSVError => e
       #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
@@ -149,10 +146,6 @@ module Csvlint
       # end
     end
 
-    def callback(param=nil)
-      # require 'pry'
-      # binding.pry
-    end
 
     def parse_cells(cell, row_sep=nil, current_line=0)
       @expected_columns = 0
