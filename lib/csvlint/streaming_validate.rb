@@ -46,7 +46,7 @@ module Csvlint
     def validate # this to become finish
       single_col = false
       # io = nil # This will get factored into Validate
-      begin
+      # begin
         validate_metadata(@stream) # this shouldn't be called on every string
         parse_csv_content(@stream)
 
@@ -57,19 +57,11 @@ module Csvlint
         # return expected_columns to calling class
         build_warnings(:check_options, :structure) if @expected_columns == 1
         check_consistency
-      rescue OpenURI::HTTPError, Errno::ENOENT
-        build_errors(:not_found)
-      rescue CSV::MalformedCSVError => e
-
-          type = fetch_error(e)
-          if type == :stray_quote
-            build_errors(:line_breaks, :structure)
-          else
-            build_errors(type, :structure)
-          end
-      ensure
+      # rescue OpenURI::HTTPError, Errno::ENOENT
+      #   build_errors(:not_found)
+      # ensure
         # io.close if io && io.respond_to?(:close) # This will get factored into Validate, or a finishing state in this class
-      end
+      # end
     end
 
     def validate_metadata(io)
@@ -135,30 +127,15 @@ module Csvlint
       # require 'pry'
       # binding.pry
       # enum = csv.each_with_index?
-
-      # begin
-        csv.each_with_index do |row, current_line|
-          begin
-            parse_cells(row, csv.row_sep, current_line)
-          rescue CSV::MalformedCSVError => e
-            # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
-            type = fetch_error(e) # refers to ERROR_MATCHER object
-            build_errors(type, :structure, "current_line", nil, "row.to_s")
-          ensure
-            callback
-          end
-
+      csv.each_with_index do |row, current_line|
+        begin
+          parse_cells(row, csv.row_sep, current_line)
+        rescue CSV::MalformedCSVError => e
+          # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
+          type = fetch_error(e) # refers to ERROR_MATCHER object
+          build_errors(type, :structure, "current_line", nil, "row.to_s")
         end
-      # rescue CSV::MalformedCSVError => e
-      #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
-      #   type = fetch_error(e) # refers to ERROR_MATCHER object
-      #   build_errors(type, :structure, "current_line", nil, "row.to_s")
-      # end
-    end
-
-    def callback(param=nil)
-      require 'pry'
-      binding.pry
+      end
     end
 
     def parse_cells(cell, row_sep=nil, current_line=0)
