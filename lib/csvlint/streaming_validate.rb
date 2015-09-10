@@ -12,7 +12,7 @@ module Csvlint
       "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
-    def initialize(stream, dialect = nil, schema = nil, options = {})
+    def initialize(stream=nil, dialect = nil, schema = nil, options = {})
       # suggested alternative initialisation parameters: stream, csv_options
 
       @stream = stream
@@ -43,12 +43,13 @@ module Csvlint
 
     end
 
-    def validate
+    def validate # this to become finish
       single_col = false
       # io = nil # This will get factored into Validate
       begin
         validate_metadata(@stream) # this shouldn't be called on every string
-        parse_csv(@stream)
+        parse_csv_content(@stream)
+
         sum = @col_counts.inject(:+)
         unless sum.nil?
           build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
@@ -99,30 +100,75 @@ module Csvlint
       build_info_messages(:assumed_header, :structure) if assumed_header
     end
 
+
     # analyses the provided csv and builds errors, warnings and info messages
-    def parse_csv(string)
+    def parse_csv_content(content)
+      # require 'pry'
+      # binding.pry
+      if content.kind_of?(CSV)
+        row_sep = content.row_sep
+        report_line_breaks(row_sep)
+        cell_iteration(content)
+      else
+        csv = CSV.new( content, @csv_options )
+        report_line_breaks(csv.row_sep)
+        cell_iteration(csv)
+      end
+    end
+
+    def report_line_breaks(row_sep)
+      @line_breaks = row_sep
+      if @line_breaks != "\r\n"
+        build_info_messages(:nonrfc_line_breaks, :structure)
+      end
+    end
+
+    def cell_iteration(csv)
+      # require 'pry'
+      # binding.pry
+      # enum = csv.each_with_index
+
+      # begin
+        csv.each_with_index do |row, current_line|
+          begin
+            parse_cells(row, csv.row_sep, current_line)
+          rescue CSV::MalformedCSVError => e
+            # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
+            type = fetch_error(e) # refers to ERROR_MATCHER object
+            build_errors(type, :structure, "current_line", nil, "row.to_s")
+            next
+          end
+        end
+      # rescue CSV::MalformedCSVError => e
+      #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
+      #   type = fetch_error(e) # refers to ERROR_MATCHER object
+      #   build_errors(type, :structure, "current_line", nil, "row.to_s")
+      # end
+
+    end
+
+
+
+    def parse_cells(cell, row_sep=nil, current_line=0)
+      require 'pry'
+      binding.pry
       @expected_columns = 0
-      current_line = 0
+      @col_counts = []
+      @csv_options[:encoding] = @encoding
+      # current_line = 0
       reported_invalid_encoding = false
       all_errors = []
-      @col_counts = []
+      @data = []
 
-      @csv_options[:encoding] = @encoding
-
-      begin
-        csv = CSV.new( string, @csv_options )
-        @data = []
-        @line_breaks = csv.row_sep
-        if @line_breaks != "\r\n"
-          build_info_messages(:nonrfc_line_breaks, :structure)
-        end
-
-        if string.class.eql?(String)
-          build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)
-        end
+        # if content.class.eql?(String)
+        #   build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)
+        # end
         # terminating condition which is part of the streaming class no longer having responsibility for detecting row seperating chars
-       begin
-         row = csv.shift # row is an array from this point onwards
+       # begin
+         row = cell # row is an array from this point onwards
+         if !row.kind_of?(Array)
+           raise RuntimeError,"something that isn't an array array has escaped your notice "
+         end
          @data << row
          if row
            if current_line == 1 && @csv_header
@@ -135,7 +181,7 @@ module Csvlint
              @col_counts << row.reject{|col| col.nil? || col.empty?}.size
              @expected_columns = row.size unless @expected_columns != 0
 
-             build_errors(:blank_rows, :structure, current_line, nil, string) if row.reject{ |c| c.nil? || c.empty? }.size == 0
+             build_errors(:blank_rows, :structure, current_line, nil, row.to_s) if row.reject{ |c| c.nil? || c.empty? }.size == 0
              # Builds errors and warnings related to the provided schema file
              if @schema
                @schema.validate_row(row, current_line, all_errors)
@@ -143,20 +189,21 @@ module Csvlint
                all_errors += @schema.errors
                @warnings += @schema.warnings
              else
-               build_errors(:ragged_rows, :structure, current_line, nil, string) if !row.empty? && row.size != @expected_columns
+               build_errors(:ragged_rows, :structure, current_line, nil, row.to_s) if !row.empty? && row.size != @expected_columns
              end
+
            end
          end
-       rescue CSV::MalformedCSVError => e
-         # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
-         type = fetch_error(e) # refers to ERROR_MATCHER object
-         build_errors(type, :structure, current_line, nil, string)
-       end
+       # rescue CSV::MalformedCSVError => e
+       #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
+       #   type = fetch_error(e) # refers to ERROR_MATCHER object
+       #   build_errors(type, :structure, current_line, nil, row.to_s)
+       # end
         # the below rescue is no longer necessary with addition of line 114
       # rescue ArgumentError => ae
       #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
       #   reported_invalid_encoding = true
-      end
+
     end
 
     def validate_header(header)
