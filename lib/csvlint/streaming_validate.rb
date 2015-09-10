@@ -59,6 +59,14 @@ module Csvlint
         check_consistency
       rescue OpenURI::HTTPError, Errno::ENOENT
         build_errors(:not_found)
+      rescue CSV::MalformedCSVError => e
+
+          type = fetch_error(e)
+          if type == :stray_quote
+            build_errors(:line_breaks, :structure)
+          else
+            build_errors(type, :structure)
+          end
       ensure
         # io.close if io && io.respond_to?(:close) # This will get factored into Validate, or a finishing state in this class
       end
@@ -146,7 +154,6 @@ module Csvlint
       #   type = fetch_error(e) # refers to ERROR_MATCHER object
       #   build_errors(type, :structure, "current_line", nil, "row.to_s")
       # end
-
     end
 
     def callback(param=nil)
