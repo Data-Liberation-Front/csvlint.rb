@@ -36,34 +36,48 @@ module Csvlint
       # This will get factored into Validate
       # @extension = parse_extension(@string) unless @string.nil?
 
+      @csv = CSV.instance(@stream, @csv_options)
+      report_line_breaks(@csv.row_sep)
+
       reset
-      # validate
-      # TODO - separating the initialise and validate calls means that many of the specs that use Validator.valid to test that the object created
-      # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
 
     end
 
-    def validate # this to become finish
-      single_col = false
-      # io = nil # This will get factored into Validate
-      begin
-        validate_metadata(@stream) # this shouldn't be called on every string
-        parse_csv_content(@stream)
+    def validate
 
-        sum = @col_counts.inject(:+)
-        unless sum.nil?
-          build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
-        end
-        # return expected_columns to calling class
-        build_warnings(:check_options, :structure) if @expected_columns == 1
-        check_consistency
+      single_col = false
+      # io = nil # TODO This should get factored into Validate - now presumes that Input handling of string or StringIO or
+                # TODO other is no longer the responsibility to this class
+      begin
+        # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
+        validate_metadata(@stream) # TODO - ideally should no longer be responsibility of the streaming class
+        parse_content(@stream)
       rescue OpenURI::HTTPError, Errno::ENOENT
+        #TODO should be refactored to client class but at this point still useful for specs (catching StringIO errors, catching validate_metadata method errors)
         build_errors(:not_found)
       rescue CSV::MalformedCSVError => e
+        # TODO the drawback of this rescue pattern is that making it more modular relative to previous versions is that
+        # TODO previous error reporting used delegator/wrappers to persist line number and error triggering string information
+        # TODO - with this refactor that information is lost with only the reported exception persisting
         type = fetch_error(e) # refers to ERROR_MATCHER object
-        build_errors(type, :structure)
+        build_errors(type, :structure) # TODO - this build_errors call has much less information than previous calls to that method
       ensure
-        # io.close if io && io.respond_to?(:close) # This will get factored into Validate, or a finishing state in this class
+        # io.close if io && io.respond_to?(:close) # TODO refactor into Validate Client, or a finishing state in this class
+      end
+      # TODO everything after this to become finish conditions
+      sum = @col_counts.inject(:+)
+      unless sum.nil?
+        build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
+      end
+      # return expected_columns to calling class
+      build_warnings(:check_options, :structure) if @expected_columns == 1
+      check_consistency
+    end
+
+    def report_line_breaks(row_sep)
+      @line_breaks = row_sep
+      if @line_breaks != "\r\n"
+        build_info_messages(:nonrfc_line_breaks, :structure)
       end
     end
 
@@ -103,42 +117,37 @@ module Csvlint
       build_info_messages(:assumed_header, :structure) if assumed_header
     end
 
-
-    # analyses the provided csv and builds errors, warnings and info messages
-    def parse_csv_content(content)
-
-      if content.kind_of?(CSV)
-        row_sep = content.row_sep
-        report_line_breaks(row_sep)
-        cell_iteration(content)
-      else
-        csv = CSV.new( content, @csv_options )
-        report_line_breaks(csv.row_sep)
-        cell_iteration(csv)
+    def parse_content (content)
+      # explicitly for line by line
+      content = content || @stream
+      row_sep = @stream.row_sep if @stream.kind_of?(CSV)
+      CSV.parse(content) do |row|
+      begin
+        parse_rows(row, row_sep)
+      rescue CSV::MalformedCSVError => e
+        # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
+        type = fetch_error(e) # refers to ERROR_MATCHER object
+        build_errors(type, :structure)
+        # build_errors(type, :structure, "current_line", nil, "row.to_s")
       end
-    end
-
-    def report_line_breaks(row_sep)
-      @line_breaks = row_sep
-      if @line_breaks != "\r\n"
-        build_info_messages(:nonrfc_line_breaks, :structure)
       end
     end
 
     def cell_iteration(csv)
-
+      # explicitly for an enumerable which will invoke `parse_rows` multiple times
+      # explicity requires a CSV object as parameter
       # enum = csv.each_with_index?
 
       # begin
-        csv.each_with_index do |row, current_line|
-          begin
-            parse_cells(row, csv.row_sep, current_line)
-          rescue CSV::MalformedCSVError => e
-            # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
-            type = fetch_error(e) # refers to ERROR_MATCHER object
-            build_errors(type, :structure, "current_line", nil, "row.to_s")
-          end
+      csv.each_with_index do |row, current_line|
+        begin
+          parse_rows(row, csv.row_sep, current_line)
+        rescue CSV::MalformedCSVError => e
+          # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
+          type = fetch_error(e) # refers to ERROR_MATCHER object
+          # build_errors(type, :structure, "current_line", nil, "row.to_s")
         end
+      end
       # rescue CSV::MalformedCSVError => e
       #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
       #   type = fetch_error(e) # refers to ERROR_MATCHER object
@@ -147,7 +156,11 @@ module Csvlint
     end
 
 
-    def parse_cells(cell, row_sep=nil, current_line=0)
+
+
+    def parse_rows(cell, row_sep=nil, current_line=0)
+      # the way this method will have to work is that it is only responsible for working on valid CSV rows, therefore
+      # any malformed CSV errors must be caught at an earlier venture
       @expected_columns = 0
       @col_counts = []
       @csv_options[:encoding] = @encoding
@@ -156,40 +169,33 @@ module Csvlint
       all_errors = []
       @data = []
 
-        # if content.class.eql?(String)
-        #   build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)
-        # end
-        # terminating condition which is part of the streaming class no longer having responsibility for detecting row seperating chars
-       # begin
-         row = cell # row is an array from this point onwards
-         if !row.kind_of?(Array)
-           raise RuntimeError,"something that isn't an array array has escaped your notice "
-         end
-         @data << row
-         if row
-           if current_line == 1 && @csv_header
-             # this conditional should be refactored somewhere
-             row = row.reject{|col| col.nil? || col.empty?}
-             validate_header(row)
-             @col_counts << row.size
-           else
-             build_formats(row)
-             @col_counts << row.reject{|col| col.nil? || col.empty?}.size
-             @expected_columns = row.size unless @expected_columns != 0
+      row = cell # row is an array from this point onwards
+      if !row.kind_of?(Array)
+         raise RuntimeError,"something that isn't an array array has escaped your notice "
+      end
+      @data << row
+      if row
+        if current_line == 1 && @csv_header
+          row = row.reject{|col| col.nil? || col.empty?}
+          validate_header(row)
+          @col_counts << row.size
+        else
+          build_formats(row)
+          @col_counts << row.reject{|col| col.nil? || col.empty?}.size
+          @expected_columns = row.size unless @expected_columns != 0
 
-             build_errors(:blank_rows, :structure, current_line, nil, row.to_s) if row.reject{ |c| c.nil? || c.empty? }.size == 0
-             # Builds errors and warnings related to the provided schema file
-             if @schema
-               @schema.validate_row(row, current_line, all_errors)
-               @errors += @schema.errors
-               all_errors += @schema.errors
-               @warnings += @schema.warnings
-             else
-               build_errors(:ragged_rows, :structure, current_line, nil, row.to_s) if !row.empty? && row.size != @expected_columns
-             end
-
-           end
-         end
+          build_errors(:blank_rows, :structure, current_line, nil, row.to_s) if row.reject{ |c| c.nil? || c.empty? }.size == 0
+          # Builds errors and warnings related to the provided schema file
+          if @schema
+            @schema.validate_row(row, current_line, all_errors)
+            @errors += @schema.errors
+            all_errors += @schema.errors
+            @warnings += @schema.warnings
+          else
+            build_errors(:ragged_rows, :structure, current_line, nil, row.to_s) if !row.empty? && row.size != @expected_columns
+          end
+       end
+     end
        # rescue CSV::MalformedCSVError => e
        #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
        #   type = fetch_error(e) # refers to ERROR_MATCHER object
@@ -242,7 +248,6 @@ module Csvlint
       row.each_with_index do |col, i|
         next if col.nil? || col.empty?
         @formats[i] ||= Hash.new(0)
-
         format = if col.strip[FORMATS[:numeric]]
           :numeric
         elsif uri?(col)
