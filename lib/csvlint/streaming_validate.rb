@@ -126,7 +126,7 @@ module Csvlint
     def cell_iteration(csv)
       # require 'pry'
       # binding.pry
-      # enum = csv.each_with_index
+      # enum = csv.each_with_index?
 
       # begin
         csv.each_with_index do |row, current_line|
@@ -136,8 +136,10 @@ module Csvlint
             # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
             type = fetch_error(e) # refers to ERROR_MATCHER object
             build_errors(type, :structure, "current_line", nil, "row.to_s")
-            next
+          ensure
+            callback
           end
+
         end
       # rescue CSV::MalformedCSVError => e
       #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
@@ -147,11 +149,12 @@ module Csvlint
 
     end
 
-
-
-    def parse_cells(cell, row_sep=nil, current_line=0)
+    def callback(param=nil)
       require 'pry'
       binding.pry
+    end
+
+    def parse_cells(cell, row_sep=nil, current_line=0)
       @expected_columns = 0
       @col_counts = []
       @csv_options[:encoding] = @encoding
