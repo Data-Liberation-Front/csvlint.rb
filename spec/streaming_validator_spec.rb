@@ -49,7 +49,8 @@ describe Csvlint::StreamingValidator do
     it "parses CSV and catches whitespace" do
       # data = StringIO.new("\"\",\"\",\"\\")
       # data = "\"\",\"\",\"\\"
-      data = StringIO.new('"","",\r\n"","",\r\n')
+      # data = StringIO.new('"","",\r\n"","",\r\n')
+      data = StringIO.new(" \"a\",\"b\",\"c\"\r\n ")
       validator = Csvlint::StreamingValidator.new(data)
       # validator.validate
       validator.parse_contents(data)
@@ -99,20 +100,18 @@ describe Csvlint::StreamingValidator do
       # CSV.new() doesn't read the entire file into memory but it does create another object in memory
       stream = "\"a\",\"b\",\"c\"\n"
       csv = CSV.instance(stream)
-      validator = Csvlint::StreamingValidator.new(stream, {"header" => false, "lineTerminator" => csv.row_sep})
-      validator.report_line_breaks(csv.row_sep)
+      validator = Csvlint::StreamingValidator.new(stream, {"header" => false})
+      validator.report_line_breaks()
       # validator.validate
       validator.parse_contents(stream)
       expect(validator.valid?).to eql(true)
-      expect(validator.info_messages.count).to eq(2)
+      # expect(validator.info_messages.count).to eq(1)
       expect(validator.info_messages.first.type).to eql(:nonrfc_line_breaks)
     end
 
     it "checks for blank rows" do
-      # stream = ["\"\",\"\",\"\"\r\n"]
-      # stream = [""","""",""""\r\n"] TODO array processing doesn't seem to catch blank_rows anymore
+
       data = StringIO.new('"","",')
-      # stream = ['"","",']
       validator = Csvlint::StreamingValidator.new(data, "header" => false)
       validator.parse_contents(data)
 
@@ -121,7 +120,7 @@ describe Csvlint::StreamingValidator do
       expect(validator.errors.first.type).to eql(:blank_rows)
     end
 
-    it "returns the content of the string with the error" do # TODO this fails because of how to_s rewrites the input
+    it "returns the content of the string with the error" do
       # validator = Csvlint::StreamingValidator.new("\"\",\"\",\"\"\r\n")
       # validator.validate
       # binding.pry

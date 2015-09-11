@@ -62,9 +62,10 @@ module Csvlint
         type = fetch_error(e) # refers to ERROR_MATCHER object
         require 'pry'
         binding.pry
-        # if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
-        if type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
-          #TODO 1 - this is a change in logic, rather than straight refactor of previous error building
+        if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+          # if type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+          # if type == :unclosed_quote && !@stream.match(@line_breaks)
+          #TODO 1 - this is a change in logic, rather than straight refactor of previous error building, however original logic is bonkers
           #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
           build_errors(:line_breaks, :structure)
         else
@@ -139,11 +140,18 @@ module Csvlint
       @col_counts = []
       @csv_options[:encoding] = @encoding
 
-      # begin
+      begin
       row = CSV.parse_line(stream, @csv_options)
       # CSV.parse will return an array of arrays which may break things
-      # rescue CSV::MalformedCSVError
-      # end
+      rescue CSV::MalformedCSVError => e
+        type = fetch_error(e)
+        if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+          build_errors(:line_breaks, :structure)
+        else
+          build_errors(type, :structure, nil, nil, stream)
+        end
+
+      end
 
       # begin
       #   csv = CSV.new( stream, @csv_options )
