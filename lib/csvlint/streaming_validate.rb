@@ -37,7 +37,7 @@ module Csvlint
       # @extension = parse_extension(@string) unless @string.nil?
 
       reset
-      report_line_breaks(row_sep) if row_sep
+      report_line_breaks(@csv_options[:row_sep])
       # validate
       # TODO - separating the initialise and validate calls means that many of the specs that use Validator.valid to test that the object created
       # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
@@ -59,7 +59,13 @@ module Csvlint
         # TODO - with this refactor that information is lost with only the reported exception persisting
 
         type = fetch_error(e) # refers to ERROR_MATCHER object
-        build_errors(type, :structure, nil, nil, @stream) # TODO - this build_errors call has much less information than previous calls to that method
+        if type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+          require 'pry'
+          binding.pry
+          build_errors(:line_breaks, :structure)
+        else
+          build_errors(type, :structure, nil, nil, @stream) # TODO - this build_errors call has much less information than previous calls to that method
+        end
       ensure
         # io.close if io && io.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
       end
@@ -109,6 +115,8 @@ module Csvlint
     end
 
     def report_line_breaks(row_sep)
+      require 'pry'
+      # binding.pry
       @line_breaks = row_sep
       if @line_breaks != "\r\n"
         build_info_messages(:nonrfc_line_breaks, :structure)
@@ -127,9 +135,11 @@ module Csvlint
       @col_counts = []
       @csv_options[:encoding] = @encoding
 
-      row = CSV.parse_line(stream)
+      # begin
+      row = CSV.parse_line(stream, @csv_options)
       # CSV.parse will return an array of arrays which may break things
-
+      # rescue CSV::MalformedCSVError
+      # end
 
       # begin
       #   csv = CSV.new( stream, @csv_options )
