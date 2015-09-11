@@ -109,9 +109,9 @@ describe Csvlint::StreamingValidator do
 
     it "checks for blank rows" do
       stream = ["\"\",\"\",\"\"\r\n"]
-      # stream = [""","""",""""\r\n"]
+      # stream = [""","""",""""\r\n"] TODO array processing doesn't seem to catch blank_rows anymore
       validator = Csvlint::StreamingValidator.new(stream)
-      validator.validate
+      validator.parse_contents(stream)
 
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
