@@ -63,6 +63,8 @@ module Csvlint
       ensure
         @stream.close if @stream && @stream.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
       end
+      require 'pry'
+      # binding.pry
       sum = @col_counts.inject(:+)
       unless sum.nil?
         build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
@@ -132,12 +134,8 @@ module Csvlint
     # analyses the provided csv and builds errors, warnings and info messages
     def parse_contents(stream, line = nil)
       # parse_contents will parse one line and apply headers, formats methods and error handle as appropriate
-      #TODO i've tried to make this method more concerned with handling row and column processing and the most logical way
-      #TODO towards this is for it to be passed an array - however
-      require 'pry'
-      # binding.pry
 
-      current_line = line+1 || 1
+      current_line = line.present? ? line+1 : 1
       reported_invalid_encoding = false
       all_errors = []
 
