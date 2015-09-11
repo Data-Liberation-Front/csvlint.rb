@@ -12,7 +12,7 @@ module Csvlint
         "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
-    def initialize(stream = nil, dialect = nil, schema = nil, options = {})
+    def initialize(stream = nil, dialect = nil, schema = nil, options = {}, row_sep = nil)
       # suggested alternative initialisation parameters: stream, csv_options
 
       @stream = stream
@@ -32,27 +32,47 @@ module Csvlint
       @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
-      @csv = CSV.instance(stream, @csv_options)
+
       # This will get factored into Validate
       # @extension = parse_extension(@string) unless @string.nil?
 
       reset
+      report_line_breaks(row_sep) if row_sep
       # validate
       # TODO - separating the initialise and validate calls means that many of the specs that use Validator.valid to test that the object created
       # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
 
     end
 
+    def stream_handling (stream)
+
+      if stream.kind_of?(Array)
+        parse_contents(@stream)
+      elsif stream.respond_to?("each")
+        stream.each do |content|
+          parse_contents(Array(content))
+        end
+      end
+    end
+
     def validate
       single_col = false
       # io = nil # This will get factored into Validate
       begin
+        # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
         validate_metadata(@stream) # this shouldn't be called on every string
         parse_contents(@stream)
       rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
         build_errors(:not_found)
+      rescue CSV::MalformedCSVError => e
+        # TODO the drawback of this rescue pattern is that making it more modular relative to previous versions is that
+        # TODO previous error reporting used delegator/wrappers to persist line number and error triggering string information
+        # TODO - with this refactor that information is lost with only the reported exception persisting
+
+        type = fetch_error(e) # refers to ERROR_MATCHER object
+        build_errors(type, :structure, nil, nil, @stream) # TODO - this build_errors call has much less information than previous calls to that method
       ensure
-        # io.close if io && io.respond_to?(:close) # This will get factored into Validate, or a finishing state in this class
+        # io.close if io && io.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
       end
       sum = @col_counts.inject(:+)
       unless sum.nil?
@@ -99,33 +119,38 @@ module Csvlint
       build_info_messages(:assumed_header, :structure) if assumed_header
     end
 
-    def report_headers
-      @line_breaks = @csv.row_sep
+    def report_line_breaks(row_sep)
+      @line_breaks = row_sep
       if @line_breaks != "\r\n"
         build_info_messages(:nonrfc_line_breaks, :structure)
       end
     end
 
     # analyses the provided csv and builds errors, warnings and info messages
-    def parse_contents(string)
+    def parse_contents(stream_array)
+      #TODO i've tried to make this method more concerned with handling row and column processing and the most logical way
+      #TODO towards this is for it to be passed an array - however
+
       @expected_columns = 0
       current_line = 0
       reported_invalid_encoding = false
       all_errors = []
       @col_counts = []
-
       @csv_options[:encoding] = @encoding
 
-      begin
-        csv = CSV.new( string, @csv_options )
+      row = stream_array
+
+
+      # begin
+      #   csv = CSV.new( stream, @csv_options )
         @data = []
 
-        if string.class.eql?(String)
-          build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)
-        end
+      # if stream.class.eql?(String)
+
+      # end
         # terminating condition which is part of the streaming class no longer having responsibility for detecting row seperating chars
-        begin
-          row = csv.shift # row is an array from this point onwards
+      # begin
+      #   row = csv.shift # row is an array from this point onwards
           @data << row
           if row
             if current_line == 1 && @csv_header
@@ -137,8 +162,7 @@ module Csvlint
               build_formats(row)
               @col_counts << row.reject{|col| col.nil? || col.empty?}.size
               @expected_columns = row.size unless @expected_columns != 0
-
-              build_errors(:blank_rows, :structure, current_line, nil, string) if row.reject{ |c| c.nil? || c.empty? }.size == 0
+              build_errors(:blank_rows, :structure, current_line, nil, stream_array.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
               # Builds errors and warnings related to the provided schema file
               if @schema
                 @schema.validate_row(row, current_line, all_errors)
@@ -146,20 +170,20 @@ module Csvlint
                 all_errors += @schema.errors
                 @warnings += @schema.warnings
               else
-                build_errors(:ragged_rows, :structure, current_line, nil, string) if !row.empty? && row.size != @expected_columns
+                build_errors(:ragged_rows, :structure, current_line, nil, stream_array.to_s) if !row.empty? && row.size != @expected_columns
               end
             end
           end
-        rescue CSV::MalformedCSVError => e
-          # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
-          type = fetch_error(e) # refers to ERROR_MATCHER object
-          build_errors(type, :structure, current_line, nil, string)
-        end
+      # rescue CSV::MalformedCSVError => e
+      #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
+      #   type = fetch_error(e) # refers to ERROR_MATCHER object
+      #   build_errors(type, :structure, current_line, nil, stream)
+      # end
         # the below rescue is no longer necessary with addition of line 114
         # rescue ArgumentError => ae
         #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
         #   reported_invalid_encoding = true
-      end
+      # end
     end
 
     def validate_header(header)

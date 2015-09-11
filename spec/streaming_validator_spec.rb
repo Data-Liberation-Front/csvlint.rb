@@ -9,14 +9,14 @@ describe Csvlint::StreamingValidator do
   context "tests to compare CSV native methods" do
 
     it "validates correctly using cascade" do
-      stream = "\"a\",\"b\",\"c\"\r\n"
+      stream = ["\"a\",\"b\",\"c\"\r\n"]
       validator = Csvlint::StreamingValidator.new(stream)
       validator.validate
       expect(validator.valid?).to eql(true)
     end
 
     it "uses CSV parse" do
-      stream = "\"a\",\"b\",\"c\"\r\n"
+      stream = ["\"a\",\"b\",\"c\"\r\n"]
       validator = Csvlint::StreamingValidator.new(stream)
       validator.validate
       # validator.parse_content(stream)
@@ -24,7 +24,7 @@ describe Csvlint::StreamingValidator do
     end
 
     it "uses CSV parse and StringIO" do
-      data = StringIO.new( "1,2,3\r\n" )
+      data = ["1,2,3\r\n"]
       validator = Csvlint::StreamingValidator.new(data)
       validator.validate
       # validator.parse_content(data)
@@ -36,27 +36,49 @@ describe Csvlint::StreamingValidator do
   context "content validation should pass without passing stream to initialise" do
 
     it "passes a compliant string with no errors" do
-      data = StringIO.new( "1,2,3\r\n" )
+      # data = StringIO.new( "1,2,3\r\n" )
+      data = ["1,2,3\r\n"]
       validator = Csvlint::StreamingValidator.new()
+      # validator.validate
       validator.parse_contents(data)
       expect( validator.valid? ).to eql(true)
-      expect(validator.info_messages.size).to eql(1) # presuming assumed header message will generate
+      expect(validator.info_messages.size).to eql(0) # presuming assumed header message will generate
     end
 
+    it "parses CSV and catches whitespace" do
+      # data = StringIO.new("\"\",\"\",\"\\")
+      data = ["\"\",\"\",\"\\"]
+      validator = Csvlint::StreamingValidator.new(data)
+      # validator.validate
+      validator.parse_contents(data)
+      expect(validator.valid?).to eql(false)
+      expect(validator.errors.first.type).to eql(:whitespace)
+    end
+  end
+
+  context "validation with multiple lines " do
     it "parses CSV when provided with an init and input" do
-      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
+      # data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
+      data = [["\"Foo\",\"Bar\",\"Baz\"\r\n"], ["1\",\"2\",\"3\"\r\n"], ["1\",\"2\",\"3\"\r\n"], ["3\",\"2\",\"1\""]]
+
       # binding.pry
       validator = Csvlint::StreamingValidator.new(data)
-      validator.validate
-      # validator.parse_content(data)
+      # validator.validate
+      data.each do |d|
+        validator.parse_contents(d)
+      end
+      # validator.parse_contents(data)
       expect(validator.valid?).to eql(true)
     end
 
-    it "parses CSV and catches an error i.e. whitespace" do
-      data = StringIO.new(" \"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+    it "parses CSV and catches whitespace" do
+      # data = StringIO.new(" \"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+      data = [["\"Foo\",\"Bar\",\"   Baz\"\r\n"], ["1\",\"2\",\"3\"\r\n"], ["1\",\"2\",\"3\"\r\n"], ["3\",\"2\",\"1\""]]
       validator = Csvlint::StreamingValidator.new(data)
-      validator.validate
-      # validator.parse_content(data)
+      data.each do |d|
+        validator.parse_contents(d)
+      end
+      # validator.validate
       expect(validator.valid?).to eql(false)
       expect(validator.errors.first.type).to eql(:whitespace)
     end
@@ -65,7 +87,7 @@ describe Csvlint::StreamingValidator do
   context "with a single row" do
 
     it "validates correctly" do
-      stream = "\"a\",\"b\",\"c\"\r\n"
+      stream = ["\"a\",\"b\",\"c\"\r\n"]
       validator = Csvlint::StreamingValidator.new(stream)
       validator.validate
       expect(validator.valid?).to eql(true)
@@ -74,19 +96,23 @@ describe Csvlint::StreamingValidator do
     it "checks for non rfc line breaks" do
       # this test implies knowledge of CSV.row_sep, a value that can only be obtained by CSV.new()
       # CSV.new() doesn't read the entire file into memory but it does create another object in memory
-      stream = "\"a\",\"b\",\"c\"\n"
-      validator = Csvlint::StreamingValidator.new(stream)
-      validator.report_headers()
-      validator.validate
+      stream = ["\"a\",\"b\",\"c\"\n"]
+      csv = CSV.instance(stream)
+      validator = Csvlint::StreamingValidator.new(stream, nil, nil, {}, csv.row_sep)
+      validator.report_line_breaks(csv.row_sep)
+      # validator.validate
+      validator.parse_contents(stream)
       expect(validator.valid?).to eql(true)
       expect(validator.info_messages.count).to eq(2)
       expect(validator.info_messages.first.type).to eql(:nonrfc_line_breaks)
     end
 
     it "checks for blank rows" do
-      stream = "\"\",\"\",\"\"\r\n"
+      stream = ["\"\",\"\",\"\"\r\n"]
+      # stream = [""","""",""""\r\n"]
       validator = Csvlint::StreamingValidator.new(stream)
       validator.validate
+
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:blank_rows)
@@ -96,7 +122,7 @@ describe Csvlint::StreamingValidator do
       # validator = Csvlint::StreamingValidator.new("\"\",\"\",\"\"\r\n")
       # validator.validate
       # binding.pry
-      stream = "\"\",\"\",\"\"\r\n"
+      stream = ["\"\",\"\",\"\"\r\n"]
       validator = Csvlint::StreamingValidator.new(stream)
       validator.validate
       # validator.parse_content(stream)
@@ -108,7 +134,8 @@ describe Csvlint::StreamingValidator do
 
     it "should handle stringIO input" do
 
-      data = StringIO.new( "1,2,3\r\n" )
+      # data = StringIO.new( "1,2,3\r\n" )
+      data = ["1,2,3\r\n"]
       validator = Csvlint::StreamingValidator.new(data)
       validator.validate
       expect( validator.valid? ).to eql(true)
@@ -120,7 +147,7 @@ describe Csvlint::StreamingValidator do
 
     it "should presume a header unless told otherwise" do
 
-      stream = "1,2,3\r\n"
+      stream = ["1,2,3\r\n"]
       validator = Csvlint::StreamingValidator.new(stream)
       validator.validate
 
@@ -133,22 +160,23 @@ describe Csvlint::StreamingValidator do
   end
 
   context "it returns the correct error from ERROR_MATCHES" do
+    # the ERROR_MATCHES messages are only built in response to CSV::Malformed Exceptions, so they cannot be invoked
+    # separately to the validator.validate
 
     it "checks for unclosed quotes" do # TODO this is failing because of a rescue being misplaced
-      stream = "\"a,\"b\",\"c\"\n"
+      stream = ["\"a,\"b\",\"c\"\n"]
       validator = Csvlint::StreamingValidator.new(stream)
-      validator.validate
-      # validator.parse_content(data)
+      validator.validate # implicitly invokes parse_contents(stream)
+      # validator.parse_contents(stream)
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
     end
 
     it "checks for stray quotes" do
-      stream = "\"a\",“b“,\"c\"""\r\n"
+      stream = ["\"a\",“b“,\"c\"" "\r\n"]
       validator = Csvlint::StreamingValidator.new(stream)
-      validator.validate
-      # validator.parse_content(data)
+      validator.validate # implicitly invokes parse_contents(stream)
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:stray_quote)
@@ -156,20 +184,18 @@ describe Csvlint::StreamingValidator do
 
     it "checks for whitespace" do
       # note that whitespace only catches prefacing and trailing whitespace as an error
-      stream = " \"a\",\"b\",\"c\"\r\n "
-      validator = Csvlint::StreamingValidator.new(stream)
-      validator.validate
-      # validator.parse_content(data)
+      stream = [" \"a\",\"b\",\"c\"\r\n "]
+      validator = Csvlint::StreamingValidator.new(stream) # implicitly invokes parse_contents(stream)
+      validator.validate # implicitly invokes parse_contents(stream)
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:whitespace)
     end
 
     it "returns line break errors if incorrectly specified" do
-      stream = "\"a\",\"b\",\"c\"\n"
+      stream = ["\"a\",\"b\",\"c\"\n"]
       validator = Csvlint::StreamingValidator.new(stream, {"lineTerminator" => "\r\n"})
-      validator.validate
-      # validator.parse_content(stream)
+      validator.validate # implicitly invokes parse_contents(stream)
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:line_breaks)
@@ -178,14 +204,6 @@ describe Csvlint::StreamingValidator do
   end
 
   context "when validating headers" do
-
-    it "validates metadata when provided with an init, dialect and input as arg" do
-      data = StringIO.new("1,2,3\r\n")
-      validator = Csvlint::StreamingValidator.new(nil, "header" => false)
-      validator.validate_metadata(data)
-      expect(validator.valid?).to eql(true)
-      expect(validator.info_messages.size).to eql(0)
-    end
 
     it "should warn if column names aren't unique" do
       data = StringIO.new( "minimum, minimum" )
