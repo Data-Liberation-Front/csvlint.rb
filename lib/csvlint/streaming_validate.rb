@@ -60,7 +60,11 @@ module Csvlint
         # TODO - with this refactor that information is lost with only the reported exception persisting
 
         type = fetch_error(e) # refers to ERROR_MATCHER object
-        if type == :unclosed_quote && !@stream.match(@csv_options[:row_sep]) #TODO - this is a change in logic, rather than straight refactor of previous error building
+        require 'pry'
+        # binding.pry
+        if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+          #TODO 1 - this is a change in logic, rather than straight refactor of previous error building
+          #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
           build_errors(:line_breaks, :structure)
         else
           build_errors(type, :structure, nil, nil, @stream) # TODO - this build_errors call has much less information than previous calls to that method
