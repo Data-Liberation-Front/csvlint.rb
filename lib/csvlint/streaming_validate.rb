@@ -37,7 +37,7 @@ module Csvlint
       # @extension = parse_extension(@string) unless @string.nil?
 
       reset
-      report_line_breaks(@csv_options[:row_sep])
+
       # validate
       # TODO - separating the initialise and validate calls means that many of the specs that use Validator.valid to test that the object created
       # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
@@ -50,6 +50,7 @@ module Csvlint
       begin
         # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
         validate_metadata(@stream) # this shouldn't be called on every string
+        report_line_breaks(@csv_options[:row_sep])
         parse_contents(@stream)
       rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
         build_errors(:not_found)
@@ -59,9 +60,7 @@ module Csvlint
         # TODO - with this refactor that information is lost with only the reported exception persisting
 
         type = fetch_error(e) # refers to ERROR_MATCHER object
-        if type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
-          require 'pry'
-          binding.pry
+        if type == :unclosed_quote && !@stream.match(@csv_options[:row_sep]) #TODO - this is a change in logic, rather than straight refactor of previous error building
           build_errors(:line_breaks, :structure)
         else
           build_errors(type, :structure, nil, nil, @stream) # TODO - this build_errors call has much less information than previous calls to that method
