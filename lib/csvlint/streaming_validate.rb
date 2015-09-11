@@ -33,6 +33,10 @@ module Csvlint
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
 
+      @expected_columns = 0
+      @col_counts = []
+
+      @data = [] # it may be advisable to flush this on init?
 
       reset
 
@@ -41,10 +45,12 @@ module Csvlint
       # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
 
     end
-    
+
     def validate (input = nil)
       single_col = false
-      @source = input.present? ? @source = input : @source
+      @stream = input.present? ? @stream = input : @stream
+      require 'pry'
+      # binding.pry
       begin
         # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
         validate_metadata(@stream) # this shouldn't be called on every string
@@ -112,27 +118,29 @@ module Csvlint
       end
     end
 
-    def build_exception_messages(csvException, errChars)
+    def build_exception_messages(csvException, errChars, lineNo)
       #TODO 1 - this is a change in logic, rather than straight refactor of previous error building, however original logic is bonkers
       #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
       type = fetch_error(csvException)
       if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
         build_errors(:line_breaks, :structure)
       else
-        build_errors(type, :structure, nil, nil, errChars)
+        build_errors(type, :structure, lineNo, nil, errChars)
       end
     end
 
     # analyses the provided csv and builds errors, warnings and info messages
-    def parse_contents(stream)
+    def parse_contents(stream, line = nil)
+      # parse_contents will parse one line and apply headers, formats methods and error handle as appropriate
       #TODO i've tried to make this method more concerned with handling row and column processing and the most logical way
       #TODO towards this is for it to be passed an array - however
+      require 'pry'
+      # binding.pry
 
-      @expected_columns = 0
-      current_line = 0
+      current_line = line+1 || 1
       reported_invalid_encoding = false
       all_errors = []
-      @col_counts = []
+
       @csv_options[:encoding] = @encoding
 
       begin
@@ -141,11 +149,14 @@ module Csvlint
         # TODO investigate if above would be a drag on memory
       # CSV.parse will return an array of arrays which may break things
       rescue CSV::MalformedCSVError => e
-        build_exception_messages(e, stream)
+        build_exception_messages(e, stream, current_line)
       end
 
-      @data = []
+      # require 'pry'
+      # binding.pry
       @data << row
+      # TODO currently it doesn't matter where the above rescue is the @data array is either populated with nil or nothing
+      # TODO is that intended behaviour?
       if row
         if current_line == 1 && @csv_header
           # this conditional should be refactored somewhere
@@ -168,6 +179,8 @@ module Csvlint
           end
         end
       end
+      # require 'pry'
+      # binding.pry
       # TODO the below argumenterror is an artefact of when everything was in one long method
       # TODO however this is an important rescue to content parsing as the README stipulates it catches
       # TODO "encoding error when parsing row, e.g. because of invalid characters"

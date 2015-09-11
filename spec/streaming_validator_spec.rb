@@ -55,30 +55,76 @@ describe Csvlint::StreamingValidator do
   end
 
   context "validation with multiple lines " do
-    it "parses CSV when provided with an init and input" do
+
+    # TODO multiple lines permits testing of warnings
+
+    # TODO need more assertions
+
+    it "parse_contents method validates a well formed CSV" do
+      # when invoking parse contents
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
-      # data = [["\"Foo\",\"Bar\",\"Baz\"\r\n"], ["1\",\"2\",\"3\"\r\n"], ["1\",\"2\",\"3\"\r\n"], ["3\",\"2\",\"1\""]]
 
       validator = Csvlint::StreamingValidator.new(data)
-      # validator.validate
-      data.each do |d|
-        validator.parse_contents(d)
+
+      data.each_with_index do |d, i|
+        validator.parse_contents(d, i)
+
       end
 
       expect(validator.valid?).to eql(true)
+      # TODO would be beneficial to know how formats functions WRT to headers - check_format.feature:17 returns 3 rows total
+      # TODO in its formats object but is provided with 5 rows (with one nil row)
+      expect(validator.instance_variable_get("@expected_columns")).to eql(3)
+      expect(validator.instance_variable_get("@col_counts").count).to eql(4)
+      expect(validator.data.size).to eql(4)
+
     end
 
-    it "parses CSV and catches whitespace" do
-      data = StringIO.new(" \"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
-      # data = [["\"Foo\",\"Bar\",\"   Baz\"\r\n"], ["1\",\"2\",\"3\"\r\n"], ["1\",\"2\",\"3\"\r\n"], ["3\",\"2\",\"1\""]]
+    it "parse_contents parses malformed CSV and catches whitespace" do
+      # doesn't build warnings because check_consistency isn't invoked
+      # TODO below is trailing whitespace but is interpreted as an unclosed quote
+      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+
       validator = Csvlint::StreamingValidator.new(data)
-      data.each do |d|
-        validator.parse_contents(d)
+      data.each_with_index do |d, i|
+        validator.parse_contents(d, i)
       end
-      # validator.validate
+      expect(validator.valid?).to eql(false)
+      expect(validator.errors.first.type).to eql(:unclosed_quote)
+      expect(validator.errors.count).to eql(1)
+    end
+
+    it "parse_contents parses malformed CSV and catches whitespace and edge case" do
+      # when this data gets passed the header it rescues a whitespace error, resulting in the header row being discarded
+      # TODO - check if this is an edge case, currently passing because it requires advice on how to specify
+      data = StringIO.new(" \"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"Foo\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+
+      validator = Csvlint::StreamingValidator.new(data)
+      data.each_with_index do |d, i|
+        validator.parse_contents(d, i)
+      end
+
       expect(validator.valid?).to eql(false)
       expect(validator.errors.first.type).to eql(:whitespace)
+      expect(validator.errors.count).to eql(2)
     end
+
+
+    # it "File forEach uses validate to pass input in streaming fashion" do
+    #   # warnings are built when validate is used to call all three methods
+    #   validator = Csvlint::StreamingValidator.new()
+    #   data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
+    #
+    #   data.each do |row|
+    #     validator.validate(row)
+    #   end
+    #
+    #   expect(validator.instance_variable_get("@expected_columns")).to eql(3)
+    #   expect(validator.instance_variable_get("@col_counts").count).to eql(4)
+    #   expect(validator.data.size).to eql(4)
+    #   expect(validator.valid?).to eql(true)
+    # end
+
   end
 
   context "with a single row" do
@@ -188,7 +234,6 @@ describe Csvlint::StreamingValidator do
       stream = "\"a\",\"b\",\"c\"\n"
       validator = Csvlint::StreamingValidator.new(stream, {"lineTerminator" => "\r\n"})
       validator.validate # implicitly invokes parse_contents(stream)
-      binding.pry
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:line_breaks)
