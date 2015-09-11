@@ -121,9 +121,6 @@ describe Csvlint::StreamingValidator do
     end
 
     it "returns the content of the string with the error" do
-      # validator = Csvlint::StreamingValidator.new("\"\",\"\",\"\"\r\n")
-      # validator.validate
-      # binding.pry
       stream = "\"\",\"\",\"\"\r\n"
       validator = Csvlint::StreamingValidator.new(stream, "header" => false)
       validator.validate
@@ -149,7 +146,6 @@ describe Csvlint::StreamingValidator do
       stream = "1,2,3\r\n"
       validator = Csvlint::StreamingValidator.new(stream, "header" => false)
       validator.validate
-      # binding.pry
       expect(validator.valid?).to eql(true)
       expect(validator.info_messages.size).to eql(0)
     end
@@ -193,6 +189,7 @@ describe Csvlint::StreamingValidator do
     end
 
     it "returns line break errors if incorrectly specified" do
+      # TODO the logic for catching this error message is very esoteric
       stream = "\"a\",\"b\",\"c\"\n"
       validator = Csvlint::StreamingValidator.new(stream, {"lineTerminator" => "\r\n"})
       validator.validate # implicitly invokes parse_contents(stream)

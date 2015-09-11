@@ -97,7 +97,6 @@ module Csvlint
           build_errors(:undeclared_header, :structure)
           assumed_header = false
         end
-
       end
       build_info_messages(:assumed_header, :structure) if assumed_header
     end
@@ -134,6 +133,8 @@ module Csvlint
 
       begin
       row = CSV.parse_line(stream, @csv_options)
+        # this is a one line substitute for CSV.new followed by row = CSV.shift
+        # TODO investigate if above would be a drag on memory
       # CSV.parse will return an array of arrays which may break things
       rescue CSV::MalformedCSVError => e
         build_exception_messages(e, stream)
@@ -164,6 +165,8 @@ module Csvlint
         end
       end
       # TODO the below argumenterror is an artefact of when everything was in one long method
+      # TODO however this is an important rescue to content parsing as the README stipulates it catches
+      # TODO "encoding error when parsing row, e.g. because of invalid characters"
       # rescue ArgumentError => ae
       #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
       #   reported_invalid_encoding = true
