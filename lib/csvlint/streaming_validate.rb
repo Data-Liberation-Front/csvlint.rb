@@ -58,19 +58,7 @@ module Csvlint
         # TODO the drawback of this rescue pattern is that making it more modular relative to previous versions is that
         # TODO previous error reporting used delegator/wrappers to persist line number and error triggering string information
         # TODO - with this refactor that information is lost with only the reported exception persisting
-
-        type = fetch_error(e) # refers to ERROR_MATCHER object
-        require 'pry'
-        binding.pry
-        if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
-          # if type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
-          # if type == :unclosed_quote && !@stream.match(@line_breaks)
-          #TODO 1 - this is a change in logic, rather than straight refactor of previous error building, however original logic is bonkers
-          #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
-          build_errors(:line_breaks, :structure)
-        else
-          build_errors(type, :structure, nil, nil, @stream) # TODO - this build_errors call has much less information than previous calls to that method
-        end
+        build_exception_message(e, @stream)
       ensure
         # io.close if io && io.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
       end
@@ -120,11 +108,20 @@ module Csvlint
     end
 
     def report_line_breaks
-      require 'pry'
-      # binding.pry
       @line_breaks = CSV.new(@stream).row_sep
       if @line_breaks != "\r\n"
         build_info_messages(:nonrfc_line_breaks, :structure)
+      end
+    end
+
+    def build_exception_messages(csvException, errChars)
+      #TODO 1 - this is a change in logic, rather than straight refactor of previous error building, however original logic is bonkers
+      #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
+      type = fetch_error(csvException)
+      if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+        build_errors(:line_breaks, :structure)
+      else
+        build_errors(type, :structure, nil, nil, errChars)
       end
     end
 
@@ -144,59 +141,37 @@ module Csvlint
       row = CSV.parse_line(stream, @csv_options)
       # CSV.parse will return an array of arrays which may break things
       rescue CSV::MalformedCSVError => e
-        type = fetch_error(e)
-        if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
-          build_errors(:line_breaks, :structure)
-        else
-          build_errors(type, :structure, nil, nil, stream)
-        end
-
+        build_exception_messages(e, stream)
       end
 
-      # begin
-      #   csv = CSV.new( stream, @csv_options )
-        @data = []
-
-      # if stream.class.eql?(String)
-
-      # end
-        # terminating condition which is part of the streaming class no longer having responsibility for detecting row seperating chars
-      # begin
-      #   row = csv.shift # row is an array from this point onwards
-      require 'pry'
-      # binding.pry
-          @data << row
-          if row
-            if current_line == 1 && @csv_header
-              # this conditional should be refactored somewhere
-              row = row.reject{|col| col.nil? || col.empty?}
-              validate_header(row)
-              @col_counts << row.size
-            else
-              build_formats(row)
-              @col_counts << row.reject{|col| col.nil? || col.empty?}.size
-              @expected_columns = row.size unless @expected_columns != 0
-              build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
-              # Builds errors and warnings related to the provided schema file
-              if @schema
-                @schema.validate_row(row, current_line, all_errors)
-                @errors += @schema.errors
-                all_errors += @schema.errors
-                @warnings += @schema.warnings
-              else
-                build_errors(:ragged_rows, :structure, current_line, nil, stream.to_s) if !row.empty? && row.size != @expected_columns
-              end
-            end
+      @data = []
+      @data << row
+      if row
+        if current_line == 1 && @csv_header
+          # this conditional should be refactored somewhere
+          row = row.reject { |col| col.nil? || col.empty? }
+          validate_header(row)
+          @col_counts << row.size
+        else
+          build_formats(row)
+          @col_counts << row.reject { |col| col.nil? || col.empty? }.size
+          @expected_columns = row.size unless @expected_columns != 0
+          build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
+          # Builds errors and warnings related to the provided schema file
+          if @schema
+            @schema.validate_row(row, current_line, all_errors)
+            @errors += @schema.errors
+            all_errors += @schema.errors
+            @warnings += @schema.warnings
+          else
+            build_errors(:ragged_rows, :structure, current_line, nil, stream.to_s) if !row.empty? && row.size != @expected_columns
           end
-      # rescue CSV::MalformedCSVError => e
-      #   # within the validator this rescue is an edge case as it is assumed that the validation streamer will always be passed a class it can parse
-      #   type = fetch_error(e) # refers to ERROR_MATCHER object
-      #   build_errors(type, :structure, current_line, nil, stream)
-      # end
-        # the below rescue is no longer necessary with addition of line 114
-        # rescue ArgumentError => ae
-        #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
-        #   reported_invalid_encoding = true
+        end
+      end
+      # TODO the below argumenterror is an artefact of when everything was in one long method
+      # rescue ArgumentError => ae
+      #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
+      #   reported_invalid_encoding = true
       # end
     end
 
