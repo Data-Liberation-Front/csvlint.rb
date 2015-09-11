@@ -43,18 +43,7 @@ module Csvlint
       # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
 
     end
-
-    def stream_handling (stream)
-
-      if stream.kind_of?(Array)
-        parse_contents(@stream)
-      elsif stream.respond_to?("each")
-        stream.each do |content|
-          parse_contents(Array(content))
-        end
-      end
-    end
-
+    
     def validate
       single_col = false
       # io = nil # This will get factored into Validate

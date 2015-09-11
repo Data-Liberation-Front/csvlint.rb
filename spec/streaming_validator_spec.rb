@@ -132,19 +132,6 @@ describe Csvlint::StreamingValidator do
     end
 
 
-    it "should handle stringIO input" do
-
-      # data = StringIO.new( "1,2,3\r\n" )
-      data = ["1,2,3\r\n"]
-      validator = Csvlint::StreamingValidator.new(data)
-      validator.validate
-      expect( validator.valid? ).to eql(true)
-      expect( validator.info_messages.size ).to eql(1)
-      expect( validator.info_messages.first.type).to eql(:assumed_header)
-      expect( validator.info_messages.first.category).to eql(:structure)
-
-    end
-
     it "should presume a header unless told otherwise" do
 
       stream = ["1,2,3\r\n"]
@@ -156,6 +143,19 @@ describe Csvlint::StreamingValidator do
       expect( validator.info_messages.first.type).to eql(:assumed_header)
       expect( validator.info_messages.first.category).to eql(:structure)
     end
+
+    it "should presume a header unless told otherwise" do
+
+      stream = ["1,2,3\r\n"]
+      validator = Csvlint::StreamingValidator.new(stream, "header" => false)
+      validator.validate
+
+      expect(validator.valid?).to eql(true)
+      expect(validator.info_messages.size).to eql(0)
+      expect(validator.info_messages.first.type).to eql(:assumed_header)
+      expect(validator.info_messages.first.category).to eql(:structure)
+    end
+
 
   end
 
@@ -237,7 +237,6 @@ describe Csvlint::StreamingValidator do
     it "should not include info message about missing header when we are told about the header" do
       data = StringIO.new( "1,2,3\r\n" )
       validator = Csvlint::StreamingValidator.new(data, "header"=>false)
-
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(0)
     end
