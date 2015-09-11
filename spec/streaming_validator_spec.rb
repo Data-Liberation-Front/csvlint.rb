@@ -72,7 +72,7 @@ describe Csvlint::StreamingValidator do
     it "parses CSV when provided with an init and input" do
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
       # binding.pry
-      validator = Csvlint::StreamingValidator.new()
+      validator = Csvlint::StreamingValidator.new(data)
       validator.validate
       # validator.parse_content(data)
       expect(validator.valid?).to eql(true)
@@ -80,7 +80,7 @@ describe Csvlint::StreamingValidator do
 
     it "parses CSV and catches an error i.e. whitespace" do
       data = StringIO.new(" \"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
-      validator = Csvlint::StreamingValidator.new()
+      validator = Csvlint::StreamingValidator.new(data)
       validator.validate
       # validator.parse_content(data)
       expect(validator.valid?).to eql(false)
@@ -122,7 +122,7 @@ describe Csvlint::StreamingValidator do
       # validator.validate
       # binding.pry
       stream = "\"\",\"\",\"\"\r\n"
-      validator = Csvlint::StreamingValidator.new()
+      validator = Csvlint::StreamingValidator.new(stream)
       validator.validate
       # validator.parse_content(stream)
       # validator.parse_cells(["\"\",\"\",\"\"\r\n"])
