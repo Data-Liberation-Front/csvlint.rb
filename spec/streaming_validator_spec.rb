@@ -88,7 +88,7 @@ describe Csvlint::StreamingValidator do
 
     it "validates correctly" do
       stream = ["\"a\",\"b\",\"c\"\r\n"]
-      validator = Csvlint::StreamingValidator.new(stream)
+      validator = Csvlint::StreamingValidator.new(stream, "header" => false)
       validator.validate
       expect(validator.valid?).to eql(true)
     end
@@ -98,7 +98,7 @@ describe Csvlint::StreamingValidator do
       # CSV.new() doesn't read the entire file into memory but it does create another object in memory
       stream = ["\"a\",\"b\",\"c\"\n"]
       csv = CSV.instance(stream)
-      validator = Csvlint::StreamingValidator.new(stream, nil, nil, {}, csv.row_sep)
+      validator = Csvlint::StreamingValidator.new(stream, {"header" => false}, nil, {}, csv.row_sep)
       validator.report_line_breaks(csv.row_sep)
       # validator.validate
       validator.parse_contents(stream)
@@ -108,9 +108,11 @@ describe Csvlint::StreamingValidator do
     end
 
     it "checks for blank rows" do
-      stream = ["\"\",\"\",\"\"\r\n"]
+      # stream = ["\"\",\"\",\"\"\r\n"]
       # stream = [""","""",""""\r\n"] TODO array processing doesn't seem to catch blank_rows anymore
-      validator = Csvlint::StreamingValidator.new(stream)
+      stream = StringIO.new('"","",')
+      # stream = ['"","",']
+      validator = Csvlint::StreamingValidator.new(stream, "header" => false)
       validator.parse_contents(stream)
 
       expect(validator.valid?).to eql(false)
@@ -123,7 +125,7 @@ describe Csvlint::StreamingValidator do
       # validator.validate
       # binding.pry
       stream = ["\"\",\"\",\"\"\r\n"]
-      validator = Csvlint::StreamingValidator.new(stream)
+      validator = Csvlint::StreamingValidator.new(stream, "header" => false)
       validator.validate
       # validator.parse_content(stream)
       # validator.parse_cells(["\"\",\"\",\"\"\r\n"])

@@ -116,7 +116,7 @@ module Csvlint
     end
 
     # analyses the provided csv and builds errors, warnings and info messages
-    def parse_contents(stream_array)
+    def parse_contents(stream)
       #TODO i've tried to make this method more concerned with handling row and column processing and the most logical way
       #TODO towards this is for it to be passed an array - however
 
@@ -127,7 +127,8 @@ module Csvlint
       @col_counts = []
       @csv_options[:encoding] = @encoding
 
-      row = stream_array
+      row = CSV.parse_line(stream)
+      # CSV.parse will return an array of arrays which may break things
 
 
       # begin
@@ -140,6 +141,8 @@ module Csvlint
         # terminating condition which is part of the streaming class no longer having responsibility for detecting row seperating chars
       # begin
       #   row = csv.shift # row is an array from this point onwards
+      require 'pry'
+      # binding.pry
           @data << row
           if row
             if current_line == 1 && @csv_header
@@ -151,7 +154,7 @@ module Csvlint
               build_formats(row)
               @col_counts << row.reject{|col| col.nil? || col.empty?}.size
               @expected_columns = row.size unless @expected_columns != 0
-              build_errors(:blank_rows, :structure, current_line, nil, stream_array.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
+              build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
               # Builds errors and warnings related to the provided schema file
               if @schema
                 @schema.validate_row(row, current_line, all_errors)
@@ -159,7 +162,7 @@ module Csvlint
                 all_errors += @schema.errors
                 @warnings += @schema.warnings
               else
-                build_errors(:ragged_rows, :structure, current_line, nil, stream_array.to_s) if !row.empty? && row.size != @expected_columns
+                build_errors(:ragged_rows, :structure, current_line, nil, stream.to_s) if !row.empty? && row.size != @expected_columns
               end
             end
           end
