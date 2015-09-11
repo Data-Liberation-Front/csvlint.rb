@@ -42,9 +42,9 @@ module Csvlint
 
     end
     
-    def validate
+    def validate (input = nil)
       single_col = false
-      # io = nil # This will get factored into Validate
+      @source = input.present? ? @source = input : @source
       begin
         # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
         validate_metadata(@stream) # this shouldn't be called on every string
@@ -99,6 +99,10 @@ module Csvlint
         end
       end
       build_info_messages(:assumed_header, :structure) if assumed_header
+    end
+
+    def header?
+      @csv_header
     end
 
     def report_line_breaks
