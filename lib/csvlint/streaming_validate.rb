@@ -32,7 +32,7 @@ module Csvlint
       @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
-
+      @csv = CSV.instance(stream, @csv_options)
       # This will get factored into Validate
       # @extension = parse_extension(@string) unless @string.nil?
 
@@ -48,19 +48,19 @@ module Csvlint
       # io = nil # This will get factored into Validate
       begin
         validate_metadata(@stream) # this shouldn't be called on every string
-        parse_csv(@stream)
-        sum = @col_counts.inject(:+)
-        unless sum.nil?
-          build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
-        end
-        # return expected_columns to calling class
-        build_warnings(:check_options, :structure) if @expected_columns == 1
-        check_consistency
-      rescue OpenURI::HTTPError, Errno::ENOENT
+        parse_contents(@stream)
+      rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
         build_errors(:not_found)
       ensure
         # io.close if io && io.respond_to?(:close) # This will get factored into Validate, or a finishing state in this class
       end
+      sum = @col_counts.inject(:+)
+      unless sum.nil?
+        build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
+      end
+      # return expected_columns to calling class
+      build_warnings(:check_options, :structure) if @expected_columns == 1
+      check_consistency
     end
 
     def validate_metadata(io)
@@ -99,8 +99,15 @@ module Csvlint
       build_info_messages(:assumed_header, :structure) if assumed_header
     end
 
+    def report_headers
+      @line_breaks = @csv.row_sep
+      if @line_breaks != "\r\n"
+        build_info_messages(:nonrfc_line_breaks, :structure)
+      end
+    end
+
     # analyses the provided csv and builds errors, warnings and info messages
-    def parse_csv(string)
+    def parse_contents(string)
       @expected_columns = 0
       current_line = 0
       reported_invalid_encoding = false
@@ -112,10 +119,6 @@ module Csvlint
       begin
         csv = CSV.new( string, @csv_options )
         @data = []
-        @line_breaks = csv.row_sep
-        if @line_breaks != "\r\n"
-          build_info_messages(:nonrfc_line_breaks, :structure)
-        end
 
         if string.class.eql?(String)
           build_errors(:line_breaks, :structure) and return if !string.match(csv.row_sep)

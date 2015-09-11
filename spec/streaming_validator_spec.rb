@@ -17,15 +17,15 @@ describe Csvlint::StreamingValidator do
 
     it "uses CSV parse" do
       stream = "\"a\",\"b\",\"c\"\r\n"
-      validator = Csvlint::StreamingValidator.new()
+      validator = Csvlint::StreamingValidator.new(stream)
       validator.validate
       # validator.parse_content(stream)
       expect(validator.valid?).to eql(true)
     end
 
     it "uses CSV parse and StringIO" do
-      validator = Csvlint::StreamingValidator.new()
       data = StringIO.new( "1,2,3\r\n" )
+      validator = Csvlint::StreamingValidator.new(data)
       validator.validate
       # validator.parse_content(data)
       expect( validator.valid? ).to eql(true)
@@ -33,41 +33,15 @@ describe Csvlint::StreamingValidator do
 
   end
 
-  context "validation methods should pass with raw input" do
+  context "content validation should pass without passing stream to initialise" do
 
-    it "validates metadata when provided with empty init and input as arg" do
+    it "passes a compliant string with no errors" do
       data = StringIO.new( "1,2,3\r\n" )
       validator = Csvlint::StreamingValidator.new()
-      validator.validate_metadata(data)
+      validator.parse_contents(data)
       expect( validator.valid? ).to eql(true)
-      expect( validator.info_messages.size ).to eql(1)
+      expect(validator.info_messages.size).to eql(1) # presuming assumed header message will generate
     end
-
-    it "validates metadata when provided with an init, dialect and input as arg" do
-      data = StringIO.new( "1,2,3\r\n" )
-      validator = Csvlint::StreamingValidator.new(nil,"header"=>false)
-      validator.validate_metadata(data)
-      expect( validator.valid? ).to eql(true)
-      expect( validator.info_messages.size ).to eql(0)
-    end
-
-    #   it "should include info message about missing header when we have assumed a header" do
-    #     data = StringIO.new( "1,2,3\r\n" )
-    #     validator = Csvlint::StreamingValidator.new(data)
-    #
-    #     expect( validator.valid? ).to eql(true)
-    #     expect( validator.info_messages.size ).to eql(1)
-    #     expect( validator.info_messages.first.type).to eql(:assumed_header)
-    #     expect( validator.info_messages.first.category).to eql(:structure)
-    #   end
-    #
-    #   it "should not include info message about missing header when we are told about the header" do
-    #     data = StringIO.new( "1,2,3\r\n" )
-    #     validator = Csvlint::StreamingValidator.new(data, "header"=>false)
-    #
-    #     expect( validator.valid? ).to eql(true)
-    #     expect( validator.info_messages.size ).to eql(0)
-    #   end
 
     it "parses CSV when provided with an init and input" do
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
@@ -102,10 +76,11 @@ describe Csvlint::StreamingValidator do
       # CSV.new() doesn't read the entire file into memory but it does create another object in memory
       stream = "\"a\",\"b\",\"c\"\n"
       validator = Csvlint::StreamingValidator.new(stream)
+      validator.report_headers()
       validator.validate
       expect(validator.valid?).to eql(true)
       expect(validator.info_messages.count).to eq(2)
-      expect(validator.info_messages.last.type).to eql(:nonrfc_line_breaks)
+      expect(validator.info_messages.first.type).to eql(:nonrfc_line_breaks)
     end
 
     it "checks for blank rows" do
@@ -203,6 +178,15 @@ describe Csvlint::StreamingValidator do
   end
 
   context "when validating headers" do
+
+    it "validates metadata when provided with an init, dialect and input as arg" do
+      data = StringIO.new("1,2,3\r\n")
+      validator = Csvlint::StreamingValidator.new(nil, "header" => false)
+      validator.validate_metadata(data)
+      expect(validator.valid?).to eql(true)
+      expect(validator.info_messages.size).to eql(0)
+    end
+
     it "should warn if column names aren't unique" do
       data = StringIO.new( "minimum, minimum" )
       validator = Csvlint::StreamingValidator.new(data)
