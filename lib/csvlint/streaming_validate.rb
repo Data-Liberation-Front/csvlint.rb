@@ -60,7 +60,7 @@ module Csvlint
         # TODO - with this refactor that information is lost with only the reported exception persisting
         build_exception_message(e, @stream)
       ensure
-        # io.close if io && io.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
+        @stream.close if @stream && @stream.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
       end
       sum = @col_counts.inject(:+)
       unless sum.nil?
