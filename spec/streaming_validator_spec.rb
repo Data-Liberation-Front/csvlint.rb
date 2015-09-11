@@ -36,20 +36,15 @@ describe Csvlint::StreamingValidator do
   context "content validation should pass without passing stream to initialise" do
 
     it "passes a compliant string with no errors" do
-      # data = StringIO.new( "1,2,3\r\n" )
       data = "1,2,3\r\n"
       validator = Csvlint::StreamingValidator.new()
-      # validator.validate
       validator.parse_contents(data)
-      # binding.pry
       expect( validator.valid? ).to eql(true)
-      expect(validator.info_messages.size).to eql(0) # presuming assumed header message will generate
+      expect(validator.info_messages.size).to eql(0)
     end
 
     it "parses CSV and catches whitespace" do
-      # data = StringIO.new("\"\",\"\",\"\\")
-      # data = "\"\",\"\",\"\\"
-      # data = StringIO.new('"","",\r\n"","",\r\n')
+
       data = StringIO.new(" \"a\",\"b\",\"c\"\r\n ")
       validator = Csvlint::StreamingValidator.new(data)
       # validator.validate
@@ -205,7 +200,7 @@ describe Csvlint::StreamingValidator do
 
     it "should warn if column names aren't unique" do
       data = StringIO.new( "minimum, minimum" )
-      validator = Csvlint::StreamingValidator.new(data)
+      validator = Csvlint::StreamingValidator.new()
       expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
       expect( validator.warnings.size ).to eql(1)
       expect( validator.warnings.first.type).to eql(:duplicate_column_name)
@@ -214,7 +209,7 @@ describe Csvlint::StreamingValidator do
 
     it "should warn if column names are blank" do
       data = StringIO.new( "minimum," )
-      validator = Csvlint::StreamingValidator.new(data)
+      validator = Csvlint::StreamingValidator.new()
 
       expect( validator.validate_header(["minimum", ""]) ).to eql(true)
       expect( validator.warnings.size ).to eql(1)
@@ -224,7 +219,7 @@ describe Csvlint::StreamingValidator do
 
     it "should include info message about missing header when we have assumed a header" do
       data = StringIO.new( "1,2,3\r\n" )
-      validator = Csvlint::StreamingValidator.new(data)
+      validator = Csvlint::StreamingValidator.new()
       validator.validate_metadata(data) # data is equivalent to validator.stream
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(1)
@@ -234,7 +229,8 @@ describe Csvlint::StreamingValidator do
 
     it "should not include info message about missing header when we are told about the header" do
       data = StringIO.new( "1,2,3\r\n" )
-      validator = Csvlint::StreamingValidator.new(data, "header"=>false)
+      validator = Csvlint::StreamingValidator.new(nil, "header" => false)
+      validator.validate_metadata(data)
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(0)
     end
