@@ -50,7 +50,7 @@ module Csvlint
       begin
         # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
         validate_metadata(@stream) # this shouldn't be called on every string
-        report_line_breaks(@csv_options[:row_sep])
+        report_line_breaks
         parse_contents(@stream)
       rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
         build_errors(:not_found)
@@ -61,8 +61,9 @@ module Csvlint
 
         type = fetch_error(e) # refers to ERROR_MATCHER object
         require 'pry'
-        # binding.pry
-        if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+        binding.pry
+        # if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+        if type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
           #TODO 1 - this is a change in logic, rather than straight refactor of previous error building
           #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
           build_errors(:line_breaks, :structure)
@@ -117,10 +118,10 @@ module Csvlint
       build_info_messages(:assumed_header, :structure) if assumed_header
     end
 
-    def report_line_breaks(row_sep)
+    def report_line_breaks
       require 'pry'
       # binding.pry
-      @line_breaks = row_sep
+      @line_breaks = CSV.new(@stream).row_sep
       if @line_breaks != "\r\n"
         build_info_messages(:nonrfc_line_breaks, :structure)
       end

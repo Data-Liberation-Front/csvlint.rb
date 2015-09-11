@@ -41,6 +41,7 @@ describe Csvlint::StreamingValidator do
       validator = Csvlint::StreamingValidator.new()
       # validator.validate
       validator.parse_contents(data)
+      # binding.pry
       expect( validator.valid? ).to eql(true)
       expect(validator.info_messages.size).to eql(0) # presuming assumed header message will generate
     end
@@ -149,7 +150,7 @@ describe Csvlint::StreamingValidator do
       stream = "1,2,3\r\n"
       validator = Csvlint::StreamingValidator.new(stream, "header" => false)
       validator.validate
-
+      # binding.pry
       expect(validator.valid?).to eql(true)
       expect(validator.info_messages.size).to eql(0)
     end

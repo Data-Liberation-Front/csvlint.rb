@@ -76,7 +76,7 @@ module Csvlint
       begin
         chunk = @csv.string
         require 'pry'
-        binding.pry
+          # binding.pry
       rescue
 
       end
