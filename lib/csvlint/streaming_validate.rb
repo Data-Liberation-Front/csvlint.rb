@@ -33,8 +33,6 @@ module Csvlint
       @limit_lines = options[:limit_lines]
       @csv_options = dialect_to_csv_options(@dialect)
 
-      # This will get factored into Validate
-      # @extension = parse_extension(@string) unless @string.nil?
 
       reset
 
@@ -54,11 +52,8 @@ module Csvlint
         parse_contents(@stream)
       rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
         build_errors(:not_found)
-      rescue CSV::MalformedCSVError => e
-        # TODO the drawback of this rescue pattern is that making it more modular relative to previous versions is that
-        # TODO previous error reporting used delegator/wrappers to persist line number and error triggering string information
-        # TODO - with this refactor that information is lost with only the reported exception persisting
-        build_exception_message(e, @stream)
+          # rescue CSV::MalformedCSVError => e
+          # build_exception_message(e, @stream)
       ensure
         @stream.close if @stream && @stream.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
       end
