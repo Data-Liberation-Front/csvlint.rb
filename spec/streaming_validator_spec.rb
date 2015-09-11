@@ -240,87 +240,87 @@ describe Csvlint::StreamingValidator do
     end
   end
 
-  # context "build_formats" do
-  #
-  #   {
-  #     :string => "foo",
-  #     :numeric => "1",
-  #     :uri => "http://www.example.com",
-  #     :dateTime_iso8601 => "2013-01-01T13:00:00Z",
-  #     :date_db => "2013-01-01",
-  #     :dateTime_hms => "13:00:00"
-  #   }.each do |type, content|
-  #     it "should return the format of #{type} correctly" do
-  #       row = [content]
-  #
-  #       validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #       validator.build_formats(row)
-  #       formats = validator.instance_variable_get("@formats")
-  #
-  #       formats[0].keys.first.should == type
-  #     end
-  #   end
-  #
-  #   it "treats floats and ints the same" do
-  #     row = ["12", "3.1476"]
-  #
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     validator.build_formats(row)
-  #     formats = validator.instance_variable_get("@formats")
-  #
-  #     formats[0].keys.first.should == :numeric
-  #     formats[1].keys.first.should == :numeric
-  #   end
-  #
-  #   it "should ignore blank arrays" do
-  #     row = []
-  #
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     validator.build_formats(row)
-  #     formats = validator.instance_variable_get("@formats")
-  #     formats.should == []
-  #   end
-  #
-  #   it "should work correctly for single columns" do
-  #     rows = [
-  #         ["foo"],
-  #         ["bar"],
-  #         ["baz"]
-  #       ]
-  #
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #
-  #     rows.each_with_index do |row, i|
-  #       validator.build_formats(row)
-  #     end
-  #
-  #     formats = validator.instance_variable_get("@formats")
-  #
-  #     formats.should == [{:string => 3}]
-  #   end
-  #
-  #   it "should return formats correctly if a row is blank" do
-  #     rows = [
-  #         [],
-  #         ["foo","1","$2345"]
-  #       ]
-  #
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #
-  #     rows.each_with_index do |row, i|
-  #       validator.build_formats(row)
-  #     end
-  #
-  #     formats = validator.instance_variable_get("@formats")
-  #
-  #     formats.should == [
-  #       {:string => 1},
-  #       {:numeric => 1},
-  #       {:string => 1},
-  #     ]
-  #   end
-  #
-  # end
+  context "build_formats" do
+
+    {
+        :string => "foo",
+        :numeric => "1",
+        :uri => "http://www.example.com",
+        :dateTime_iso8601 => "2013-01-01T13:00:00Z",
+        :date_db => "2013-01-01",
+        :dateTime_hms => "13:00:00"
+    }.each do |type, content|
+      it "should return the format of #{type} correctly" do
+        row = [content]
+
+        validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+        validator.build_formats(row)
+        formats = validator.instance_variable_get("@formats")
+
+        formats[0].keys.first.should == type
+      end
+    end
+
+    it "treats floats and ints the same" do
+      row = ["12", "3.1476"]
+
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      validator.build_formats(row)
+      formats = validator.instance_variable_get("@formats")
+
+      formats[0].keys.first.should == :numeric
+      formats[1].keys.first.should == :numeric
+    end
+
+    it "should ignore blank arrays" do
+      row = []
+
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      validator.build_formats(row)
+      formats = validator.instance_variable_get("@formats")
+      formats.should == []
+    end
+
+    it "should work correctly for single columns" do
+      rows = [
+          ["foo"],
+          ["bar"],
+          ["baz"]
+      ]
+
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+
+      rows.each_with_index do |row, i|
+        validator.build_formats(row)
+      end
+
+      formats = validator.instance_variable_get("@formats")
+
+      formats.should == [{:string => 3}]
+    end
+
+    it "should return formats correctly if a row is blank" do
+      rows = [
+          [],
+          ["foo", "1", "$2345"]
+      ]
+
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+
+      rows.each_with_index do |row, i|
+        validator.build_formats(row)
+      end
+
+      formats = validator.instance_variable_get("@formats")
+
+      formats.should == [
+          {:string => 1},
+          {:numeric => 1},
+          {:string => 1},
+      ]
+    end
+
+  end
 
   # context "csv dialect" do
   #   it "should provide sensible defaults for CSV parsing" do
