@@ -48,11 +48,10 @@ module Csvlint
 
     def validate (input = nil, index = nil)
       single_col = false
+      # TODO is this still required for single column CSV edge case, see spec it "should work correctly for single columns"
       @stream = input.present? ? input : @stream
       # reassign stream if validate has been invoked with an input, mostly a way of faking loosely coupled stuff while testing
       line = index.present? ? index : 0
-      require 'pry'
-      # binding.pry
       begin
         # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
         validate_metadata(@stream) if line == 0 # this shouldn't be called on every string
@@ -65,10 +64,7 @@ module Csvlint
       ensure
         @stream.close if @stream && @stream.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
       end
-      require 'pry'
-      # binding.pry
       # finish
-
     end
 
     def finish
@@ -182,8 +178,6 @@ module Csvlint
           end
         end
       end
-      # require 'pry'
-      # binding.pry
       # TODO the below argumenterror is an artefact of when everything was in one long method
       # TODO however this is an important rescue to content parsing as the README stipulates it catches
       # TODO "encoding error when parsing row, e.g. because of invalid characters"
@@ -234,33 +228,34 @@ module Csvlint
         next if col.nil? || col.empty?
         @formats[i] ||= Hash.new(0)
 
-        format = if col.strip[FORMATS[:numeric]]
-                   :numeric
-                 elsif uri?(col)
-                   :uri
-                 elsif col[FORMATS[:date_db]] && date_format?(Date, col, '%Y-%m-%d')
-                   :date_db
-                 elsif col[FORMATS[:date_short]] && date_format?(Date, col, '%e %b')
-                   :date_short
-                 elsif col[FORMATS[:date_rfc822]] && date_format?(Date, col, '%e %b %Y')
-                   :date_rfc822
-                 elsif col[FORMATS[:date_long]] && date_format?(Date, col, '%B %e, %Y')
-                   :date_long
-                 elsif col[FORMATS[:dateTime_time]] && date_format?(Time, col, '%H:%M')
-                   :dateTime_time
-                 elsif col[FORMATS[:dateTime_hms]] && date_format?(Time, col, '%H:%M:%S')
-                   :dateTime_hms
-                 elsif col[FORMATS[:dateTime_db]] && date_format?(Time, col, '%Y-%m-%d %H:%M:%S')
-                   :dateTime_db
-                 elsif col[FORMATS[:dateTime_iso8601]] && date_format?(Time, col, '%Y-%m-%dT%H:%M:%SZ')
-                   :dateTime_iso8601
-                 elsif col[FORMATS[:dateTime_short]] && date_format?(Time, col, '%d %b %H:%M')
-                   :dateTime_short
-                 elsif col[FORMATS[:dateTime_long]] && date_format?(Time, col, '%B %d, %Y %H:%M')
-                   :dateTime_long
-                 else
-                   :string
-                 end
+        format =
+            if col.strip[FORMATS[:numeric]]
+              :numeric
+            elsif uri?(col)
+              :uri
+            elsif col[FORMATS[:date_db]] && date_format?(Date, col, '%Y-%m-%d')
+              :date_db
+            elsif col[FORMATS[:date_short]] && date_format?(Date, col, '%e %b')
+              :date_short
+            elsif col[FORMATS[:date_rfc822]] && date_format?(Date, col, '%e %b %Y')
+              :date_rfc822
+            elsif col[FORMATS[:date_long]] && date_format?(Date, col, '%B %e, %Y')
+              :date_long
+            elsif col[FORMATS[:dateTime_time]] && date_format?(Time, col, '%H:%M')
+              :dateTime_time
+            elsif col[FORMATS[:dateTime_hms]] && date_format?(Time, col, '%H:%M:%S')
+              :dateTime_hms
+            elsif col[FORMATS[:dateTime_db]] && date_format?(Time, col, '%Y-%m-%d %H:%M:%S')
+              :dateTime_db
+            elsif col[FORMATS[:dateTime_iso8601]] && date_format?(Time, col, '%Y-%m-%dT%H:%M:%SZ')
+              :dateTime_iso8601
+            elsif col[FORMATS[:dateTime_short]] && date_format?(Time, col, '%d %b %H:%M')
+              :dateTime_short
+            elsif col[FORMATS[:dateTime_long]] && date_format?(Time, col, '%B %d, %Y %H:%M')
+              :dateTime_long
+            else
+              :string
+            end
 
         @formats[i][format] += 1
       end

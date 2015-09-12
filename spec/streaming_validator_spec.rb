@@ -127,7 +127,7 @@ describe Csvlint::StreamingValidator do
       expect(validator.info_messages.count).to eql(2)
     end
 
-    it "parse_contents parses malformed CSV and populates errors, warnings & info_msgs" do
+    it ".each() -> `validate` parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
       # doesn't build warnings because check_consistency isn't invoked
       # TODO below is trailing whitespace but is interpreted as an unclosed quote
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"two\",\"3\"\r\n\"3\",\"2\",\"1\" ")
@@ -147,6 +147,10 @@ describe Csvlint::StreamingValidator do
       expect(validator.errors.first.type).to eql(:unclosed_quote)
       expect(validator.warnings.count).to eql(1)
       expect(validator.warnings.first.type).to eql(:inconsistent_values)
+    end
+
+    it "using file forEach" do
+
     end
 
   end
