@@ -40,7 +40,7 @@ module Csvlint
 
       reset
 
-      # validate
+      # validate - was once implicit, removed and specs revised to take account of this
       # TODO - separating the initialise and validate calls means that many of the specs that use Validator.valid to test that the object created
       # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
 
@@ -64,7 +64,7 @@ module Csvlint
       ensure
         @stream.close if @stream && @stream.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
       end
-      # finish
+      # finish - was once implicit, removed and specs revised to take account of this, only invoked when full spectrum of error reporting tested
     end
 
     def finish
@@ -138,7 +138,7 @@ module Csvlint
     def parse_contents(stream, line = nil)
       # parse_contents will parse one line and apply headers, formats methods and error handle as appropriate
 
-      current_line = line.present? ? line+1 : 1
+      current_line = line.present? ? line : 1
       reported_invalid_encoding = false
       all_errors = []
 
@@ -157,7 +157,7 @@ module Csvlint
       # TODO currently it doesn't matter where the above rescue is the @data array is either populated with nil or nothing
       # TODO is that intended behaviour?
       if row
-        if current_line == 1 && @csv_header
+        if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
           row = row.reject { |col| col.nil? || col.empty? }
           validate_header(row)
