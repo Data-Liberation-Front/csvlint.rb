@@ -419,6 +419,27 @@ describe Csvlint::StreamingValidator do
     end
 
   end
+
+  context "check_consistency" do
+
+    it "should return a warning if columns have inconsistent values" do
+      formats = [
+          {:string => 3},
+          {:string => 2, :numeric => 1},
+          {:numeric => 3},
+      ]
+
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      validator.instance_variable_set("@formats", formats)
+      validator.check_consistency
+
+      warnings = validator.instance_variable_get("@warnings")
+      warnings.delete_if { |h| h.type != :inconsistent_values }
+
+      warnings.count.should == 1
+    end
+
+  end
   #
   # context "when detecting headers" do
   #   it "should default to expecting a header" do
@@ -540,30 +561,7 @@ describe Csvlint::StreamingValidator do
   #   end
   #
   # end
-  #
 
-  #
-  # context "check_consistency" do
-  #
-  #   it "should return a warning if columns have inconsistent values" do
-  #     formats = [
-  #         {:string => 3},
-  #         {:string => 2, :numeric => 1},
-  #         {:numeric => 3},
-  #       ]
-  #
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     validator.instance_variable_set("@formats", formats)
-  #     validator.check_consistency
-  #
-  #     warnings = validator.instance_variable_get("@warnings")
-  #     warnings.delete_if { |h| h.type != :inconsistent_values }
-  #
-  #     warnings.count.should == 1
-  #   end
-  #
-  # end
-  #
   # context "accessing metadata" do
   #
   #   before :all do
