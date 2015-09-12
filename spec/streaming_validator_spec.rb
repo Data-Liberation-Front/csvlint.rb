@@ -54,13 +54,15 @@ describe Csvlint::StreamingValidator do
     end
   end
 
-  context "validation with multiple lines " do
+  context "validation with multiple lines: " do
 
     # TODO multiple lines permits testing of warnings
+    # TODO need more assertions in each test IE @formats
+    # TODO the phrasig of col_counts if only consulting specs might be confusing
+    # TODO ^-> col_counts and data.size should be equivalent, but only data is populated outside of if row.nil?
+    # TODO ^- -> and its less the size of col_counts than the homogeneity of its contents which is important
 
-    # TODO need more assertions
-
-    it "parse_contents method validates a well formed CSV" do
+    it ".each() -> parse_contents method validates a well formed CSV" do
       # when invoking parse contents
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
 
@@ -73,14 +75,14 @@ describe Csvlint::StreamingValidator do
 
       expect(validator.valid?).to eql(true)
       # TODO would be beneficial to know how formats functions WRT to headers - check_format.feature:17 returns 3 rows total
-      # TODO in its formats object but is provided with 5 rows (with one nil row)
+      # TODO in its formats object but is provided with 5 rows (with one nil row) [uses validation_warnings_steps.rb]
       expect(validator.instance_variable_get("@expected_columns")).to eql(3)
       expect(validator.instance_variable_get("@col_counts").count).to eql(4)
       expect(validator.data.size).to eql(4)
 
     end
 
-    it "parse_contents parses malformed CSV and catches whitespace" do
+    it ".each() -> `parse_contents` parses malformed CSV and catches unclosed quote" do
       # doesn't build warnings because check_consistency isn't invoked
       # TODO below is trailing whitespace but is interpreted as an unclosed quote
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
@@ -94,7 +96,7 @@ describe Csvlint::StreamingValidator do
       expect(validator.errors.count).to eql(1)
     end
 
-    it "parse_contents parses malformed CSV and catches whitespace and edge case" do
+    it ".each() -> `parse_contents` parses malformed CSV and catches whitespace and edge case" do
       # when this data gets passed the header it rescues a whitespace error, resulting in the header row being discarded
       # TODO - check if this is an edge case, currently passing because it requires advice on how to specify
       data = StringIO.new(" \"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"Foo\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
@@ -110,20 +112,42 @@ describe Csvlint::StreamingValidator do
     end
 
 
-    # it "File forEach uses validate to pass input in streaming fashion" do
-    #   # warnings are built when validate is used to call all three methods
-    #   validator = Csvlint::StreamingValidator.new()
-    #   data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
-    #
-    #   data.each do |row|
-    #     validator.validate(row)
-    #   end
-    #
-    #   expect(validator.instance_variable_get("@expected_columns")).to eql(3)
-    #   expect(validator.instance_variable_get("@col_counts").count).to eql(4)
-    #   expect(validator.data.size).to eql(4)
-    #   expect(validator.valid?).to eql(true)
-    # end
+    it ".each() -> `validate` to pass input in streaming fashion" do
+      # warnings are built when validate is used to call all three methods
+      validator = Csvlint::StreamingValidator.new()
+      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
+
+      data.each_with_index do |row, index|
+        validator.validate(row, index)
+      end
+      expect(validator.valid?).to eql(true)
+      expect(validator.instance_variable_get("@expected_columns")).to eql(3)
+      expect(validator.instance_variable_get("@col_counts").count).to eql(4)
+      expect(validator.data.size).to eql(4)
+      expect(validator.info_messages.count).to eql(2)
+    end
+
+    it "parse_contents parses malformed CSV and populates errors, warnings & info_msgs" do
+      # doesn't build warnings because check_consistency isn't invoked
+      # TODO below is trailing whitespace but is interpreted as an unclosed quote
+      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"two\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+
+      validator = Csvlint::StreamingValidator.new(data)
+      data.each_with_index do |d, i|
+        validator.validate(d, i) # implicitly invokes validate_metadata,report_line_breaks, parse_contents(stream)
+      end
+      validator.finish
+      expect(validator.valid?).to eql(false)
+      expect(validator.instance_variable_get("@expected_columns")).to eql(3)
+      expect(validator.instance_variable_get("@col_counts").count).to eql(4)
+      expect(validator.data.size).to eql(5)
+      #TODO - this assertion is linked to other note regarding expected behaviour RE populating data array
+      expect(validator.info_messages.count).to eql(2)
+      expect(validator.errors.count).to eql(1)
+      expect(validator.errors.first.type).to eql(:unclosed_quote)
+      expect(validator.warnings.count).to eql(1)
+      expect(validator.warnings.first.type).to eql(:inconsistent_values)
+    end
 
   end
 

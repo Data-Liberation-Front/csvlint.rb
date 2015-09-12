@@ -46,16 +46,18 @@ module Csvlint
 
     end
 
-    def validate (input = nil)
+    def validate (input = nil, index = nil)
       single_col = false
-      @stream = input.present? ? @stream = input : @stream
+      @stream = input.present? ? input : @stream
+      # reassign stream if validate has been invoked with an input, mostly a way of faking loosely coupled stuff while testing
+      line = index.present? ? index : 0
       require 'pry'
       # binding.pry
       begin
         # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
-        validate_metadata(@stream) # this shouldn't be called on every string
+        validate_metadata(@stream) if line == 0 # this shouldn't be called on every string
         report_line_breaks
-        parse_contents(@stream)
+        parse_contents(@stream, line)
       rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
         build_errors(:not_found)
           # rescue CSV::MalformedCSVError => e
@@ -65,6 +67,11 @@ module Csvlint
       end
       require 'pry'
       # binding.pry
+      # finish
+
+    end
+
+    def finish
       sum = @col_counts.inject(:+)
       unless sum.nil?
         build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
@@ -150,8 +157,6 @@ module Csvlint
         build_exception_messages(e, stream, current_line)
       end
 
-      # require 'pry'
-      # binding.pry
       @data << row
       # TODO currently it doesn't matter where the above rescue is the @data array is either populated with nil or nothing
       # TODO is that intended behaviour?
