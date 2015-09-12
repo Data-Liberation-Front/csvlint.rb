@@ -54,7 +54,7 @@ module Csvlint
       line = index.present? ? index : 0
       begin
         # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
-        validate_metadata(@stream) if line == 0 # this shouldn't be called on every string
+        validate_metadata(@stream) if line <= 1 # this shouldn't be called on every string
         report_line_breaks
         parse_contents(@stream, line)
       rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
@@ -159,6 +159,8 @@ module Csvlint
       if row
         if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
+          require 'pry'
+          binding.pry
           row = row.reject { |col| col.nil? || col.empty? }
           validate_header(row)
           @col_counts << row.size
