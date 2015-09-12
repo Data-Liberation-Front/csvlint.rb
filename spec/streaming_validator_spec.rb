@@ -132,7 +132,7 @@ describe Csvlint::StreamingValidator do
       # TODO below is trailing whitespace but is interpreted as an unclosed quote
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"two\",\"3\"\r\n\"3\",\"2\",\"1\" ")
 
-      validator = Csvlint::StreamingValidator.new(data)
+      validator = Csvlint::StreamingValidator.new()
       data.each_with_index do |d, i|
         validator.validate(d, i) # implicitly invokes validate_metadata,report_line_breaks, parse_contents(stream)
       end
@@ -149,8 +149,96 @@ describe Csvlint::StreamingValidator do
       expect(validator.warnings.first.type).to eql(:inconsistent_values)
     end
 
-    it "using file forEach" do
+    it "File.open.each_line -> `validate` passes a valid csv" do
+      filename = 'valid_many_rows.csv'
+      file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
+      openfile = File.open(file)
+      validator = Csvlint::StreamingValidator.new()
+      openfile.each_line do |l|
+        validator.validate(l, openfile.lineno)
+      end
+      validator.finish
+      openfile.close
+      expect(validator.valid?).to eql(true)
+      expect(validator.info_messages.size).to eql(1)
+      expect(validator.info_messages.first.type).to eql(:assumed_header)
+      expect(validator.info_messages.first.category).to eql(:structure)
+    end
 
+    it "File.open.each_line -> `validate` batch parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
+
+      filename = 'invalid_many_rows.csv'
+      file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
+      openfile = File.open(file)
+      validator = Csvlint::StreamingValidator.new()
+      openfile.each_line do |l|
+        validator.validate(l, openfile.lineno)
+      end
+      validator.finish
+      binding.pry
+      linesparsed = openfile.lineno
+      openfile.close
+      expect(validator.valid?).to eql(false)
+      expect(validator.data.size).to eql(linesparsed)
+      expect(validator.instance_variable_get("@col_counts").size).to eql(validator.data.compact.size)
+      #col_counts should equal data minus nil values
+      expect(validator.instance_variable_get("@expected_columns")).to eql(3)
+      expect(validator.info_messages.count).to eql(2)
+      expect(validator.info_messages.first.type).to eql(:assumed_header)
+      expect(validator.info_messages.last.type).to eql(:nonrfc_line_breaks)
+      expect(validator.errors.count).to eql(2)
+      expect(validator.errors.first.type).to eql(:unclosed_quote)
+      expect(validator.errors.first.type).to eql(:blank_rows)
+      expect(validator.warnings.count).to eql(1)
+      expect(validator.warnings.first.type).to eql(:inconsistent_values)
+    end
+
+    it "File.open.each_line -> `validate` chunks parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
+
+      def chunk(enum, limit)
+        chunklimit = 0
+        while chunklimit < limit do
+          chunklimit += 1
+          @validator.validate(enum.gets, enum.lineno)
+        end
+      end
+
+      def validation_tracker(stage)
+        case stage
+          when 0
+            expect(@validator.valid?).to eql(true)
+            expect(@validator.info_messages.count).to eql(1)
+          when 1
+            expect(@validator.valid?).to eql(false)
+            expect(@validator.errors.count).to eql(1)
+          when 2
+            expect(@validator.valid?).to eql(false)
+          when 3
+            expect(@validator.valid?).to eql(false)
+            expect(@validator.errors.count).to eql(2)
+            expect(@validator.info_messages.count).to eql(2)
+        end
+      end
+
+      filename = 'invalid_many_rows.csv'
+      file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
+      openfile = File.open(file)
+      @validator = Csvlint::StreamingValidator.new()
+
+      begin
+        4.times do |i|
+          # this is quite reliant on knowing the structure of the CSV being parsed
+          chunk(openfile, 3)
+          validation_tracker(i)
+        end
+        @validator.finish
+        linesparsed = openfile.lineno
+        expect(@validator.data.size).to eql(linesparsed)
+        expect(@validator.instance_variable_get("@col_counts").size).to eql(@validator.data.compact.size)
+          # binding.pry
+      ensure
+        openfile.close
+      end
     end
 
   end
@@ -193,6 +281,7 @@ describe Csvlint::StreamingValidator do
       stream = "\"\",\"\",\"\"\r\n"
       validator = Csvlint::StreamingValidator.new(stream, "header" => false)
       validator.validate
+      binding.pry
       # validator.parse_content(stream)
       expect(validator.errors.first.content).to eql("\"\",\"\",\"\"\r\n")
     end
