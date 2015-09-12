@@ -391,34 +391,34 @@ describe Csvlint::StreamingValidator do
 
   end
 
-  # context "csv dialect" do
-  #   it "should provide sensible defaults for CSV parsing" do
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     opts = validator.instance_variable_get("@csv_options")
-  #     opts.should include({
-  #       :col_sep => ",",
-  #       :row_sep => :auto,
-  #       :quote_char => '"',
-  #       :skip_blanks => false
-  #     })
-  #   end
-  #
-  #   it "should map CSV DDF to correct values" do
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     opts = validator.dialect_to_csv_options( {
-  #       "lineTerminator" => "\n",
-  #       "delimiter" => "\t",
-  #       "quoteChar" => "'"
-  #     })
-  #     opts.should include({
-  #       :col_sep => "\t",
-  #       :row_sep => "\n",
-  #       :quote_char => "'",
-  #       :skip_blanks => false
-  #     })
-  #   end
-  #
-  # end
+  context "csv dialect" do
+    it "should provide sensible defaults for CSV parsing" do
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      opts = validator.instance_variable_get("@csv_options")
+      opts.should include({
+                              :col_sep => ",",
+                              :row_sep => :auto,
+                              :quote_char => '"',
+                              :skip_blanks => false
+                          })
+    end
+
+    it "should map CSV DDF to correct values" do
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      opts = validator.dialect_to_csv_options({
+                                                  "lineTerminator" => "\n",
+                                                  "delimiter" => "\t",
+                                                  "quoteChar" => "'"
+                                              })
+      opts.should include({
+                              :col_sep => "\t",
+                              :row_sep => "\n",
+                              :quote_char => "'",
+                              :skip_blanks => false
+                          })
+    end
+
+  end
   #
   # context "when detecting headers" do
   #   it "should default to expecting a header" do
