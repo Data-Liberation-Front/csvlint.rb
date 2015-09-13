@@ -73,6 +73,7 @@ describe Csvlint::StreamingValidator do
       data.each_with_index do |row, index|
         validator.validate(row, index)
       end
+      # binding.pry
       expect(validator.valid?).to eql(true)
       expect(validator.instance_variable_get("@expected_columns")).to eql(3)
       expect(validator.instance_variable_get("@col_counts").count).to eql(4)
@@ -120,7 +121,7 @@ describe Csvlint::StreamingValidator do
 
     it "File.open.each_line -> `validate` batch parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
 
-      filename = 'pp-2015.csv'
+      filename = 'invalid_many_rows.csv'
       file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
       openfile = File.open(file)
       validator = Csvlint::StreamingValidator.new()
@@ -128,7 +129,6 @@ describe Csvlint::StreamingValidator do
         validator.validate(l, openfile.lineno)
       end
       validator.finish
-      binding.pry
       linesparsed = openfile.lineno
       openfile.close
       expect(validator.valid?).to eql(false)
@@ -141,7 +141,7 @@ describe Csvlint::StreamingValidator do
       expect(validator.info_messages.last.type).to eql(:nonrfc_line_breaks)
       expect(validator.errors.count).to eql(2)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
-      expect(validator.errors.first.type).to eql(:blank_rows)
+      expect(validator.errors.last.type).to eql(:blank_rows)
       expect(validator.warnings.count).to eql(1)
       expect(validator.warnings.first.type).to eql(:inconsistent_values)
     end
@@ -177,7 +177,6 @@ describe Csvlint::StreamingValidator do
       file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
       openfile = File.open(file)
       @validator = Csvlint::StreamingValidator.new()
-      binding.pry
 
       begin
         4.times do |i|
@@ -235,7 +234,6 @@ describe Csvlint::StreamingValidator do
       stream = "\"\",\"\",\"\"\r\n"
       validator = Csvlint::StreamingValidator.new(stream, "header" => false)
       validator.validate
-      binding.pry
       # validator.parse_content(stream)
       expect(validator.errors.first.content).to eql("\"\",\"\",\"\"\r\n")
     end

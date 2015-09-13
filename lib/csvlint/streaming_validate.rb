@@ -4,7 +4,7 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data
+    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data, :header_processed
     ERROR_MATCHERS = {
         "Missing or stray quote" => :stray_quote,
         "Illegal quoting" => :whitespace,
@@ -54,7 +54,7 @@ module Csvlint
       line = index.present? ? index : 0
       begin
         # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
-        validate_metadata(@stream) if line <= 1 # this shouldn't be called on every string
+        validate_metadata(@stream) if line <= 1 && !@header_processed # this should be a one shot, inelegant way of accomplishing
         report_line_breaks(line)
         parse_contents(@stream, line)
       rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
@@ -109,6 +109,7 @@ module Csvlint
           assumed_header = false
         end
       end
+      @header_processed = true
       build_info_messages(:assumed_header, :structure) if assumed_header
     end
 
