@@ -6,53 +6,6 @@ describe Csvlint::StreamingValidator do
   #   stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :body => "")
   # end
 
-  context "tests to compare CSV native methods" do
-
-    it "validates correctly using cascade" do
-      stream = "\"a\",\"b\",\"c\"\r\n"
-      validator = Csvlint::StreamingValidator.new(stream)
-      validator.validate
-      expect(validator.valid?).to eql(true)
-    end
-
-    it "uses CSV parse" do
-      stream = "\"a\",\"b\",\"c\"\r\n"
-      validator = Csvlint::StreamingValidator.new(stream)
-      validator.validate
-      # validator.parse_content(stream)
-      expect(validator.valid?).to eql(true)
-    end
-
-    it "uses CSV parse and StringIO" do
-      data = "1,2,3\r\n"
-      validator = Csvlint::StreamingValidator.new(data)
-      validator.validate
-      # validator.parse_content(data)
-      expect( validator.valid? ).to eql(true)
-    end
-
-  end
-
-  context "content validation should pass without passing stream to initialise" do
-
-    it "passes a compliant string with no errors" do
-      data = "1,2,3\r\n"
-      validator = Csvlint::StreamingValidator.new()
-      validator.parse_contents(data)
-      expect( validator.valid? ).to eql(true)
-      expect(validator.info_messages.size).to eql(0)
-    end
-
-    it "parses CSV and catches whitespace" do
-
-      data = StringIO.new(" \"a\",\"b\",\"c\"\r\n ")
-      validator = Csvlint::StreamingValidator.new(data)
-      # validator.validate
-      validator.parse_contents(data)
-      expect(validator.valid?).to eql(false)
-      expect(validator.errors.first.type).to eql(:whitespace)
-    end
-  end
 
   context "validation with multiple lines: " do
 
@@ -167,7 +120,7 @@ describe Csvlint::StreamingValidator do
 
     it "File.open.each_line -> `validate` batch parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
 
-      filename = 'invalid_many_rows.csv'
+      filename = 'pp-2015.csv'
       file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
       openfile = File.open(file)
       validator = Csvlint::StreamingValidator.new()
@@ -224,6 +177,7 @@ describe Csvlint::StreamingValidator do
       file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
       openfile = File.open(file)
       @validator = Csvlint::StreamingValidator.new()
+      binding.pry
 
       begin
         4.times do |i|
