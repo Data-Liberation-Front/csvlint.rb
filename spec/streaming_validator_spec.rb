@@ -7,6 +7,14 @@ describe Csvlint::StreamingValidator do
   # end
 
 
+  context "multi line CSV validation with included schema" do
+
+  end
+
+  context "single line row validation with included schema" do
+
+  end
+
   context "validation with multiple lines: " do
 
     # TODO multiple lines permits testing of warnings
