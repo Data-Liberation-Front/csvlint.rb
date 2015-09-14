@@ -48,12 +48,11 @@ module Csvlint
 
     def validate (input = nil, index = nil)
       single_col = false
-      # TODO is this still required for single column CSV edge case, see spec it "should work correctly for single columns"
+      # TODO is this ^ still required for single column CSV edge case, see spec it "should work correctly for single columns"
       @stream = input.present? ? input : @stream
       # reassign stream if validate has been invoked with an input, mostly a way of faking loosely coupled stuff while testing
       line = index.present? ? index : 0
       begin
-        # TODO wrapping the successive parsing functions in a rescue block means that CSV malformed errors can be reported to error builder
         validate_metadata(@stream) if line <= 1 && !@header_processed # this should be a one shot, inelegant way of accomplishing
         report_line_breaks(line)
         parse_contents(@stream, line)
