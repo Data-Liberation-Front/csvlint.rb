@@ -19,7 +19,7 @@ describe Csvlint::StreamingValidator do
 
     # TODO multiple lines permits testing of warnings
     # TODO need more assertions in each test IE @formats
-    # TODO the phrasig of col_counts if only consulting specs might be confusing
+    # TODO the phrasing of col_counts if only consulting specs might be confusing
     # TODO ^-> col_counts and data.size should be equivalent, but only data is populated outside of if row.nil?
     # TODO ^- -> and its less the size of col_counts than the homogeneity of its contents which is important
 
@@ -275,7 +275,7 @@ describe Csvlint::StreamingValidator do
     # the ERROR_MATCHES messages are only built in response to CSV::Malformed Exceptions, so they cannot be invoked
     # separately to the validator.validate
 
-    it "checks for unclosed quotes" do # TODO this is failing because of a rescue being misplaced
+    it "checks for unclosed quotes" do
       stream = "\"a,\"b\",\"c\"\n"
       validator = Csvlint::StreamingValidator.new(stream)
       validator.validate # implicitly invokes parse_contents(stream)
@@ -489,7 +489,7 @@ describe Csvlint::StreamingValidator do
     end
 
   end
-  #
+  # TODO the below tests are all the remaining tests from validator_spec.rb, annotations indicate their status HOWEVER these tests may be best refactored into client specs
   # context "when detecting headers" do
   #   it "should default to expecting a header" do
   #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
@@ -574,18 +574,19 @@ describe Csvlint::StreamingValidator do
   #     expect( validator.info_messages.first.category).to eql(:structure)
   #   end
   #
-  #   it "should not include info message about missing header when we are told about the header" do
-  #     data = StringIO.new( "1,2,3\r\n" )
-  #     validator = Csvlint::StreamingValidator.new(data, "header"=>false)
-  #
-  #     expect( validator.valid? ).to eql(true)
-  #     expect( validator.info_messages.size ).to eql(0)
-  #   end
-  #
   #   it "should be an error if we have assumed a header, there is no dialect and there's no content-type" do
   #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
   #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
   #     expect( validator.valid? ).to eql(false)
+  #   end
+  #
+  #
+  #   it "should not include info message about missing header when we are told about the header" do
+  #     data = StringIO.new( "1,2,3\r\n" )
+  #     validator = Csvlint::StreamingValidator.new(data, "header"=>false)
+  #     validator.validate_header
+  #     expect( validator.valid? ).to eql(true)
+  #     expect( validator.info_messages.size ).to eql(0)
   #   end
   #
   #   it "should not be an error if we have assumed a header, there is no dialect and content-type doesn't declare header, as we assume header=present" do

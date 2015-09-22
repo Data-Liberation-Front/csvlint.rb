@@ -41,14 +41,13 @@ module Csvlint
       reset
 
       # validate - was once implicit, removed and specs revised to take account of this
-      # TODO - separating the initialise and validate calls means that many of the specs that use Validator.valid to test that the object created
-      # TODO - are no longer useful as they no longer contain the entire breadth of errors which this class can populate error collector with
+      # TODO - separating the initialise and validate calls means that specs assertions in streaming_validator are more verbose, but can also be unit tested
 
     end
 
     def validate (input = nil, index = nil)
       single_col = false
-      # TODO is this ^ still required for single column CSV edge case, see spec it "should work correctly for single columns"
+      # TODO is single_col still required for single column CSV edge case, see spec it "should work correctly for single columns"
       @stream = input.present? ? input : @stream
       # reassign stream if validate has been invoked with an input, mostly a way of faking loosely coupled stuff while testing
       line = index.present? ? index : 0
@@ -61,7 +60,7 @@ module Csvlint
           # rescue CSV::MalformedCSVError => e
           # build_exception_message(e, @stream)
       ensure
-        @stream.close if @stream && @stream.respond_to?(:close) #TODO This will get factored into Validate, or a finishing state in this class
+        @stream.close if @stream && @stream.respond_to?(:close) #TODO This could get factored into Validate client, or a finishing state in this class
       end
       # finish - was once implicit, removed and specs revised to take account of this, only invoked when full spectrum of error reporting tested
     end
@@ -146,9 +145,10 @@ module Csvlint
 
       begin
       row = CSV.parse_line(stream, @csv_options)
-        # this is a one line substitute for CSV.new followed by row = CSV.shift
+        # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
+        # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
         # TODO investigate if above would be a drag on memory
-      # CSV.parse will return an array of arrays which may break things
+
       rescue CSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line)
       end
