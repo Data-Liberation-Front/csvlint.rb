@@ -1,7 +1,7 @@
 Feature: Collect all the tests that should trigger dialect check related errors
 
   Scenario: Title rows, I wish to trigger a :title_row type message
-    Given I have a CSV file called "title-row.csv"
+    Given I have a file called "title-row.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are warnings
     Then there should be 1 warnings
@@ -10,7 +10,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
 #    :nonrfc_line_breaks
 
   Scenario: LF line endings in file give an info message of type :nonrfc_line_breaks
-    Given I have a CSV file called "lf-line-endings.csv"
+    Given I have a file called "lf-line-endings.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I set header to "true"
     And I ask if there are info messages
@@ -18,7 +18,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
     And one of the messages should have the type "nonrfc_line_breaks"
 
   Scenario: CR line endings in file give an info message of type :nonrfc_line_breaks
-    Given I have a CSV file called "cr-line-endings.csv"
+    Given I have a file called "cr-line-endings.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I set header to "true"
     And I ask if there are info messages
@@ -26,7 +26,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
     And one of the messages should have the type "nonrfc_line_breaks"
 
   Scenario: CRLF line endings in file produces no info messages of type :nonrfc_line_breaks
-    Given I have a CSV file called "crlf-line-endings.csv"
+    Given I have a file called "crlf-line-endings.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I set header to "true"
     And I ask if there are info messages
@@ -35,7 +35,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
 #  :line_breaks
 
   Scenario: Incorrect line endings specified in settings
-    Given I have a CSV file called "cr-line-endings.csv"
+    Given I have a file called "cr-line-endings.csv"
     And I set the line endings to linefeed
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are errors
@@ -43,7 +43,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
     And that error should have the type "line_breaks"
 
   Scenario: inconsistent line endings in file cause an error
-    Given I have a CSV file called "inconsistent-line-endings.csv"
+    Given I have a file called "inconsistent-line-endings.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are errors
     Then there should be 1 error
@@ -51,7 +51,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
 
 
   Scenario: inconsistent line endings with unquoted fields in file cause an error
-    Given I have a CSV file called "inconsistent-line-endings-unquoted.csv"
+    Given I have a file called "inconsistent-line-endings-unquoted.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are errors
     Then there should be 1 error
@@ -75,7 +75,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
 #  :invalid_encoding
 
   Scenario: Report invalid Encoding
-    Given I have a CSV file called "invalid-byte-sequence.csv"
+    Given I have a file called "invalid-byte-sequence.csv"
     And I set an encoding header of "UTF-8"
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if there are errors
@@ -84,7 +84,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
 
   Scenario: Report invalid file
 #should this throw an excel error?
-    Given I have a CSV file called "spreadsheet.xls"
+    Given I have a file called "spreadsheet.xls"
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if there are errors
     Then there should be 1 error

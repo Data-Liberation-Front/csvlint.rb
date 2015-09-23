@@ -10,8 +10,8 @@ end
 Given(/^I do not set an encoding header$/) do
   @encoding = nil
 end
-
-Given(/^I have a CSV file called "(.*?)"$/) do |filename|
+# TODO hfhfhfhf
+Given(/^I have a file called "(.*?)"$/) do |filename|
   @csv = File.read( File.join( File.dirname(__FILE__), "..", "fixtures", filename ) )
 end
 
