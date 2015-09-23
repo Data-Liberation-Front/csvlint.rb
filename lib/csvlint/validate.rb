@@ -343,7 +343,7 @@ module Csvlint
           end
         rescue Errno::ENOENT
         rescue OpenURI::HTTPError
-        rescue=> e
+        rescue => e
           STDERR.puts e.class
           STDERR.puts e.message
           STDERR.puts e.backtrace
