@@ -33,11 +33,11 @@ File.open(SCRIPT_FILE_PATH, 'w') do |file|
 	manifest = JSON.parse( open("http://w3c.github.io/csvw/tests/manifest-validation.jsonld").read )
 	manifest["entries"].each do |entry|
 		type = "valid"
-		case entry["type"] 
-		when "csvt:WarningValidationTest" 
-			type = "warnings" 
-		when "csvt:NegativeValidationTest" 
-			type = "errors" 
+		case entry["type"]
+			when "csvt:WarningValidationTest"
+				type = "warnings"
+			when "csvt:NegativeValidationTest"
+				type = "errors"
 		end
 		file.puts "echo \"#{entry["id"].split("#")[-1]}: #{entry["name"].gsub("`", "'")}\""
 		file.puts "echo \"#{type}: #{entry["comment"].gsub("\"", "\\\"").gsub("`", "'")}\""
@@ -60,7 +60,7 @@ File.open(FEATURE_FILE_PATH, 'w') do |file|
 
 	file.puts "Feature: #{manifest["label"]}"
 	file.puts ""
-	
+
 	manifest["entries"].each do |entry|
 		action_uri, action_file = cache_file(entry["action"])
 		metadata = nil
@@ -73,7 +73,7 @@ File.open(FEATURE_FILE_PATH, 'w') do |file|
 			file.puts "\t\tGiven I have a metadata file called \"csvw/#{entry["action"]}\""
 			file.puts "\t\tAnd the metadata is stored at the url \"#{action_uri}\""
 		else
-			file.puts "\t\tGiven I have a CSV file called \"csvw/#{entry["action"]}\""
+			file.puts "\t\tGiven I have a file called \"csvw/#{entry["action"]}\""
 			file.puts "\t\tAnd it has a Link header holding \"#{entry["httpLink"]}\"" if entry["httpLink"]
 			file.puts "\t\tAnd it is stored at the url \"#{action_uri}\""
 			if entry["option"] && entry["option"]["metadata"]
@@ -83,7 +83,7 @@ File.open(FEATURE_FILE_PATH, 'w') do |file|
 				file.puts "\t\tAnd the metadata is stored at the url \"#{metadata}\""
 			end
 			provided_files << action_uri.to_s
-			missing_files = [				  
+			missing_files = [
   				URI.join(action_uri, '/.well-known/csvm').to_s,
   				"#{action_uri}-metadata.json",
   				URI.join(action_uri, 'csv-metadata.json').to_s
