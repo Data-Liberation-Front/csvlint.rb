@@ -99,15 +99,7 @@ Feature: Get validation errors
     When I ask if there are errors
     Then there should be no "content_encoding" errors
 
-  Scenario: Report invalid file when storing Excel file at a CSV URI
-
-    Given I have a file called "spreadsheet.xls"
-    And it is stored at the url "http://example.com/example1.csv"
-    When I ask if there are errors
-    Then there should be 1 error
-    And that error should have the type "invalid_encoding"
-
-  Scenario: Incorrect content type, specified as excel but directed to .csv
+  Scenario: Incorrect content type, specified as excel but directed to .csv URI
     Given I have a CSV with the following content:
     """
 "abc","2","3"
