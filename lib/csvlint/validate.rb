@@ -33,6 +33,10 @@ module Csvlint
       single_col = false
       io = nil
       begin
+        if @extension =~ /.xls(x)?/
+          build_warnings(:excel, :context)
+          return
+        end
         io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
         locate_schema unless @schema.instance_of?(Csvlint::Schema)
@@ -77,7 +81,6 @@ module Csvlint
           build_warnings(:encoding, :context) if @encoding != "utf-8"
         end
         build_warnings(:no_content_type, :context) if @content_type == nil
-        build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
 
         if undeclared_header
@@ -343,7 +346,7 @@ module Csvlint
           end
         rescue Errno::ENOENT
         rescue OpenURI::HTTPError
-        rescue=> e
+        rescue => e
           STDERR.puts e.class
           STDERR.puts e.message
           STDERR.puts e.backtrace
