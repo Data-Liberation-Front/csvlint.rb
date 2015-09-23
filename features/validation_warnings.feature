@@ -74,13 +74,13 @@ Feature: Validation warnings
     And that warning should have the type "title_row"
 
   Scenario: catch excel warnings
-    Given I parse a CSV file called "spreadsheet.xls"
+    Given I parse a file called "spreadsheet.xls"
     And I ask if there are warnings
     Then there should be 1 warnings
     And that warning should have the type "excel"
 
   Scenario: catch excel warnings
-    Given I parse a CSV file called "spreadsheet.xlsx"
+    Given I parse a file called "spreadsheet.xlsx"
     And I ask if there are warnings
     Then there should be 1 warnings
     And that warning should have the type "excel"
