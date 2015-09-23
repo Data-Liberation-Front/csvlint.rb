@@ -14,7 +14,47 @@ module Csvlint
       reset
     end
 
-    def validate_header(header)
+    class << self
+
+      def from_json_table(uri, json)
+        fields = []
+        json["fields"].each do |field_desc|
+          fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"],
+            field_desc["title"], field_desc["description"] )
+        end if json["fields"]
+        return Schema.new( uri , fields, json["title"], json["description"] )
+      end
+
+      def from_csvw_metadata(uri, json)
+        return Csvlint::Csvw::TableGroup.from_json(uri, json)
+      end
+
+      def load_from_json(uri)
+        begin
+          json = JSON.parse( open(uri).read )
+          if json["@context"]
+            uri = "file:#{File.expand_path(uri)}" unless uri.to_s =~ /^http(s)?/
+            return Schema.from_csvw_metadata(uri,json)
+          else
+            return Schema.from_json_table(uri,json)
+          end
+        rescue Csvlint::Csvw::MetadataError => e
+          raise e
+        rescue JSON::ParserError => e
+          raise e
+        rescue OpenURI::HTTPError => e
+          raise e
+        rescue => e
+          STDERR.puts e.class
+          STDERR.puts e.message
+          STDERR.puts e.backtrace
+          return Schema.new(nil, [], "malformed", "malformed")
+        end
+      end
+
+    end
+
+    def validate_header(header, source_url=nil)
       reset
 
       found_header = header.to_csv(:row_sep => '')
@@ -25,7 +65,7 @@ module Csvlint
       return valid?
     end
 
-    def validate_row(values, row=nil, all_errors=[])
+    def validate_row(values, row=nil, all_errors=[], source_url=nil)
       reset
       if values.length < fields.length
         fields[values.size..-1].each_with_index do |field, i|
@@ -46,27 +86,6 @@ module Csvlint
       end
 
       return valid?
-    end
-
-    def Schema.from_json_table(uri, json)
-      fields = []
-      json["fields"].each do |field_desc|
-        fields << Csvlint::Field.new( field_desc["name"] , field_desc["constraints"],
-          field_desc["title"], field_desc["description"] )
-      end if json["fields"]
-      return Schema.new( uri , fields, json["title"], json["description"] )
-    end
-
-    # Difference in functionality between from_json_table and load_from_json_table
-    # needs to be specified
-
-    def Schema.load_from_json_table(uri)
-      begin
-        json = JSON.parse( open(uri).read )
-        return Schema.from_json_table(uri,json)
-      rescue
-        return Schema.new(nil, [], "malformed", "malformed")
-      end
     end
 
   end

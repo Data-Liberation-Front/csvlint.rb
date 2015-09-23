@@ -20,3 +20,9 @@ coverage/
 
 .idea
 .DS_Store
+features/csvw_validation_tests.feature
+features/fixtures/csvw
+
+bin/run-csvw-tests
+
+features/csvw_json_transformation_tests.feature
