@@ -314,7 +314,7 @@ module Csvlint
           end
         end
       end if @link_headers
-      return @schema = link_schema if link_schema
+      @schema = link_schema if link_schema
 
       paths = []
       if @source_url =~ /^http(s)?/
@@ -335,7 +335,7 @@ module Csvlint
           schema = Schema.load_from_json(url)
           if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
-              return @schema = schema
+              @schema = schema
             else
               warn_if_unsuccessful = true
               build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
@@ -351,7 +351,7 @@ module Csvlint
         end
       end
       build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema) if warn_if_unsuccessful
-      return @schema = nil
+      @schema = nil
     end
 
     private
