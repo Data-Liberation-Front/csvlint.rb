@@ -10,18 +10,18 @@ Feature: Validation warnings
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if there are warnings
     Then there should be 0 warnings
-    
+
    Scenario: ISO-8859-1 Encoding
     Given I have a CSV with the following content:
     """
 "col1","col2","col3"
 "1","2","3"
     """
-    And it is encoded as "iso-8859-1"    
+     And it is encoded as "iso-8859-1"
     And it is stored at the url "http://example.com/example1.csv"
     When I ask if there are warnings
     Then there should be 1 warnings
-  
+
   Scenario: Correct content type
     Given I have a CSV with the following content:
     """
@@ -32,7 +32,7 @@ Feature: Validation warnings
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are warnings
     Then there should be 0 warnings
-    
+
   Scenario: No extension
     Given I have a CSV with the following content:
     """
@@ -43,7 +43,7 @@ Feature: Validation warnings
     And it is stored at the url "http://example.com/example1"
     And I ask if there are warnings
     Then there should be 0 warnings
-    
+
   Scenario: Allow query params after extension
     Given I have a CSV with the following content:
     """
@@ -54,7 +54,7 @@ Feature: Validation warnings
     And it is stored at the url "http://example.com/example1.csv?query=param"
     And I ask if there are warnings
     Then there should be 0 warnings
-    
+
   Scenario: User doesn't supply encoding
     Given I have a CSV with the following content:
     """
@@ -66,8 +66,8 @@ Feature: Validation warnings
     Then there should be 1 warnings
     And that warning should have the type "no_encoding"
 
-  Scenario: Title rows
-    Given I have a CSV file called "title-row.csv"
+  Scenario: Title rows in a CSV file
+    Given I have a file called "title-row.csv"
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are warnings
     Then there should be 1 warnings
