@@ -12,14 +12,14 @@ module Csvlint
         "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
-    def initialize(source = nil, dialect = nil, schema = nil, options = {}, row_sep = nil)
+    def initialize(source = nil, dialect = {}, schema = nil, options = {}, row_sep = nil)
       # suggested alternative initialisation parameters: stream, csv_options
 
       @source = source
       @formats = []
       @schema = schema
 
-      @supplied_dialect = dialect != nil
+      @assumed_header = dialect["header"].nil?
 
       @dialect = {
           "header" => true,
@@ -27,7 +27,7 @@ module Csvlint
           "skipInitialSpace" => true,
           "lineTerminator" => :auto,
           "quoteChar" => '"'
-      }.merge(dialect || {})
+      }.merge(dialect)
 
       @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
@@ -173,13 +173,12 @@ module Csvlint
     end
 
     def validate_metadata
-      assumed_header = undeclared_header = !@supplied_dialect
 
       if @headers
         if @headers["content-type"] =~ /text\/csv/
           @csv_header = true
           undeclared_header = false
-          assumed_header = true
+          assumed_header = @assumed_header.present?
         end
         if @headers["content-type"] =~ /header=(present|absent)/
           @csv_header = true if $1 == "present"
