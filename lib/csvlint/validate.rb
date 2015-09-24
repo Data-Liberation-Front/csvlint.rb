@@ -93,14 +93,11 @@ module Csvlint
     end
 
     def validate_line(input = nil, index = nil)
-        single_col = false
-        # TODO is single_col still required for single column CSV edge case, see spec it "should work correctly for single columns"
-        @stream = input.present? ? input : @stream
-        # reassign stream if validate has been invoked with an input, mostly a way of faking loosely coupled stuff while testing
-        line = index.present? ? index : 0
-        @encoding = input.encoding.to_s
-        report_line_breaks(line)
-        parse_contents(@stream, line)
+      single_col = false
+      line = index.present? ? index : 0
+      @encoding = input.encoding.to_s
+      report_line_breaks(line)
+      parse_contents(input, line)
     rescue ArgumentError => ae
        build_errors(:invalid_encoding, :structure, index, nil, index) unless @reported_invalid_encoding
        @reported_invalid_encoding = true
