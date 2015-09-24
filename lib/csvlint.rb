@@ -3,6 +3,7 @@ require 'date'
 require 'open-uri'
 require 'set'
 require 'tempfile'
+require 'typhoeus'
 
 require 'active_support/core_ext/date/conversions'
 require 'active_support/core_ext/time/conversions'
