@@ -65,7 +65,7 @@ module Csvlint
     def validate_url
       i = 0
       leading = ""
-      request = Typhoeus::Request.new(@source)
+      request = Typhoeus::Request.new(@source, followlocation: true)
       request.on_headers do |response|
         @headers = response.headers
         @content_type = response.headers["content-type"] rescue nil
