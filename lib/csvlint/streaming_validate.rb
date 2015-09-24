@@ -15,7 +15,7 @@ module Csvlint
     def initialize(source = nil, dialect = nil, schema = nil, options = {}, row_sep = nil)
       # suggested alternative initialisation parameters: stream, csv_options
 
-      @stream = stream
+      @source = source
       @formats = []
       @schema = schema
 
@@ -43,6 +43,47 @@ module Csvlint
       # validate - was once implicit, removed and specs revised to take account of this
       # TODO - separating the initialise and validate calls means that specs assertions in streaming_validator are more verbose, but can also be unit tested
 
+    end
+
+    def validate
+      if @source.class == String
+        validate_url
+      else
+        validate_stream
+      end
+    end
+
+    def validate_stream
+      i = 0
+      @source.each_line do |line|
+        validate_line(line, i)
+        i = i+1
+      end
+    end
+
+    def validate_url
+      i = 0
+      leading = ""
+      request = Typhoeus::Request.new(@source)
+      request.on_headers do |response|
+        return build_errors(:not_found) if response.code == "404"
+      end
+      request.on_body do |chunk|
+        io = StringIO.new(leading + chunk)
+        io.each_line do |line|
+          # Check if the last line is a line break - in which case it's a full line
+          if line[-1, 1].include?("\n")
+            validate_line(line, i)
+            i = i+1
+          else
+            # If it's not a full line, then prepare to add it to the beginning of the next chunk
+            leading = line
+          end
+        end
+      end
+      request.run
+      # Validate the last line too
+      validate_line(leading, i) unless leading == ""
     end
 
     def validate_line(input = nil, index = nil)

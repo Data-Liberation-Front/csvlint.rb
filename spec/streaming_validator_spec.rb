@@ -7,6 +7,25 @@ describe Csvlint::StreamingValidator do
   # end
 
 
+  it "should validate from a URL" do
+    stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+    validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+
+    expect(validator.valid?).to eql(true)
+    expect(validator.instance_variable_get("@expected_columns")).to eql(3)
+    expect(validator.instance_variable_get("@col_counts").count).to eql(3)
+    expect(validator.data.size).to eql(3)
+  end
+
+  it "should validate from a file path" do
+    validator = Csvlint::StreamingValidator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+
+    expect(validator.valid?).to eql(true)
+    expect(validator.instance_variable_get("@expected_columns")).to eql(3)
+    expect(validator.instance_variable_get("@col_counts").count).to eql(3)
+    expect(validator.data.size).to eql(3)
+  end
+
   context "multi line CSV validation with included schema" do
 
   end
