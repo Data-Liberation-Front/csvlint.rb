@@ -55,6 +55,7 @@ module Csvlint
     def validate_stream
       i = 0
       @source.each_line do |line|
+        break if i == @limit_lines
         validate_line(line, i)
         i = i+1
       end
@@ -70,6 +71,7 @@ module Csvlint
       request.on_body do |chunk|
         io = StringIO.new(leading + chunk)
         io.each_line do |line|
+          break if i == @limit_lines
           # Check if the last line is a line break - in which case it's a full line
           if line[-1, 1].include?("\n")
             validate_line(line, i)
