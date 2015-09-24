@@ -12,7 +12,7 @@ module Csvlint
         "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
-    def initialize(stream = nil, dialect = nil, schema = nil, options = {}, row_sep = nil)
+    def initialize(source = nil, dialect = nil, schema = nil, options = {}, row_sep = nil)
       # suggested alternative initialisation parameters: stream, csv_options
 
       @stream = stream
