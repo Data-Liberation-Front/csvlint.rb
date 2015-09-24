@@ -95,8 +95,6 @@ module Csvlint
         validate_metadata(@stream) if line <= 1 && !@header_processed # this should be a one shot, inelegant way of accomplishing
         report_line_breaks(line)
         parse_contents(@stream, line)
-      rescue OpenURI::HTTPError, Errno::ENOENT # this rescue applies to the validate_metadata method
-        build_errors(:not_found)
           # rescue CSV::MalformedCSVError => e
           # build_exception_message(e, @stream)
       ensure
