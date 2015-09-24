@@ -35,6 +35,7 @@ module Csvlint
 
       @expected_columns = 0
       @col_counts = []
+      @line_breaks = []
 
       @data = [] # it may be advisable to flush this on init?
 
@@ -170,6 +171,7 @@ module Csvlint
       build_warnings(:check_options, :structure) if @expected_columns == 1
       check_consistency
       validate_metadata
+      check_mixed_linebreaks
     end
 
     def validate_metadata
@@ -209,9 +211,10 @@ module Csvlint
     end
 
     def report_line_breaks(line_no=nil)
+      line_break = CSV.new(@stream).row_sep
+      @line_breaks << line_break
       unless line_breaks_reported?
-        @line_breaks = CSV.new(@stream).row_sep
-        if @line_breaks != "\r\n"
+        if line_break != "\r\n"
           build_info_messages(:nonrfc_line_breaks, :structure, line_no)
           @line_breaks_reported = true
         end
@@ -222,12 +225,16 @@ module Csvlint
       @line_breaks_reported === true
     end
 
+    def check_mixed_linebreaks
+      build_linebreak_error if @line_breaks.uniq.count > 1
+    end
+
     def build_exception_messages(csvException, errChars, lineNo)
       #TODO 1 - this is a change in logic, rather than straight refactor of previous error building, however original logic is bonkers
       #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
       type = fetch_error(csvException)
       if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
-        build_errors(:line_breaks, :structure) unless @errors.any? { |e| e.type == :line_breaks }
+        build_linebreak_error
       else
         build_errors(type, :structure, lineNo, nil, errChars)
       end
