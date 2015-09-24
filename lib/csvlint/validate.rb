@@ -93,27 +93,23 @@ module Csvlint
     end
 
     def validate_line(input = nil, index = nil)
-      single_col = false
-      # TODO is single_col still required for single column CSV edge case, see spec it "should work correctly for single columns"
-      @stream = input.present? ? input : @stream
-      # reassign stream if validate has been invoked with an input, mostly a way of faking loosely coupled stuff while testing
-      line = index.present? ? index : 0
-      @encoding = input.encoding.to_s
-      begin
+        single_col = false
+        # TODO is single_col still required for single column CSV edge case, see spec it "should work correctly for single columns"
+        @stream = input.present? ? input : @stream
+        # reassign stream if validate has been invoked with an input, mostly a way of faking loosely coupled stuff while testing
+        line = index.present? ? index : 0
+        @encoding = input.encoding.to_s
         report_line_breaks(line)
         parse_contents(@stream, line)
-          # rescue CSV::MalformedCSVError => e
-          # build_exception_message(e, @stream)
-      ensure
-        @stream.close if @stream && @stream.respond_to?(:close) #TODO This could get factored into Validate client, or a finishing state in this class
-      end
+    rescue ArgumentError => ae
+       build_errors(:invalid_encoding, :structure, index, nil, index) unless @reported_invalid_encoding
+       @reported_invalid_encoding = true
     end
 
     # analyses the provided csv and builds errors, warnings and info messages
     def parse_contents(stream, line = nil)
       # parse_contents will parse one line and apply headers, formats methods and error handle as appropriate
       current_line = line.present? ? line : 1
-      reported_invalid_encoding = false
       all_errors = []
 
       @csv_options[:encoding] = @encoding
@@ -153,13 +149,6 @@ module Csvlint
           end
         end
       end
-      # TODO the below argumenterror is an artefact of when everything was in one long method
-      # TODO however this is an important rescue to content parsing as the README stipulates it catches
-      # TODO "encoding error when parsing row, e.g. because of invalid characters"
-      # rescue ArgumentError => ae
-      #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
-      #   reported_invalid_encoding = true
-      # end
     end
 
     def finish
@@ -238,6 +227,10 @@ module Csvlint
       else
         build_errors(type, :structure, lineNo, nil, errChars)
       end
+    end
+
+    def build_linebreak_error
+      build_errors(:line_breaks, :structure) unless @errors.any? { |e| e.type == :line_breaks }
     end
 
     def validate_header(header)
