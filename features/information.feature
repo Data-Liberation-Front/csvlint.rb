@@ -13,7 +13,7 @@ Feature: Return information
     Then the "encoding" should be "UTF-8"
 
   Scenario: Return content type
-    Then the "content_type" should be "text/csv"
+    Then the "content_type" should be "text/csv; charset=utf-8"
 
   Scenario: Return extension
     Then the "extension" should be ".csv"
