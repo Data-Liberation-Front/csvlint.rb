@@ -94,6 +94,7 @@ module Csvlint
     end
 
     def validate_line(input = nil, index = nil)
+      @input = input
       single_col = false
       line = index.present? ? index : 0
       @encoding = input.encoding.to_s
@@ -198,7 +199,7 @@ module Csvlint
     end
 
     def report_line_breaks(line_no=nil)
-      line_break = CSV.new(@stream).row_sep
+      line_break = CSV.new(@input).row_sep
       @line_breaks << line_break
       unless line_breaks_reported?
         if line_break != "\r\n"
@@ -220,7 +221,7 @@ module Csvlint
       #TODO 1 - this is a change in logic, rather than straight refactor of previous error building, however original logic is bonkers
       #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
       type = fetch_error(csvException)
-      if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
+      if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@input.match(@csv_options[:row_sep])
         build_linebreak_error
       else
         build_errors(type, :structure, lineNo, nil, errChars)
