@@ -178,8 +178,8 @@ module Csvlint
         end
         if @headers["content-type"] !~ /charset=/
           build_warnings(:no_encoding, :context)
-        else
-          build_warnings(:encoding, :context) if @encoding != "UTF-8"
+        elsif @encoding != "UTF-8" || @headers["content-type"] !~ /charset=utf-8/i
+          build_warnings(:encoding, :context)
         end
         build_warnings(:no_content_type, :context) if @content_type == nil
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
