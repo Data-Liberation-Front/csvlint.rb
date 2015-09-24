@@ -103,6 +103,60 @@ module Csvlint
       finish
     end
 
+    # analyses the provided csv and builds errors, warnings and info messages
+    def parse_contents(stream, line = nil)
+      # parse_contents will parse one line and apply headers, formats methods and error handle as appropriate
+
+      current_line = line.present? ? line : 1
+      reported_invalid_encoding = false
+      all_errors = []
+
+      @csv_options[:encoding] = @encoding
+
+      begin
+      row = CSV.parse_line(stream, @csv_options)
+        # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
+        # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
+        # TODO investigate if above would be a drag on memory
+
+      rescue CSV::MalformedCSVError => e
+        build_exception_messages(e, stream, current_line)
+      end
+
+      @data << row
+      # TODO currently it doesn't matter where the above rescue is the @data array is either populated with nil or nothing
+      # TODO is that intended behaviour?
+      if row
+        if current_line <= 1 && @csv_header
+          # this conditional should be refactored somewhere
+          row = row.reject { |col| col.nil? || col.empty? }
+          validate_header(row)
+          @col_counts << row.size
+        else
+          build_formats(row)
+          @col_counts << row.reject { |col| col.nil? || col.empty? }.size
+          @expected_columns = row.size unless @expected_columns != 0
+          build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
+          # Builds errors and warnings related to the provided schema file
+          if @schema
+            @schema.validate_row(row, current_line, all_errors)
+            @errors += @schema.errors
+            all_errors += @schema.errors
+            @warnings += @schema.warnings
+          else
+            build_errors(:ragged_rows, :structure, current_line, nil, stream.to_s) if !row.empty? && row.size != @expected_columns
+          end
+        end
+      end
+      # TODO the below argumenterror is an artefact of when everything was in one long method
+      # TODO however this is an important rescue to content parsing as the README stipulates it catches
+      # TODO "encoding error when parsing row, e.g. because of invalid characters"
+      # rescue ArgumentError => ae
+      #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
+      #   reported_invalid_encoding = true
+      # end
+    end
+
     def finish
       sum = @col_counts.inject(:+)
       unless sum.nil?
@@ -169,60 +223,6 @@ module Csvlint
       else
         build_errors(type, :structure, lineNo, nil, errChars)
       end
-    end
-
-    # analyses the provided csv and builds errors, warnings and info messages
-    def parse_contents(stream, line = nil)
-      # parse_contents will parse one line and apply headers, formats methods and error handle as appropriate
-
-      current_line = line.present? ? line : 1
-      reported_invalid_encoding = false
-      all_errors = []
-
-      @csv_options[:encoding] = @encoding
-
-      begin
-      row = CSV.parse_line(stream, @csv_options)
-        # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
-        # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
-        # TODO investigate if above would be a drag on memory
-
-      rescue CSV::MalformedCSVError => e
-        build_exception_messages(e, stream, current_line)
-      end
-
-      @data << row
-      # TODO currently it doesn't matter where the above rescue is the @data array is either populated with nil or nothing
-      # TODO is that intended behaviour?
-      if row
-        if current_line <= 1 && @csv_header
-          # this conditional should be refactored somewhere
-          row = row.reject { |col| col.nil? || col.empty? }
-          validate_header(row)
-          @col_counts << row.size
-        else
-          build_formats(row)
-          @col_counts << row.reject { |col| col.nil? || col.empty? }.size
-          @expected_columns = row.size unless @expected_columns != 0
-          build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
-          # Builds errors and warnings related to the provided schema file
-          if @schema
-            @schema.validate_row(row, current_line, all_errors)
-            @errors += @schema.errors
-            all_errors += @schema.errors
-            @warnings += @schema.warnings
-          else
-            build_errors(:ragged_rows, :structure, current_line, nil, stream.to_s) if !row.empty? && row.size != @expected_columns
-          end
-        end
-      end
-      # TODO the below argumenterror is an artefact of when everything was in one long method
-      # TODO however this is an important rescue to content parsing as the README stipulates it catches
-      # TODO "encoding error when parsing row, e.g. because of invalid characters"
-      # rescue ArgumentError => ae
-      #   build_errors(:invalid_encoding, :structure, current_line, nil, current_line) unless reported_invalid_encoding
-      #   reported_invalid_encoding = true
-      # end
     end
 
     def validate_header(header)
