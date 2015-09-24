@@ -100,7 +100,7 @@ module Csvlint
       ensure
         @stream.close if @stream && @stream.respond_to?(:close) #TODO This could get factored into Validate client, or a finishing state in this class
       end
-      # finish - was once implicit, removed and specs revised to take account of this, only invoked when full spectrum of error reporting tested
+      finish
     end
 
     def finish
