@@ -210,10 +210,17 @@ module Csvlint
     end
 
     def report_line_breaks(line_no=nil)
-      @line_breaks = CSV.new(@stream).row_sep
-      if @line_breaks != "\r\n"
-        build_info_messages(:nonrfc_line_breaks, :structure, line_no)
+      unless line_breaks_reported?
+        @line_breaks = CSV.new(@stream).row_sep
+        if @line_breaks != "\r\n"
+          build_info_messages(:nonrfc_line_breaks, :structure, line_no)
+          @line_breaks_reported = true
+        end
       end
+    end
+
+    def line_breaks_reported?
+      @line_breaks_reported === true
     end
 
     def build_exception_messages(csvException, errChars, lineNo)
