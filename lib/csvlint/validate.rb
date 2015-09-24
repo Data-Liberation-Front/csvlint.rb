@@ -227,7 +227,7 @@ module Csvlint
       #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
       type = fetch_error(csvException)
       if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@stream.match(@csv_options[:row_sep])
-        build_errors(:line_breaks, :structure)
+        build_errors(:line_breaks, :structure) unless @errors.any? { |e| e.type == :line_breaks }
       else
         build_errors(type, :structure, lineNo, nil, errChars)
       end
