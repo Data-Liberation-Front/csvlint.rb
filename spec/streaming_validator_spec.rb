@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe Csvlint::StreamingValidator do
 
-  # before do
-  #   stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :body => "")
-  # end
+  before do
+    stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :body => "")
+  end
 
 
   it "should validate from a URL" do
@@ -48,11 +48,6 @@ describe Csvlint::StreamingValidator do
 
       validator = Csvlint::StreamingValidator.new(data)
 
-      data.each_with_index do |d, i|
-        validator.parse_contents(d, i)
-
-      end
-
       expect(validator.valid?).to eql(true)
       # TODO would be beneficial to know how formats functions WRT to headers - check_format.feature:17 returns 3 rows total
       # TODO in its formats object but is provided with 5 rows (with one nil row) [uses validation_warnings_steps.rb]
@@ -68,9 +63,7 @@ describe Csvlint::StreamingValidator do
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
 
       validator = Csvlint::StreamingValidator.new(data)
-      data.each_with_index do |d, i|
-        validator.parse_contents(d, i)
-      end
+
       expect(validator.valid?).to eql(false)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
       expect(validator.errors.count).to eql(1)
@@ -82,9 +75,6 @@ describe Csvlint::StreamingValidator do
       data = StringIO.new(" \"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"Foo\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
 
       validator = Csvlint::StreamingValidator.new(data)
-      data.each_with_index do |d, i|
-        validator.parse_contents(d, i)
-      end
 
       expect(validator.valid?).to eql(false)
       expect(validator.errors.first.type).to eql(:whitespace)
@@ -94,13 +84,9 @@ describe Csvlint::StreamingValidator do
 
     it ".each() -> `validate` to pass input in streaming fashion" do
       # warnings are built when validate is used to call all three methods
-      validator = Csvlint::StreamingValidator.new()
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
+      validator = Csvlint::StreamingValidator.new(data)
 
-      data.each_with_index do |row, index|
-        validator.validate(row, index)
-      end
-      # binding.pry
       expect(validator.valid?).to eql(true)
       expect(validator.instance_variable_get("@expected_columns")).to eql(3)
       expect(validator.instance_variable_get("@col_counts").count).to eql(4)
@@ -111,13 +97,10 @@ describe Csvlint::StreamingValidator do
     it ".each() -> `validate` parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
       # doesn't build warnings because check_consistency isn't invoked
       # TODO below is trailing whitespace but is interpreted as an unclosed quote
-      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"two\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"two\",\"3\"\r\n\"3\",\"2\",   \"1\"")
 
-      validator = Csvlint::StreamingValidator.new()
-      data.each_with_index do |d, i|
-        validator.validate(d, i) # implicitly invokes validate_metadata,report_line_breaks, parse_contents(stream)
-      end
-      validator.finish
+      validator = Csvlint::StreamingValidator.new(data)
+
       expect(validator.valid?).to eql(false)
       expect(validator.instance_variable_get("@expected_columns")).to eql(3)
       expect(validator.instance_variable_get("@col_counts").count).to eql(4)
@@ -125,7 +108,7 @@ describe Csvlint::StreamingValidator do
       #TODO - this assertion is linked to other note regarding expected behaviour RE populating data array
       expect(validator.info_messages.count).to eql(2)
       expect(validator.errors.count).to eql(1)
-      expect(validator.errors.first.type).to eql(:unclosed_quote)
+      expect(validator.errors.first.type).to eql(:whitespace)
       expect(validator.warnings.count).to eql(1)
       expect(validator.warnings.first.type).to eql(:inconsistent_values)
     end
@@ -133,13 +116,8 @@ describe Csvlint::StreamingValidator do
     it "File.open.each_line -> `validate` passes a valid csv" do
       filename = 'valid_many_rows.csv'
       file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
-      openfile = File.open(file)
-      validator = Csvlint::StreamingValidator.new()
-      openfile.each_line do |l|
-        validator.validate(l, openfile.lineno)
-      end
-      validator.finish
-      openfile.close
+      validator = Csvlint::StreamingValidator.new(File.new(file))
+
       expect(validator.valid?).to eql(true)
       expect(validator.info_messages.size).to eql(1)
       expect(validator.info_messages.first.type).to eql(:assumed_header)
@@ -150,75 +128,23 @@ describe Csvlint::StreamingValidator do
 
       filename = 'invalid_many_rows.csv'
       file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
-      openfile = File.open(file)
-      validator = Csvlint::StreamingValidator.new()
-      openfile.each_line do |l|
-        validator.validate(l, openfile.lineno)
-      end
-      validator.finish
-      linesparsed = openfile.lineno
-      openfile.close
+      linesparsed = count = File.foreach(file).inject(0) {|c, line| c+1}
+
+      validator = Csvlint::StreamingValidator.new(File.new(file))
+
       expect(validator.valid?).to eql(false)
       expect(validator.data.size).to eql(linesparsed)
       expect(validator.instance_variable_get("@col_counts").size).to eql(validator.data.compact.size)
       #col_counts should equal data minus nil values
       expect(validator.instance_variable_get("@expected_columns")).to eql(3)
       expect(validator.info_messages.count).to eql(2)
-      expect(validator.info_messages.first.type).to eql(:assumed_header)
-      expect(validator.info_messages.last.type).to eql(:nonrfc_line_breaks)
+      expect(validator.info_messages.first.type).to eql(:nonrfc_line_breaks)
+      expect(validator.info_messages.last.type).to eql(:assumed_header)
       expect(validator.errors.count).to eql(2)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
       expect(validator.errors.last.type).to eql(:blank_rows)
       expect(validator.warnings.count).to eql(1)
       expect(validator.warnings.first.type).to eql(:inconsistent_values)
-    end
-
-    it "File.open.each_line -> `validate` chunks parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
-
-      def chunk(enum, limit)
-        chunklimit = 0
-        while chunklimit < limit do
-          chunklimit += 1
-          @validator.validate(enum.gets, enum.lineno)
-        end
-      end
-
-      def validation_tracker(stage)
-        case stage
-          when 0
-            expect(@validator.valid?).to eql(true)
-            expect(@validator.info_messages.count).to eql(1)
-          when 1
-            expect(@validator.valid?).to eql(false)
-            expect(@validator.errors.count).to eql(1)
-          when 2
-            expect(@validator.valid?).to eql(false)
-          when 3
-            expect(@validator.valid?).to eql(false)
-            expect(@validator.errors.count).to eql(2)
-            expect(@validator.info_messages.count).to eql(2)
-        end
-      end
-
-      filename = 'invalid_many_rows.csv'
-      file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
-      openfile = File.open(file)
-      @validator = Csvlint::StreamingValidator.new()
-
-      begin
-        4.times do |i|
-          # this is quite reliant on knowing the structure of the CSV being parsed
-          chunk(openfile, 3)
-          validation_tracker(i)
-        end
-        @validator.finish
-        linesparsed = openfile.lineno
-        expect(@validator.data.size).to eql(linesparsed)
-        expect(@validator.instance_variable_get("@col_counts").size).to eql(@validator.data.compact.size)
-          # binding.pry
-      ensure
-        openfile.close
-      end
     end
 
   end
@@ -227,30 +153,21 @@ describe Csvlint::StreamingValidator do
 
     it "validates correctly" do
       stream = "\"a\",\"b\",\"c\"\r\n"
-      validator = Csvlint::StreamingValidator.new(stream, "header" => false)
-      validator.validate
+      validator = Csvlint::StreamingValidator.new(StringIO.new(stream), "header" => false)
       expect(validator.valid?).to eql(true)
     end
 
     it "checks for non rfc line breaks" do
-      # this test implies knowledge of CSV.row_sep, a value that can only be obtained by CSV.new()
-      # CSV.new() doesn't read the entire file into memory but it does create another object in memory
       stream = "\"a\",\"b\",\"c\"\n"
-      csv = CSV.instance(stream)
-      validator = Csvlint::StreamingValidator.new(stream, {"header" => false})
-      validator.report_line_breaks()
-      # validator.validate
-      validator.parse_contents(stream)
+      validator = Csvlint::StreamingValidator.new(StringIO.new(stream), {"header" => false})
       expect(validator.valid?).to eql(true)
-      # expect(validator.info_messages.count).to eq(1)
+      expect(validator.info_messages.count).to eq(1)
       expect(validator.info_messages.first.type).to eql(:nonrfc_line_breaks)
     end
 
     it "checks for blank rows" do
-
       data = StringIO.new('"","",')
       validator = Csvlint::StreamingValidator.new(data, "header" => false)
-      validator.parse_contents(data)
 
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
@@ -259,18 +176,13 @@ describe Csvlint::StreamingValidator do
 
     it "returns the content of the string with the error" do
       stream = "\"\",\"\",\"\"\r\n"
-      validator = Csvlint::StreamingValidator.new(stream, "header" => false)
-      validator.validate
-      # validator.parse_content(stream)
+      validator = Csvlint::StreamingValidator.new(StringIO.new(stream), "header" => false)
       expect(validator.errors.first.content).to eql("\"\",\"\",\"\"\r\n")
     end
 
-
     it "should presume a header unless told otherwise" do
-
       stream = "1,2,3\r\n"
-      validator = Csvlint::StreamingValidator.new(stream)
-      validator.validate
+      validator = Csvlint::StreamingValidator.new(StringIO.new(stream))
 
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(1)
@@ -279,9 +191,8 @@ describe Csvlint::StreamingValidator do
     end
 
     it "should evaluate the row as 'row 2' when stipulated" do
-
       stream = "1,2,3\r\n"
-      validator = Csvlint::StreamingValidator.new(stream, "header" => false)
+      validator = Csvlint::StreamingValidator.new(StringIO.new(stream), "header" => false)
       validator.validate
       expect(validator.valid?).to eql(true)
       expect(validator.info_messages.size).to eql(0)
@@ -291,14 +202,10 @@ describe Csvlint::StreamingValidator do
   end
 
   context "it returns the correct error from ERROR_MATCHES" do
-    # the ERROR_MATCHES messages are only built in response to CSV::Malformed Exceptions, so they cannot be invoked
-    # separately to the validator.validate
 
     it "checks for unclosed quotes" do
       stream = "\"a,\"b\",\"c\"\n"
-      validator = Csvlint::StreamingValidator.new(stream)
-      validator.validate # implicitly invokes parse_contents(stream)
-      # validator.parse_contents(stream)
+      validator = Csvlint::StreamingValidator.new(StringIO.new(stream))
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
@@ -316,10 +223,9 @@ describe Csvlint::StreamingValidator do
     # end
 
     it "checks for whitespace" do
-      # note that whitespace only catches prefacing and trailing whitespace as an error
-      stream = " \"a\",\"b\",\"c\"\r\n "
-      validator = Csvlint::StreamingValidator.new(stream) # implicitly invokes parse_contents(stream)
-      validator.validate # implicitly invokes parse_contents(stream)
+      stream = " \"a\",\"b\",\"c\"\r\n"
+      validator = Csvlint::StreamingValidator.new(StringIO.new(stream))
+
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:whitespace)
@@ -328,8 +234,7 @@ describe Csvlint::StreamingValidator do
     it "returns line break errors if incorrectly specified" do
       # TODO the logic for catching this error message is very esoteric
       stream = "\"a\",\"b\",\"c\"\n"
-      validator = Csvlint::StreamingValidator.new(stream, {"lineTerminator" => "\r\n"})
-      validator.validate # implicitly invokes parse_contents(stream)
+      validator = Csvlint::StreamingValidator.new(StringIO.new(stream), {"lineTerminator" => "\r\n"})
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:line_breaks)
@@ -341,7 +246,7 @@ describe Csvlint::StreamingValidator do
 
     it "should warn if column names aren't unique" do
       data = StringIO.new( "minimum, minimum" )
-      validator = Csvlint::StreamingValidator.new()
+      validator = Csvlint::StreamingValidator.new(data)
       expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
       expect( validator.warnings.size ).to eql(1)
       expect( validator.warnings.first.type).to eql(:duplicate_column_name)
@@ -350,7 +255,7 @@ describe Csvlint::StreamingValidator do
 
     it "should warn if column names are blank" do
       data = StringIO.new( "minimum," )
-      validator = Csvlint::StreamingValidator.new()
+      validator = Csvlint::StreamingValidator.new(data)
 
       expect( validator.validate_header(["minimum", ""]) ).to eql(true)
       expect( validator.warnings.size ).to eql(1)
@@ -360,8 +265,7 @@ describe Csvlint::StreamingValidator do
 
     it "should include info message about missing header when we have assumed a header" do
       data = StringIO.new( "1,2,3\r\n" )
-      validator = Csvlint::StreamingValidator.new()
-      validator.validate_metadata(data) # data is equivalent to validator.stream
+      validator = Csvlint::StreamingValidator.new(data)
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(1)
       expect( validator.info_messages.first.type).to eql(:assumed_header)
@@ -370,8 +274,7 @@ describe Csvlint::StreamingValidator do
 
     it "should not include info message about missing header when we are told about the header" do
       data = StringIO.new( "1,2,3\r\n" )
-      validator = Csvlint::StreamingValidator.new(nil, "header" => false)
-      validator.validate_metadata(data)
+      validator = Csvlint::StreamingValidator.new(data, "header" => false)
       expect( validator.valid? ).to eql(true)
       expect( validator.info_messages.size ).to eql(0)
     end
@@ -508,167 +411,167 @@ describe Csvlint::StreamingValidator do
     end
 
   end
-  # TODO the below tests are all the remaining tests from validator_spec.rb, annotations indicate their status HOWEVER these tests may be best refactored into client specs
-  # context "when detecting headers" do
-  #   it "should default to expecting a header" do
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     expect( validator.header? ).to eql(true)
-  #   end
-  #
-  #   it "should look in CSV options to detect header" do
-  #     opts = {
-  #       "header" => true
-  #     }
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", opts)
-  #     expect( validator.header? ).to eql(true)
-  #     opts = {
-  #       "header" => false
-  #     }
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", opts)
-  #     expect( validator.header? ).to eql(false)
-  #   end
-  #
-  #   it "should look in content-type for header=absent" do
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv; header=absent"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     expect( validator.header? ).to eql(false)
-  #     expect( validator.errors.size ).to eql(0)
-  #   end
-  #
-  #   it "should look in content-type for header=present" do
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv; header=present"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     expect( validator.header? ).to eql(true)
-  #     expect( validator.errors.size ).to eql(0)
-  #   end
-  #
-  #   it "assume header present if not specified in content type" do
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     expect( validator.header? ).to eql(true)
-  #     expect( validator.errors.size ).to eql(0)
-  #     expect( validator.info_messages.size ).to eql(1)
-  #     expect( validator.info_messages.first.type).to eql(:assumed_header)
-  #   end
-  #
-  #   it "give undeclared header error if content type is wrong" do
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/html"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     expect( validator.header? ).to eql(true)
-  #     expect( validator.errors.size ).to eql(2)
-  #     expect( validator.errors[0].type).to eql(:wrong_content_type)
-  #     expect( validator.errors[1].type).to eql(:undeclared_header)
-  #     expect( validator.info_messages.size ).to eql(0)
-  #   end
-  #
-  # end
-  #
-  # context "when validating headers" do
-  #   it "should warn if column names aren't unique" do
-  #     data = StringIO.new( "minimum, minimum" )
-  #     validator = Csvlint::StreamingValidator.new(data)
-  #     expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
-  #     expect( validator.warnings.size ).to eql(1)
-  #     expect( validator.warnings.first.type).to eql(:duplicate_column_name)
-  #     expect( validator.warnings.first.category).to eql(:schema)
-  #   end
-  #
-  #   it "should warn if column names are blank" do
-  #     data = StringIO.new( "minimum," )
-  #     validator = Csvlint::StreamingValidator.new(data)
-  #
-  #     expect( validator.validate_header(["minimum", ""]) ).to eql(true)
-  #     expect( validator.warnings.size ).to eql(1)
-  #     expect( validator.warnings.first.type).to eql(:empty_column_name)
-  #     expect( validator.warnings.first.category).to eql(:schema)
-  #   end
-  #
-  #   it "should include info message about missing header when we have assumed a header" do
-  #     data = StringIO.new( "1,2,3\r\n" )
-  #     validator = Csvlint::StreamingValidator.new(data)
-  #
-  #     expect( validator.valid? ).to eql(true)
-  #     expect( validator.info_messages.size ).to eql(1)
-  #     expect( validator.info_messages.first.type).to eql(:assumed_header)
-  #     expect( validator.info_messages.first.category).to eql(:structure)
-  #   end
-  #
-  #   it "should be an error if we have assumed a header, there is no dialect and there's no content-type" do
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     expect( validator.valid? ).to eql(false)
-  #   end
-  #
-  #
-  #   it "should not include info message about missing header when we are told about the header" do
-  #     data = StringIO.new( "1,2,3\r\n" )
-  #     validator = Csvlint::StreamingValidator.new(data, "header"=>false)
-  #     validator.validate_header
-  #     expect( validator.valid? ).to eql(true)
-  #     expect( validator.info_messages.size ).to eql(0)
-  #   end
-  #
-  #   it "should not be an error if we have assumed a header, there is no dialect and content-type doesn't declare header, as we assume header=present" do
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #     expect( validator.valid? ).to eql(true)
-  #   end
-  #
-  #   it "should be valid if we have a dialect and the data is from the web" do
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     #header defaults to true in csv dialect, so this is valid
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", {})
-  #     expect( validator.valid? ).to eql(true)
-  #
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", {"header"=>true})
-  #     expect( validator.valid? ).to eql(true)
-  #
-  #     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", {"header"=>false})
-  #     expect( validator.valid? ).to eql(true)
-  #   end
-  #
-  # end
 
-  # context "accessing metadata" do
-  #
-  #   before :all do
-  #     stub_request(:get, "http://example.com/crlf.csv").to_return(:status => 200, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','windows-line-endings.csv')))
-  #   end
-  #
-  #   it "can get line break symbol" do
-  #
-  #     validator = Csvlint::StreamingValidator.new("http://example.com/crlf.csv")
-  #     validator.line_breaks.should == "\r\n"
-  #
-  #   end
-  #
-  # end
-  #
-  # it "should give access to the complete CSV data file" do
-  #   stub_request(:get, "http://example.com/example.csv").to_return(:status => 200,
-  #       :headers=>{"Content-Type" => "text/csv; header=present"},
-  #       :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #   validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
-  #   expect( validator.valid? ).to eql(true)
-  #   data = validator.data
-  #   expect( data.count ).to eql 4
-  #   expect( data[0] ).to eql ['Foo','Bar','Baz']
-  #   expect( data[2] ).to eql ['3','2','1']
-  # end
-  #
-  # it "should limit number of lines read" do
-  #   stub_request(:get, "http://example.com/example.csv").to_return(:status => 200,
-  #   :headers=>{"Content-Type" => "text/csv; header=present"},
-  #   :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-  #   validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", nil, nil, limit_lines: 2)
-  #   expect( validator.valid? ).to eql(true)
-  #   data = validator.data
-  #   expect( data.count ).to eql 2
-  #   expect( data[0] ).to eql ['Foo','Bar','Baz']
-  # end
-  #
+  #TODO the below tests are all the remaining tests from validator_spec.rb, annotations indicate their status HOWEVER these tests may be best refactored into client specs
+  context "when detecting headers" do
+    it "should default to expecting a header" do
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      expect( validator.header? ).to eql(true)
+    end
+
+    it "should look in CSV options to detect header" do
+      opts = {
+        "header" => true
+      }
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", opts)
+      expect( validator.header? ).to eql(true)
+      opts = {
+        "header" => false
+      }
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", opts)
+      expect( validator.header? ).to eql(false)
+    end
+
+    it "should look in content-type for header=absent" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv; header=absent"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      expect( validator.header? ).to eql(false)
+      expect( validator.errors.size ).to eql(0)
+    end
+
+    it "should look in content-type for header=present" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv; header=present"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      expect( validator.header? ).to eql(true)
+      expect( validator.errors.size ).to eql(0)
+    end
+
+    it "assume header present if not specified in content type" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      expect( validator.header? ).to eql(true)
+      expect( validator.errors.size ).to eql(0)
+      expect( validator.info_messages.size ).to eql(1)
+      expect( validator.info_messages.first.type).to eql(:assumed_header)
+    end
+
+    it "give undeclared header error if content type is wrong" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/html"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      expect( validator.header? ).to eql(true)
+      expect( validator.errors.size ).to eql(2)
+      expect( validator.errors[0].type).to eql(:wrong_content_type)
+      expect( validator.errors[1].type).to eql(:undeclared_header)
+      expect( validator.info_messages.size ).to eql(0)
+    end
+
+  end
+
+  context "when validating headers" do
+    it "should warn if column names aren't unique" do
+      data = StringIO.new( "minimum, minimum" )
+      validator = Csvlint::StreamingValidator.new(data)
+      expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
+      expect( validator.warnings.size ).to eql(1)
+      expect( validator.warnings.first.type).to eql(:duplicate_column_name)
+      expect( validator.warnings.first.category).to eql(:schema)
+    end
+
+    it "should warn if column names are blank" do
+      data = StringIO.new( "minimum," )
+      validator = Csvlint::StreamingValidator.new(data)
+
+      expect( validator.validate_header(["minimum", ""]) ).to eql(true)
+      expect( validator.warnings.size ).to eql(1)
+      expect( validator.warnings.first.type).to eql(:empty_column_name)
+      expect( validator.warnings.first.category).to eql(:schema)
+    end
+
+    it "should include info message about missing header when we have assumed a header" do
+      data = StringIO.new( "1,2,3\r\n" )
+      validator = Csvlint::StreamingValidator.new(data)
+
+      expect( validator.valid? ).to eql(true)
+      expect( validator.info_messages.size ).to eql(1)
+      expect( validator.info_messages.first.type).to eql(:assumed_header)
+      expect( validator.info_messages.first.category).to eql(:structure)
+    end
+
+    it "should be an error if we have assumed a header, there is no dialect and there's no content-type" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      expect( validator.valid? ).to eql(false)
+    end
+
+
+    it "should not include info message about missing header when we are told about the header" do
+      data = StringIO.new( "1,2,3\r\n" )
+      validator = Csvlint::StreamingValidator.new(data, "header"=>false)
+      expect( validator.valid? ).to eql(true)
+      expect( validator.info_messages.size ).to eql(0)
+    end
+
+    it "should not be an error if we have assumed a header, there is no dialect and content-type doesn't declare header, as we assume header=present" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+      expect( validator.valid? ).to eql(true)
+    end
+
+    it "should be valid if we have a dialect and the data is from the web" do
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      #header defaults to true in csv dialect, so this is valid
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", {})
+      expect( validator.valid? ).to eql(true)
+
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", {"header"=>true})
+      expect( validator.valid? ).to eql(true)
+
+      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+      validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", {"header"=>false})
+      expect( validator.valid? ).to eql(true)
+    end
+
+  end
+
+  context "accessing metadata" do
+
+    before :all do
+      stub_request(:get, "http://example.com/crlf.csv").to_return(:status => 200, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','windows-line-endings.csv')))
+    end
+
+    it "can get line break symbol" do
+      validator = Csvlint::StreamingValidator.new("http://example.com/crlf.csv")
+      validator.line_breaks.should == "\r\n"
+    end
+
+  end
+
+  it "should give access to the complete CSV data file" do
+    stub_request(:get, "http://example.com/example.csv").to_return(:status => 200,
+        :headers=>{"Content-Type" => "text/csv; header=present"},
+        :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+    validator = Csvlint::StreamingValidator.new("http://example.com/example.csv")
+    expect( validator.valid? ).to eql(true)
+    data = validator.data
+
+    expect( data.count ).to eql 3
+    expect( data[0] ).to eql ['Foo','Bar','Baz']
+    expect( data[2] ).to eql ['3','2','1']
+  end
+
+  it "should limit number of lines read" do
+    stub_request(:get, "http://example.com/example.csv").to_return(:status => 200,
+    :headers=>{"Content-Type" => "text/csv; header=present"},
+    :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+    validator = Csvlint::StreamingValidator.new("http://example.com/example.csv", nil, nil, limit_lines: 2)
+    expect( validator.valid? ).to eql(true)
+    data = validator.data
+    expect( data.count ).to eql 2
+    expect( data[0] ).to eql ['Foo','Bar','Baz']
+  end
+
+  # Commented out because there is currently no way to mock redirects with Typhoeus and WebMock - see https://github.com/bblimke/webmock/issues/237
   # it "should follow redirects to SSL" do
   #   stub_request(:get, "http://example.com/redirect").to_return(:status => 301, :headers=>{"Location" => "https://example.com/example.csv"})
   #   stub_request(:get, "https://example.com/example.csv").to_return(:status => 200,
