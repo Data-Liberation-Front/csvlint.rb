@@ -31,6 +31,7 @@ module Csvlint
 
       @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
+      @extension = parse_extension(source) unless @source.nil?
       @csv_options = dialect_to_csv_options(@dialect)
 
       @expected_columns = 0
@@ -320,8 +321,6 @@ module Csvlint
     def parse_extension(source)
 
       case source
-        when String
-          return true
         when File
           return File.extname( source.path )
         when IO
