@@ -45,7 +45,7 @@ module Csvlint
 
     end
 
-    def validate (input = nil, index = nil)
+    def validate_line(input = nil, index = nil)
       single_col = false
       # TODO is single_col still required for single column CSV edge case, see spec it "should work correctly for single columns"
       @stream = input.present? ? input : @stream
