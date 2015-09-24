@@ -50,6 +50,7 @@ module Csvlint
       else
         validate_stream
       end
+      finish
     end
 
     def validate_stream
@@ -66,7 +67,10 @@ module Csvlint
       leading = ""
       request = Typhoeus::Request.new(@source)
       request.on_headers do |response|
-        return build_errors(:not_found) if response.code == "404"
+        @headers = response.headers
+        @content_type = response.headers["content-type"] rescue nil
+        @response_code = response.code
+        return build_errors(:not_found) if response.code == 404
       end
       request.on_body do |chunk|
         io = StringIO.new(leading + chunk)
@@ -94,7 +98,6 @@ module Csvlint
       # reassign stream if validate has been invoked with an input, mostly a way of faking loosely coupled stuff while testing
       line = index.present? ? index : 0
       begin
-        validate_metadata(@stream) if line <= 1 && !@header_processed # this should be a one shot, inelegant way of accomplishing
         report_line_breaks(line)
         parse_contents(@stream, line)
           # rescue CSV::MalformedCSVError => e
@@ -102,7 +105,6 @@ module Csvlint
       ensure
         @stream.close if @stream && @stream.respond_to?(:close) #TODO This could get factored into Validate client, or a finishing state in this class
       end
-      finish
     end
 
     # analyses the provided csv and builds errors, warnings and info messages
@@ -167,12 +169,11 @@ module Csvlint
       # return expected_columns to calling class
       build_warnings(:check_options, :structure) if @expected_columns == 1
       check_consistency
+      validate_metadata
     end
 
-    def validate_metadata(io)
+    def validate_metadata
       @encoding = io.charset rescue nil
-      @content_type = io.content_type rescue nil
-      @headers = io.meta rescue nil
       assumed_header = undeclared_header = !@supplied_dialect
 
       if @headers
