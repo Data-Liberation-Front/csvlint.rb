@@ -35,8 +35,8 @@ Feature: Collect all the tests that should trigger dialect check related errors
 #  :line_breaks
 
   Scenario: Incorrect line endings specified in settings
-    Given I have a CSV file called "cr-line-endings.csv"
-    And I set the line endings to linefeed
+    Given I have a CSV file called "lf-line-endings.csv"
+    And I set the line endings to carriage return
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are errors
     Then there should be 1 error
