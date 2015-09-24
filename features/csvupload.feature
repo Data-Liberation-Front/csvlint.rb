@@ -30,7 +30,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
     And it is stored at the url "http://example.com/example1.csv"
     And I set header to "true"
     And I ask if there are info messages
-    Then there should be 1 info message
+    Then there should be 0 info messages
 
 #  :line_breaks
 
