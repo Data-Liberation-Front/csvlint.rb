@@ -78,10 +78,17 @@ module Csvlint
         io = StringIO.new(leading + chunk)
         io.each_line do |line|
           break if i == @limit_lines
+          line = leading + line
           # Check if the last line is a line break - in which case it's a full line
           if line[-1, 1].include?("\n")
-            validate_line(line, i)
-            i = i+1
+            # If the number of quotes is odd, the linebreak is inside some quotes
+            if line.count(@dialect["quoteChar"]).odd?
+              leading = line
+            else
+              validate_line(line, i)
+              leading = ""
+              i = i+1
+            end
           else
             # If it's not a full line, then prepare to add it to the beginning of the next chunk
             leading = line
