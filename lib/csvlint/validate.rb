@@ -66,6 +66,7 @@ module Csvlint
 
     def validate_url
       i = 1
+    begin
       leading = ""
       request = Typhoeus::Request.new(@source, followlocation: true)
       request.on_headers do |response|
@@ -98,6 +99,10 @@ module Csvlint
       request.run
       # Validate the last line too
       validate_line(leading, i) unless leading == ""
+      rescue ArgumentError => ae
+        build_errors(:invalid_encoding, :structure, i, nil, i) unless @reported_invalid_encoding
+        @reported_invalid_encoding = true
+      end
     end
 
     def validate_line(input = nil, index = nil)
@@ -108,7 +113,7 @@ module Csvlint
       report_line_breaks(line)
       parse_contents(input, line)
     rescue ArgumentError => ae
-       build_errors(:invalid_encoding, :structure, index, nil, index) unless @reported_invalid_encoding
+       build_errors(:invalid_encoding, :structure, i, nil, index) unless @reported_invalid_encoding
        @reported_invalid_encoding = true
     end
 
