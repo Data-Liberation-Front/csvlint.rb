@@ -57,16 +57,16 @@ module Csvlint
     end
 
     def validate_stream
-      i = 1
+      @i = 1
       @source.each_line do |line|
-        break if i == @limit_lines
-        validate_line(line, i)
-        i = i+1
+        break if line_limit_reached?
+        validate_line(line, @i)
+        @i = @i+1
       end
     end
 
     def validate_url
-      i = 1
+      @i = 1
     begin
       leading = ""
       request = Typhoeus::Request.new(@source, followlocation: true)
@@ -79,7 +79,7 @@ module Csvlint
       request.on_body do |chunk|
         io = StringIO.new(leading + chunk)
         io.each_line do |line|
-          break if i == @limit_lines
+          break if line_limit_reached?
           line = leading + line
           # Check if the last line is a line break - in which case it's a full line
           if line[-1, 1].include?("\n")
@@ -87,9 +87,9 @@ module Csvlint
             if line.count(@dialect["quoteChar"]).odd?
               leading = line
             else
-              validate_line(line, i)
+              validate_line(line, @i)
               leading = ""
-              i = i+1
+              @i = @i+1
             end
           else
             # If it's not a full line, then prepare to add it to the beginning of the next chunk
@@ -99,9 +99,9 @@ module Csvlint
       end
       request.run
       # Validate the last line too
-      validate_line(leading, i) unless leading == ""
+      validate_line(leading, @i) unless leading == ""
       rescue ArgumentError => ae
-        build_errors(:invalid_encoding, :structure, i, nil, i) unless @reported_invalid_encoding
+        build_errors(:invalid_encoding, :structure, @i, nil, @i) unless @reported_invalid_encoding
         @reported_invalid_encoding = true
       end
     end
@@ -176,7 +176,6 @@ module Csvlint
     end
 
     def validate_metadata
-
       @csv_header = true
       assumed_header = undeclared_header = !@supplied_dialect
       if @headers
@@ -378,6 +377,10 @@ module Csvlint
       klass.strptime(value, format).strftime(format) == value
     rescue ArgumentError # invalid date
       false
+    end
+
+    def line_limit_reached?
+       @limit_lines.present? && @i > @limit_lines
     end
 
     FORMATS = {
