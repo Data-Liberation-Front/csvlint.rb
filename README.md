@@ -31,13 +31,13 @@ You can either use this gem within your own Ruby code, or as a standolone comman
 After installing the gem, you can validate a CSV on the command line like so:
 
 	csvlint myfile.csv
-	
+
 You will then see the validation result, together with any warnings or errors e.g.
 
 ```
 myfile.csv is INVALID
 1. blank_rows. Row: 3
-1. title_row. 
+1. title_row.
 2. inconsistent_values. Column: 14
 ```
 
@@ -50,40 +50,40 @@ You can also optionally pass a schema file like so:
 Currently the gem supports retrieving a CSV accessible from a URL, File, or an IO-style object (e.g. StringIO)
 
 	require 'csvlint'
-	
+
 	validator = Csvlint::Validator.new( "http://example.org/data.csv" )
 	validator = Csvlint::Validator.new( File.new("/path/to/my/data.csv" ))
 	validator = Csvlint::Validator.new( StringIO.new( my_data_in_a_string ) )
 
-When validating from a URL the range of errors and warnings is wider as the library will also check HTTP headers for 
+When validating from a URL the range of errors and warnings is wider as the library will also check HTTP headers for
 best practices
-	
-	#invoke the validation	
+
+	#invoke the validation
 	validator.validate
-	
+
 	#check validation status
 	validator.valid?
-	
+
 	#access array of errors, each is an Csvlint::ErrorMessage object
 	validator.errors
-	
+
 	#access array of warnings
 	validator.warnings
-	
+
 	#access array of information messages
 	validator.info_messages
-	
+
 	#get some information about the CSV file that was validated
 	validator.encoding
 	validator.content_type
 	validator.extension
-	
+
 	#retrieve HTTP headers from request
 	validator.headers
 
 ## Controlling CSV Parsing
 
-The validator supports configuration of the [CSV Dialect](http://dataprotocols.org/csv-dialect/) used in a data file. This is specified by 
+The validator supports configuration of the [CSV Dialect](http://dataprotocols.org/csv-dialect/) used in a data file. This is specified by
 passing a dialect hash to the constructor:
 
     dialect = {
@@ -94,17 +94,17 @@ passing a dialect hash to the constructor:
 
 The options should be a Hash that conforms to the [CSV Dialect](http://dataprotocols.org/csv-dialect/) JSON structure.
 
-While these options configure the parser to correctly process the file, the validator will still raise errors or warnings for CSV 
+While these options configure the parser to correctly process the file, the validator will still raise errors or warnings for CSV
 structure that it considers to be invalid, e.g. a missing header or different delimiters.
 
-Note that the parser will also check for a `header` parameter on the `Content-Type` header returned when fetching a remote CSV file. As 
+Note that the parser will also check for a `header` parameter on the `Content-Type` header returned when fetching a remote CSV file. As
 specified in [RFC 4180](http://www.ietf.org/rfc/rfc4180.txt) the values for this can be `present` and `absent`, e.g:
 
 	Content-Type: text/csv; header=present
 
 ## Error Reporting
 
-The validator provides feedback on a validation result using instances of `Csvlint::ErrorMessage`. Errors are divided into errors, warnings and information 
+The validator provides feedback on a validation result using instances of `Csvlint::ErrorMessage`. Errors are divided into errors, warnings and information
 messages. A validation attempt is successful if there are no errors.
 
 Messages provide context including:
@@ -122,13 +122,12 @@ The following types of error can be reported:
 * `:wrong_content_type` -- content type is not `text/csv`
 * `:ragged_rows` -- row has a different number of columns (than the first row in the file)
 * `:blank_rows` -- completely empty row, e.g. blank line or a line where all column values are empty
-* `:invalid_encoding` -- encoding error when parsing row, e.g. because of invalid characters 
+* `:invalid_encoding` -- encoding error when parsing row, e.g. because of invalid characters
 * `:not_found` -- HTTP 404 error when retrieving the data
 * `:stray_quote` -- missing or stray quote
 * `:unclosed_quote` -- unclosed quoted field
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
-* `:undeclared_header` -- if there is no machine-readable description of whether a header is present (e.g. in a dialect or `Content-Type` header)
 
 ## Warnings
 
@@ -153,27 +152,27 @@ There are also information messages available:
 
 ## Schema Validation
 
-The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON. The structure currently 
+The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON. The structure currently
 follows JSON Table Schema with some extensions.
 
 An example schema file is:
 
 	{
 		"fields": [
-			{ 
-				"name": "id", 
-			  	"constraints": { "required": true } 
+			{
+				"name": "id",
+			  	"constraints": { "required": true }
 			},
-            { 
-               	"name": "price", 
-               	"constraints": { "required": true, "minLength": 1 } 
+            {
+               	"name": "price",
+               	"constraints": { "required": true, "minLength": 1 }
             },
-            { 
-            	"name": "postcode", 
-            	"constraints": { 
-            		"required": true, 
-            		"pattern": "[A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2}" 
-            	} 
+            {
+            	"name": "postcode",
+            	"constraints": {
+            		"required": true,
+            		"pattern": "[A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2}"
+            	}
             }
         ]
 	}
@@ -192,7 +191,7 @@ Supported constraints:
 * `pattern` -- values must match the provided regular expression
 * `type` -- specifies an XML Schema data type. Values of the column must be a valid value for that type
 * `minimum` -- specify a minimum range for values, the value will be parsed as specified by `type`
-* `maximum` -- specify a maximum range for values, the value will be parsed as specified by `type` 
+* `maximum` -- specify a maximum range for values, the value will be parsed as specified by `type`
 * `datePattern` -- specify a `strftime` compatible date pattern to be used when parsing date values and min/max constraints
 
 Supported data types (this is still a work in progress):
@@ -214,7 +213,7 @@ Supported data types (this is still a work in progress):
 * Time -- `http://www.w3.org/2001/XMLSchema#time`
 
 Use of an unknown data type will result in the column failing to validate.
-	
+
 Schema validation provides some additional types of error and warning messages:
 
 * `:missing_value` (error) -- a column marked as `required` in the schema has no value
