@@ -177,17 +177,15 @@ module Csvlint
 
     def validate_metadata
       @csv_header = true
-      assumed_header = undeclared_header = !@supplied_dialect
+      assumed_header = !@supplied_dialect
       if @headers
         if @headers["content-type"] =~ /text\/csv/
           @csv_header = true
-          undeclared_header = false
           assumed_header = @assumed_header.present?
         end
         if @headers["content-type"] =~ /header=(present|absent)/
           @csv_header = true if $1 == "present"
           @csv_header = false if $1 == "absent"
-          undeclared_header = false
           assumed_header = false
         end
         if @headers["content-type"] !~ /charset=/
@@ -198,11 +196,6 @@ module Csvlint
         build_warnings(:no_content_type, :context) if @content_type == nil
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
-
-        if undeclared_header
-          build_errors(:undeclared_header, :structure)
-          assumed_header = false
-        end
       end
       @header_processed = true
       build_info_messages(:assumed_header, :structure) if assumed_header

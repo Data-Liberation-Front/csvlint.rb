@@ -451,14 +451,12 @@ describe Csvlint::Validator do
       expect( validator.info_messages.first.type).to eql(:assumed_header)
     end
 
-    it "give undeclared header error if content type is wrong" do
+    it "give wrong content type error if content type is wrong" do
       stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/html"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       expect( validator.header? ).to eql(true)
-      expect( validator.errors.size ).to eql(2)
+      expect( validator.errors.size ).to eql(1)
       expect( validator.errors[0].type).to eql(:wrong_content_type)
-      expect( validator.errors[1].type).to eql(:undeclared_header)
-      expect( validator.info_messages.size ).to eql(0)
     end
 
   end

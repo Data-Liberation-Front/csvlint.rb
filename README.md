@@ -128,7 +128,6 @@ The following types of error can be reported:
 * `:unclosed_quote` -- unclosed quoted field
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
-* `:undeclared_header` -- if there is no machine-readable description of whether a header is present (e.g. in a dialect or `Content-Type` header)
 
 ## Warnings
 
@@ -154,9 +153,9 @@ There are also information messages available:
 ## Schema Validation
 
 The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON. The structure currently
-follows JSON Table Schema with some extensions and rudinmentary [CSV on the Web Metadata](http://www.w3.org/TR/tabular-metadata/).
+follows JSON Table Schema with some extensions.
 
-An example JSON Table Schema schema file is:
+An example schema file is:
 
 	{
 		"fields": [
@@ -178,40 +177,10 @@ An example JSON Table Schema schema file is:
         ]
 	}
 
-An equivalent CSV on the Web Metadata file is:
+Parsing and validating with a schema:
 
-	{
-		"@context": "http://www.w3.org/ns/csvw",
-		"url": "http://example.com/example1.csv",
-		"tableSchema": {
-			"columns": [
-				{
-					"name": "id",
-					"required": true
-				},
-				{
-					"name": "price",
-					"required": true,
-					"datatype": { "base": "string", "minLength": 1 }
-				},
-				{
-					"name": "postcode",
-					"required": true
-				}
-			]
-		}
-	}
-
-Parsing and validating with a schema (of either kind):
-
-	schema = Csvlint::Schema.load_from_json(uri)
+	schema = Csvlint::Schema.load_from_json_table(uri)
 	validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, schema )
-
-### CSV on the Web Validation Support
-
-This gem passes all the validation tests in the [official CSV on the Web test suite](http://w3c.github.io/csvw/tests/) (though there might still be errors or parts of the [CSV on the Web standard](http://www.w3.org/TR/tabular-metadata/) that aren't tested by that test suite).
-
-### JSON Table Schema Support
 
 Supported constraints:
 
@@ -278,30 +247,3 @@ validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, opt
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
-
-### Testing
-
-The codebase includes both rspec and cucumber tests, which can be run together using:
-
-    $ rake
-
-or separately:
-
-    $ rake spec
-    $ rake features
-
-When the cucumber tests are first run, a script will create tests based on the latest version of the [CSV on the Web test suite](http://w3c.github.io/csvw/tests/), including creating a local cache of the test files. This requires an internet connection and some patience. Following that download, the tests will run locally; there's also a batch script:
-
-    $ bin/run-csvw-tests
-
-which will run the tests from the command line.
-
-If you need to refresh the CSV on the Web tests:
-
-    $ rm bin/run-csvw-tests
-    $ rm features/csvw_validation_tests.feature
-    $ rm -r features/fixtures/csvw
-
-and then run the cucumber tests again or:
-
-    $ ruby features/support/load_tests.rb
