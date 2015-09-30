@@ -91,12 +91,10 @@ describe Csvlint::Validator do
       expect(validator.instance_variable_get("@expected_columns")).to eql(3)
       expect(validator.instance_variable_get("@col_counts").count).to eql(4)
       expect(validator.data.size).to eql(4)
-      expect(validator.info_messages.count).to eql(2)
+      expect(validator.info_messages.count).to eql(1)
     end
 
     it ".each() -> `validate` parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
-      # doesn't build warnings because check_consistency isn't invoked
-      # TODO below is trailing whitespace but is interpreted as an unclosed quote
       data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"two\",\"3\"\r\n\"3\",\"2\",   \"1\"")
 
       validator = Csvlint::Validator.new(data)
@@ -105,8 +103,7 @@ describe Csvlint::Validator do
       expect(validator.instance_variable_get("@expected_columns")).to eql(3)
       expect(validator.instance_variable_get("@col_counts").count).to eql(4)
       expect(validator.data.size).to eql(5)
-      #TODO - this assertion is linked to other note regarding expected behaviour RE populating data array
-      expect(validator.info_messages.count).to eql(2)
+      expect(validator.info_messages.count).to eql(1)
       expect(validator.errors.count).to eql(1)
       expect(validator.errors.first.type).to eql(:whitespace)
       expect(validator.warnings.count).to eql(1)
@@ -137,10 +134,9 @@ describe Csvlint::Validator do
       expect(validator.instance_variable_get("@col_counts").size).to eql(validator.data.compact.size)
       #col_counts should equal data minus nil values
       expect(validator.instance_variable_get("@expected_columns")).to eql(3)
-      expect(validator.info_messages.count).to eql(2)
-      expect(validator.info_messages.first.type).to eql(:nonrfc_line_breaks)
+      expect(validator.info_messages.count).to eql(1)
       expect(validator.info_messages.last.type).to eql(:assumed_header)
-      expect(validator.errors.count).to eql(2)
+      expect(validator.errors.count).to eql(3)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
       expect(validator.errors.last.type).to eql(:blank_rows)
       expect(validator.warnings.count).to eql(1)
