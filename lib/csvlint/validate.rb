@@ -32,10 +32,7 @@ module Csvlint
 
       @data = [] # it may be advisable to flush this on init?
 
-      reset
       validate
-      # TODO - separating the initialise and validate calls means that specs assertions in streaming_validator are more verbose, but can also be unit tested
-
     end
 
     def validate
