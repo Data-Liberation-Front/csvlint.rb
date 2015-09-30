@@ -27,6 +27,9 @@ module Csvlint
       @col_counts = []
       @line_breaks = []
 
+      @errors += @schema.errors unless @schema.nil?
+      @warnings += @schema.warnings unless @schema.nil?
+
       @data = [] # it may be advisable to flush this on init?
 
       reset
