@@ -18,22 +18,10 @@ module Csvlint
       @source = source
       @formats = []
       @schema = schema
+      @dialect = dialect
 
-      @assumed_header = dialect["header"].nil?
-      @supplied_dialect = dialect != {}
-
-      @dialect = {
-          "header" => true,
-          "delimiter" => ",",
-          "skipInitialSpace" => true,
-          "lineTerminator" => :auto,
-          "quoteChar" => '"'
-      }.merge(dialect)
-
-      @csv_header = @dialect["header"]
       @limit_lines = options[:limit_lines]
       @extension = parse_extension(source) unless @source.nil?
-      @csv_options = dialect_to_csv_options(@dialect)
 
       @expected_columns = 0
       @col_counts = []
@@ -49,6 +37,7 @@ module Csvlint
 
     def validate
       locate_schema unless @schema.instance_of?(Csvlint::Schema)
+      set_dialect
 
       if @source.class == String
         validate_url
@@ -223,7 +212,10 @@ module Csvlint
       @line_breaks_reported === true
     end
 
-    def set_dialect(dialect)
+    def set_dialect
+      @assumed_header = @dialect["header"].nil?
+      @supplied_dialect = @dialect != {}
+
       begin
         schema_dialect = @schema.tables[@source_url].dialect || {}
       rescue
@@ -236,7 +228,7 @@ module Csvlint
         "lineTerminator" => :auto,
         "quoteChar" => '"',
         "trim" => :true
-      }.merge(schema_dialect).merge(dialect || {})
+      }.merge(schema_dialect).merge(@dialect || {})
 
       @csv_header = @csv_header && @dialect["header"]
       @csv_options = dialect_to_csv_options(@dialect)
