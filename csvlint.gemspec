@@ -24,6 +24,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activesupport"
   spec.add_dependency "addressable"
   spec.add_dependency "typhoeus"
+  spec.add_dependency "escape_utils"
+  spec.add_dependency "uri_template"
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"

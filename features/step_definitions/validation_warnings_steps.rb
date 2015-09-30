@@ -18,11 +18,25 @@ end
 When(/^I ask if there are warnings$/) do
   @csv_options ||= default_csv_options
   if @schema_json
-    @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", JSON.parse(@schema_json) )
+    if @schema_type == :json_table
+      @schema = Csvlint::Schema.from_json_table( @schema_url || "http://example.org ", JSON.parse(@schema_json) )
+    else
+      @schema = Csvlint::Schema.from_csvw_metadata( @schema_url || "http://example.org ", JSON.parse(@schema_json) )
+    end
   end
 
   @validator = Csvlint::Validator.new( @url, @csv_options, @schema )
   @warnings = @validator.warnings
+end
+
+Then(/^there should be warnings$/) do
+  expect( @warnings.count ).to be > 0
+end
+
+Then(/^there should not be warnings$/) do
+  # this test is only used for CSVW testing, and :inconsistent_values warnings don't count in CSVW
+  @warnings.delete_if { |w| [:inconsistent_values, :check_options].include?(w.type) }
+  expect( @warnings.count ).to eq(0)
 end
 
 Then(/^there should be (\d+) warnings$/) do |count|
