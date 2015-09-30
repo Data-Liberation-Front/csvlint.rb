@@ -20,6 +20,7 @@ module Csvlint
       @schema = schema
 
       @assumed_header = dialect["header"].nil?
+      @supplied_dialect = dialect != {}
 
       @dialect = {
           "header" => true,
@@ -176,6 +177,8 @@ module Csvlint
 
     def validate_metadata
 
+      @csv_header = true
+      assumed_header = undeclared_header = !@supplied_dialect
       if @headers
         if @headers["content-type"] =~ /text\/csv/
           @csv_header = true
@@ -207,7 +210,7 @@ module Csvlint
     end
 
     def header?
-      @csv_header
+      @csv_header && @dialect["header"]
     end
 
     def report_line_breaks(line_no=nil)
