@@ -564,7 +564,7 @@ describe Csvlint::Validator do
     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200,
     :headers=>{"Content-Type" => "text/csv; header=present"},
     :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-    validator = Csvlint::Validator.new("http://example.com/example.csv", nil, nil, limit_lines: 2)
+    validator = Csvlint::Validator.new("http://example.com/example.csv", {}, nil, limit_lines: 2)
     expect( validator.valid? ).to eql(true)
     data = validator.data
     expect( data.count ).to eql 2
