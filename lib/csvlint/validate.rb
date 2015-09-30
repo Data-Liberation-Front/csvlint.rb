@@ -48,6 +48,8 @@ module Csvlint
     end
 
     def validate
+      locate_schema unless @schema.instance_of?(Csvlint::Schema)
+
       if @source.class == String
         validate_url
       else
