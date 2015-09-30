@@ -4,7 +4,7 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :encoding, :content_type, :extension, :headers, :line_breaks, :dialect, :csv_header, :schema, :data, :header_processed
+    attr_reader :encoding, :content_type, :extension, :headers, :dialect, :csv_header, :schema, :data, :header_processed
     ERROR_MATCHERS = {
         "Missing or stray quote" => :stray_quote,
         "Illegal quoting" => :whitespace,
@@ -231,6 +231,14 @@ module Csvlint
 
     def check_mixed_linebreaks
       build_linebreak_error if @line_breaks.uniq.count > 1
+    end
+
+    def line_breaks
+      if @line_breaks.uniq.count > 1
+        :mixed
+      else
+        @line_breaks.uniq.first
+      end
     end
 
     def build_exception_messages(csvException, errChars, lineNo)
