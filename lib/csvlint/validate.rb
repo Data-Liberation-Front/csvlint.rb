@@ -357,6 +357,8 @@ module Csvlint
     end
 
     def locate_schema
+      @link_headers = @headers["link"].split(",") rescue nil
+
       @source_url = nil
       warn_if_unsuccessful = false
       case @source
