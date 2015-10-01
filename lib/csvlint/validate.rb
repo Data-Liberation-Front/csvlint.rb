@@ -4,7 +4,7 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :encoding, :content_type, :extension, :headers, :link_headers, :dialect, :csv_header, :schema, :data
+    attr_reader :encoding, :content_type, :extension, :headers, :link_headers, :dialect, :csv_header, :schema, :data, :current_line
 
     ERROR_MATCHERS = {
         "Missing or stray quote" => :stray_quote,
@@ -13,7 +13,7 @@ module Csvlint
         "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
-    def initialize(source, dialect = {}, schema = nil, options = {}, row_sep = nil)
+    def initialize(source, dialect = {}, schema = nil, options = {})
       reset
       @source = source
       @formats = []
@@ -21,6 +21,7 @@ module Csvlint
       @dialect = dialect
       @csv_header = true
       @headers = {}
+      @lambda = options[:lambda] || lambda { |a| nil }
 
       @limit_lines = options[:limit_lines]
       @extension = parse_extension(source) unless @source.nil?
@@ -51,16 +52,16 @@ module Csvlint
     end
 
     def validate_stream
-      @i = 1
+      @current_line = 1
       @source.each_line do |line|
         break if line_limit_reached?
-        validate_line(line, @i)
-        @i = @i+1
+        validate_line(line, @current_line)
+        @current_line = @current_line+1
       end
     end
 
     def validate_url
-      @i = 1
+      @current_line = 1
     begin
       leading = ""
       request = Typhoeus::Request.new(@source, followlocation: true)
@@ -82,9 +83,9 @@ module Csvlint
             if line.count(@dialect["quoteChar"]).odd?
               leading = line
             else
-              validate_line(line, @i)
+              validate_line(line, @current_line)
               leading = ""
-              @i = @i+1
+              @current_line = @current_line+1
             end
           else
             # If it's not a full line, then prepare to add it to the beginning of the next chunk
@@ -94,9 +95,9 @@ module Csvlint
       end
       request.run
       # Validate the last line too
-      validate_line(leading, @i) unless leading == ""
+      validate_line(leading, @current_line) unless leading == ""
       rescue ArgumentError => ae
-        build_errors(:invalid_encoding, :structure, @i, nil, @i) unless @reported_invalid_encoding
+        build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
         @reported_invalid_encoding = true
       end
     end
@@ -110,7 +111,7 @@ module Csvlint
       parse_contents(input, line)
       @lambda.call(self)
     rescue ArgumentError => ae
-       build_errors(:invalid_encoding, :structure, i, nil, index) unless @reported_invalid_encoding
+       build_errors(:invalid_encoding, :structure, @current_line, nil, index) unless @reported_invalid_encoding
        @reported_invalid_encoding = true
     end
 
@@ -486,7 +487,7 @@ module Csvlint
     end
 
     def line_limit_reached?
-       @limit_lines.present? && @i > @limit_lines
+       @limit_lines.present? && @current_line > @limit_lines
     end
 
     FORMATS = {
