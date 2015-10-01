@@ -65,7 +65,7 @@ module Csvlint
       leading = ""
       request = Typhoeus::Request.new(@source, followlocation: true)
       request.on_headers do |response|
-        @headers = response.headers
+        @headers = response.headers || {}
         @content_type = response.headers["content-type"] rescue nil
         @response_code = response.code
         return build_errors(:not_found) if response.code == 404
