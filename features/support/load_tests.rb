@@ -93,7 +93,7 @@ File.open(FEATURE_FILE_PATH, 'w') do |file|
 			implicit_uri, implicit_file = cache_file(implicit)
 			provided_files << implicit_uri.to_s
 			unless implicit_uri == metadata
-				file.puts "\t\tAnd I have a file called \"csvw/#{implicit}\" at the url \"#{implicit_uri}\""
+				file.puts "\t\tAnd I have the file \"csvw/#{implicit}\" at the url \"#{implicit_uri}\""
 			end
 		end if entry["implicit"]
 		missing_files.each do |uri|
