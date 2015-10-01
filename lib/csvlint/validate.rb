@@ -108,6 +108,7 @@ module Csvlint
       @encoding = input.encoding.to_s
       report_line_breaks(line)
       parse_contents(input, line)
+      @lambda.call(self)
     rescue ArgumentError => ae
        build_errors(:invalid_encoding, :structure, i, nil, index) unless @reported_invalid_encoding
        @reported_invalid_encoding = true
