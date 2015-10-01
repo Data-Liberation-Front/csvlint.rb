@@ -99,17 +99,6 @@ Feature: Get validation errors
     When I ask if there are errors
     Then there should be no "content_encoding" errors
 
-  Scenario: Incorrect content type, specified as excel but directed to .csv URI
-    Given I have a CSV with the following content:
-    """
-"abc","2","3"
-    """
-    And the content type is set to "application/excel"
-    And it is stored at the url "http://example.com/example1.xls"
-    And I ask if there are errors
-    Then there should be 1 error
-    And that error should have the type "wrong_content_type"
-
   Scenario: Incorrect extension, specified as excel but directed to .csv
     Given I have a CSV with the following content:
     """
