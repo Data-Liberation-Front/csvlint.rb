@@ -557,6 +557,15 @@ describe Csvlint::Validator do
     expect( data[0] ).to eql ['Foo','Bar','Baz']
   end
 
+  context "with a lambda" do
+
+    it "should call a lambda for each line" do
+      @count = 0
+      mylambda = lambda { |row| @count = @count + 1 }
+      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { lambda: mylambda })
+      expect(@count).to eq(3)
+    end
+  end
   # Commented out because there is currently no way to mock redirects with Typhoeus and WebMock - see https://github.com/bblimke/webmock/issues/237
   # it "should follow redirects to SSL" do
   #   stub_request(:get, "http://example.com/redirect").to_return(:status => 301, :headers=>{"Location" => "https://example.com/example.csv"})
