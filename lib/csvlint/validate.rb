@@ -20,6 +20,7 @@ module Csvlint
       @schema = schema
       @dialect = dialect
       @csv_header = true
+      @headers = {}
 
       @limit_lines = options[:limit_lines]
       @extension = parse_extension(source) unless @source.nil?
@@ -169,7 +170,7 @@ module Csvlint
 
     def validate_metadata
       assumed_header = !@supplied_dialect
-      if @headers
+      unless @headers.empty?
         if @headers["content-type"] =~ /text\/csv/
           @csv_header = @csv_header && true
           assumed_header = @assumed_header.present?
