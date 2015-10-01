@@ -22,6 +22,7 @@ module Csvlint
       @csv_header = true
       @headers = {}
       @lambda = options[:lambda] || lambda { |a| nil }
+      @leading = ""
 
       @limit_lines = options[:limit_lines]
       @extension = parse_extension(source) unless @source.nil?
@@ -55,15 +56,14 @@ module Csvlint
       @current_line = 1
       @source.each_line do |line|
         break if line_limit_reached?
-        validate_line(line, @current_line)
-        @current_line = @current_line+1
+        parse_line(line)
       end
+      validate_line(@leading, @current_line) unless @leading == ""
     end
 
     def validate_url
       @current_line = 1
     begin
-      leading = ""
       request = Typhoeus::Request.new(@source, followlocation: true)
       request.on_headers do |response|
         @headers = response.headers || {}
@@ -73,32 +73,36 @@ module Csvlint
         validate_metadata
       end
       request.on_body do |chunk|
-        io = StringIO.new(leading + chunk)
+        io = StringIO.new(@leading + chunk)
         io.each_line do |line|
           break if line_limit_reached?
-          line = leading + line
-          # Check if the last line is a line break - in which case it's a full line
-          if line[-1, 1].include?("\n")
-            # If the number of quotes is odd, the linebreak is inside some quotes
-            if line.count(@dialect["quoteChar"]).odd?
-              leading = line
-            else
-              validate_line(line, @current_line)
-              leading = ""
-              @current_line = @current_line+1
-            end
-          else
-            # If it's not a full line, then prepare to add it to the beginning of the next chunk
-            leading = line
-          end
+          parse_line(line)
         end
       end
       request.run
       # Validate the last line too
-      validate_line(leading, @current_line) unless leading == ""
+      validate_line(@leading, @current_line) unless @leading == ""
       rescue ArgumentError => ae
         build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
         @reported_invalid_encoding = true
+      end
+    end
+
+    def parse_line(line)
+      line = @leading + line
+      # Check if the last line is a line break - in which case it's a full line
+      if line[-1, 1].include?("\n")
+        # If the number of quotes is odd, the linebreak is inside some quotes
+        if line.count(@dialect["quoteChar"]).odd?
+          @leading = line
+        else
+          validate_line(line, @current_line)
+          @leading = ""
+          @current_line = @current_line+1
+        end
+      else
+        # If it's not a full line, then prepare to add it to the beginning of the next chunk
+        @leading = line
       end
     end
 

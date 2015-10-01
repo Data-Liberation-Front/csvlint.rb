@@ -4,8 +4,10 @@ describe Csvlint::Validator do
 
   before do
     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :body => "")
+    stub_request(:get, "http://example.com/.well-known/csvm").to_return(:status => 404)
+    stub_request(:get, "http://example.com/example.csv-metadata.json").to_return(:status => 404)
+    stub_request(:get, "http://example.com/csv-metadata.json").to_return(:status => 404)
   end
-
 
   it "should validate from a URL" do
     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{"Content-Type" => "text/csv"}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
@@ -81,6 +83,45 @@ describe Csvlint::Validator do
       expect(validator.errors.count).to eql(2)
     end
 
+    it "handles line breaks within a cell" do
+      data = StringIO.new("\"a\",\"b\",\"c\"\r\n\"d\",\"e\",\"this is\r\nvalid\"\r\n\"a\",\"b\",\"c\"")
+      validator = Csvlint::Validator.new(data)
+      expect(validator.valid?).to eql(true)
+    end
+
+    it "handles multiple line breaks within a cell" do
+      data = StringIO.new("\"a\",\"b\",\"c\"\r\n\"d\",\"this is\r\n valid\",\"as is this\r\n too\"")
+      validator = Csvlint::Validator.new(data)
+      expect(validator.valid?).to eql(true)
+    end
+  end
+
+  context "csv dialect" do
+    it "should provide sensible defaults for CSV parsing" do
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      opts = validator.instance_variable_get("@csv_options")
+      expect(opts).to include({
+        :col_sep => ",",
+        :row_sep => :auto,
+        :quote_char => '"',
+        :skip_blanks => false
+      })
+    end
+
+    it "should map CSV DDF to correct values" do
+      validator = Csvlint::Validator.new("http://example.com/example.csv")
+      opts = validator.dialect_to_csv_options( {
+        "lineTerminator" => "\n",
+        "delimiter" => "\t",
+        "quoteChar" => "'"
+      })
+      expect(opts).to include({
+        :col_sep => "\t",
+        :row_sep => "\n",
+        :quote_char => "'",
+        :skip_blanks => false
+      })
+    end
 
     it ".each() -> `validate` to pass input in streaming fashion" do
       # warnings are built when validate is used to call all three methods
@@ -119,28 +160,6 @@ describe Csvlint::Validator do
       expect(validator.info_messages.size).to eql(1)
       expect(validator.info_messages.first.type).to eql(:assumed_header)
       expect(validator.info_messages.first.category).to eql(:structure)
-    end
-
-    it "File.open.each_line -> `validate` batch parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
-
-      filename = 'invalid_many_rows.csv'
-      file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
-      linesparsed = count = File.foreach(file).inject(0) {|c, line| c+1}
-
-      validator = Csvlint::Validator.new(File.new(file))
-
-      expect(validator.valid?).to eql(false)
-      expect(validator.data.size).to eql(linesparsed)
-      expect(validator.instance_variable_get("@col_counts").size).to eql(validator.data.compact.size)
-      #col_counts should equal data minus nil values
-      expect(validator.instance_variable_get("@expected_columns")).to eql(3)
-      expect(validator.info_messages.count).to eql(1)
-      expect(validator.info_messages.last.type).to eql(:assumed_header)
-      expect(validator.errors.count).to eql(3)
-      expect(validator.errors.first.type).to eql(:unclosed_quote)
-      expect(validator.errors.last.type).to eql(:blank_rows)
-      expect(validator.warnings.count).to eql(1)
-      expect(validator.warnings.first.type).to eql(:inconsistent_values)
     end
 
   end
@@ -194,7 +213,6 @@ describe Csvlint::Validator do
       expect(validator.info_messages.size).to eql(0)
     end
 
-
   end
 
   context "it returns the correct error from ERROR_MATCHES" do
@@ -243,6 +261,7 @@ describe Csvlint::Validator do
     it "should warn if column names aren't unique" do
       data = StringIO.new( "minimum, minimum" )
       validator = Csvlint::Validator.new(data)
+      validator.reset
       expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
       expect( validator.warnings.size ).to eql(1)
       expect( validator.warnings.first.type).to eql(:duplicate_column_name)
@@ -293,7 +312,7 @@ describe Csvlint::Validator do
         validator.build_formats(row)
         formats = validator.instance_variable_get("@formats")
 
-        formats[0].keys.first.should == type
+        expect(formats[0].keys.first).to eql type
       end
     end
 
@@ -304,8 +323,8 @@ describe Csvlint::Validator do
       validator.build_formats(row)
       formats = validator.instance_variable_get("@formats")
 
-      formats[0].keys.first.should == :numeric
-      formats[1].keys.first.should == :numeric
+      expect(formats[0].keys.first).to eql :numeric
+      expect(formats[1].keys.first).to eql :numeric
     end
 
     it "should ignore blank arrays" do
@@ -313,8 +332,9 @@ describe Csvlint::Validator do
 
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       validator.build_formats(row)
+
       formats = validator.instance_variable_get("@formats")
-      formats.should == []
+      expect(formats).to eql []
     end
 
     it "should work correctly for single columns" do
@@ -331,8 +351,7 @@ describe Csvlint::Validator do
       end
 
       formats = validator.instance_variable_get("@formats")
-
-      formats.should == [{:string => 3}]
+      expect(formats).to eql [{:string => 3}]
     end
 
     it "should return formats correctly if a row is blank" do
@@ -349,10 +368,10 @@ describe Csvlint::Validator do
 
       formats = validator.instance_variable_get("@formats")
 
-      formats.should == [
-          {:string => 1},
-          {:numeric => 1},
-          {:string => 1},
+      expect(formats).to eql [
+        {:string => 1},
+        {:numeric => 1},
+        {:string => 1},
       ]
     end
 
@@ -403,7 +422,7 @@ describe Csvlint::Validator do
       warnings = validator.instance_variable_get("@warnings")
       warnings.delete_if { |h| h.type != :inconsistent_values }
 
-      warnings.count.should == 1
+      expect(warnings.count).to eql 1
     end
 
   end
@@ -524,11 +543,12 @@ describe Csvlint::Validator do
 
     before :all do
       stub_request(:get, "http://example.com/crlf.csv").to_return(:status => 200, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','windows-line-endings.csv')))
+      stub_request(:get, "http://example.com/crlf.csv-metadata.json").to_return(:status => 404)
     end
 
     it "can get line break symbol" do
       validator = Csvlint::Validator.new("http://example.com/crlf.csv")
-      validator.line_breaks.should == "\r\n"
+      expect(validator.line_breaks).to eql "\r\n"
     end
 
   end
@@ -575,7 +595,7 @@ describe Csvlint::Validator do
       expect(@results[1]).to eq(2)
       expect(@results[2]).to eq(3)
     end
-    
+
   end
 
   # Commented out because there is currently no way to mock redirects with Typhoeus and WebMock - see https://github.com/bblimke/webmock/issues/237
