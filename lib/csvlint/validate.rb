@@ -19,6 +19,7 @@ module Csvlint
       @formats = []
       @schema = schema
       @dialect = dialect
+      @csv_header = true
 
       @limit_lines = options[:limit_lines]
       @extension = parse_extension(source) unless @source.nil?
@@ -42,6 +43,7 @@ module Csvlint
       if @source.class == String
         validate_url
       else
+        validate_metadata
         validate_stream
       end
       finish
@@ -66,6 +68,7 @@ module Csvlint
         @content_type = response.headers["content-type"] rescue nil
         @response_code = response.code
         return build_errors(:not_found) if response.code == 404
+        validate_metadata
       end
       request.on_body do |chunk|
         io = StringIO.new(leading + chunk)
@@ -128,8 +131,6 @@ module Csvlint
       end
 
       @data << row
-      # TODO currently it doesn't matter where the above rescue is the @data array is either populated with nil or nothing
-      # TODO is that intended behaviour?
       if row
         if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
@@ -162,16 +163,14 @@ module Csvlint
       # return expected_columns to calling class
       build_warnings(:check_options, :structure) if @expected_columns == 1
       check_consistency
-      validate_metadata
       check_mixed_linebreaks
     end
 
     def validate_metadata
-      @csv_header = true
       assumed_header = !@supplied_dialect
       if @headers
         if @headers["content-type"] =~ /text\/csv/
-          @csv_header = true
+          @csv_header = @csv_header && true
           assumed_header = @assumed_header.present?
         end
         if @headers["content-type"] =~ /header=(present|absent)/
