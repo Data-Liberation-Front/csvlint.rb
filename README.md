@@ -271,6 +271,22 @@ options = {
 validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
 ```
 
+* :lambda -- Pass a block of code to be called when each line is validated, this will give you access to the `Validator` object. For example, this will return the current line number for every line validated:
+
+```
+options = {
+  lambda: ->(validator) { puts validator.current_line }
+}
+validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+=> 1
+2
+3
+4
+.....
+```
+
+
+
 ## Contributing
 
 1. Fork it
