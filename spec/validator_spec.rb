@@ -519,13 +519,6 @@ describe Csvlint::Validator do
       expect( validator.info_messages.first.category).to eql(:structure)
     end
 
-    it "should be an error if we have assumed a header, there is no dialect and there's no content-type" do
-      stub_request(:get, "http://example.com/example.csv").to_return(:status => 200, :headers=>{}, :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
-      validator = Csvlint::Validator.new("http://example.com/example.csv")
-      expect( validator.valid? ).to eql(false)
-    end
-
-
     it "should not include info message about missing header when we are told about the header" do
       data = StringIO.new( "1,2,3\r\n" )
       validator = Csvlint::Validator.new(data, "header"=>false)
