@@ -231,11 +231,14 @@ module Csvlint
     end
 
     def validate_encoding
-      if @headers["content-type"] !~ /charset=/
-        build_warnings(:no_encoding, :context)
-      elsif @encoding != "UTF-8" || @headers["content-type"] !~ /charset=utf-8/i
-        build_warnings(:encoding, :context)
+      if @headers["content-type"]
+        if @headers["content-type"] !~ /charset=/
+          build_warnings(:no_encoding, :context)
+        elsif @headers["content-type"] !~ /charset=utf-8/i
+          build_warnings(:encoding, :context)
+        end
       end
+      build_warnings(:encoding, :context) if @encoding != "UTF-8"
     end
 
     def check_mixed_linebreaks
