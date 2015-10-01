@@ -465,7 +465,6 @@ describe Csvlint::Validator do
     it "should warn if column names aren't unique" do
       data = StringIO.new( "minimum, minimum" )
       validator = Csvlint::Validator.new(data)
-      expect( validator.validate_header(["minimum", "minimum"]) ).to eql(true)
       expect( validator.warnings.size ).to eql(1)
       expect( validator.warnings.first.type).to eql(:duplicate_column_name)
       expect( validator.warnings.first.category).to eql(:schema)
