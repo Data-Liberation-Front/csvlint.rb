@@ -164,6 +164,7 @@ module Csvlint
       build_warnings(:check_options, :structure) if @expected_columns == 1
       check_consistency
       check_mixed_linebreaks
+      validate_encoding
     end
 
     def validate_metadata
@@ -177,11 +178,6 @@ module Csvlint
           @csv_header = true if $1 == "present"
           @csv_header = false if $1 == "absent"
           assumed_header = false
-        end
-        if @headers["content-type"] !~ /charset=/
-          build_warnings(:no_encoding, :context)
-        elsif @encoding != "UTF-8" || @headers["content-type"] !~ /charset=utf-8/i
-          build_warnings(:encoding, :context)
         end
         build_warnings(:no_content_type, :context) if @content_type == nil
         build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
@@ -233,6 +229,13 @@ module Csvlint
       @csv_options = dialect_to_csv_options(@dialect)
     end
 
+    def validate_encoding
+      if @headers["content-type"] !~ /charset=/
+        build_warnings(:no_encoding, :context)
+      elsif @encoding != "UTF-8" || @headers["content-type"] !~ /charset=utf-8/i
+        build_warnings(:encoding, :context)
+      end
+    end
 
     def check_mixed_linebreaks
       build_linebreak_error if @line_breaks.uniq.count > 1
