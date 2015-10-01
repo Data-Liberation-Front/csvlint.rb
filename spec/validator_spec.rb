@@ -82,6 +82,18 @@ describe Csvlint::Validator do
       expect(validator.errors.first.type).to eql(:whitespace)
       expect(validator.errors.count).to eql(2)
     end
+
+    it "handles line breaks within a cell" do
+      data = StringIO.new("\"a\",\"b\",\"c\"\r\n\"d\",\"e\",\"this is\r\nvalid\"\r\n\"a\",\"b\",\"c\"")
+      validator = Csvlint::Validator.new(data)
+      expect(validator.valid?).to eql(true)
+    end
+
+    it "handles multiple line breaks within a cell" do
+      data = StringIO.new("\"a\",\"b\",\"c\"\r\n\"d\",\"this is\r\n valid\",\"as is this\r\n too\"")
+      validator = Csvlint::Validator.new(data)
+      expect(validator.valid?).to eql(true)
+    end
   end
 
   context "csv dialect" do
@@ -148,28 +160,6 @@ describe Csvlint::Validator do
       expect(validator.info_messages.size).to eql(1)
       expect(validator.info_messages.first.type).to eql(:assumed_header)
       expect(validator.info_messages.first.category).to eql(:structure)
-    end
-
-    it "File.open.each_line -> `validate` batch parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
-
-      filename = 'invalid_many_rows.csv'
-      file = File.join(File.expand_path(Dir.pwd), "features", "fixtures", filename)
-      linesparsed = count = File.foreach(file).inject(0) {|c, line| c+1}
-
-      validator = Csvlint::Validator.new(File.new(file))
-
-      expect(validator.valid?).to eql(false)
-      expect(validator.data.size).to eql(linesparsed)
-      expect(validator.instance_variable_get("@col_counts").size).to eql(validator.data.compact.size)
-      #col_counts should equal data minus nil values
-      expect(validator.instance_variable_get("@expected_columns")).to eql(3)
-      expect(validator.info_messages.count).to eql(1)
-      expect(validator.info_messages.last.type).to eql(:assumed_header)
-      expect(validator.errors.count).to eql(3)
-      expect(validator.errors.first.type).to eql(:unclosed_quote)
-      expect(validator.errors.last.type).to eql(:blank_rows)
-      expect(validator.warnings.count).to eql(1)
-      expect(validator.warnings.first.type).to eql(:inconsistent_values)
     end
 
   end
@@ -605,7 +595,7 @@ describe Csvlint::Validator do
       expect(@results[1]).to eq(2)
       expect(@results[2]).to eq(3)
     end
-    
+
   end
 
   # Commented out because there is currently no way to mock redirects with Typhoeus and WebMock - see https://github.com/bblimke/webmock/issues/237
