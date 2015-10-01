@@ -410,7 +410,7 @@ module Csvlint
           well_known_uri = URI.join(@source_url, "/.well-known/csvm")
           well_known = open(well_known_uri).read
           # TODO
-        rescue OpenURI::HTTPError
+        rescue OpenURI::HTTPError, URI::BadURIError
         end
       end
       paths = ["{+url}-metadata.json", "csv-metadata.json"] if paths.empty?
@@ -430,7 +430,7 @@ module Csvlint
             end
           end
         rescue Errno::ENOENT
-        rescue OpenURI::HTTPError
+        rescue OpenURI::HTTPError, URI::BadURIError
         rescue=> e
           STDERR.puts e.class
           STDERR.puts e.message
