@@ -40,6 +40,10 @@ module Csvlint
     end
 
     def validate
+      if @extension =~ /.xls(x)?/
+        build_warnings(:excel, :context)
+        return
+      end
       locate_schema unless @schema.instance_of?(Csvlint::Schema)
       set_dialect
 
@@ -63,25 +67,25 @@ module Csvlint
 
     def validate_url
       @current_line = 1
-    begin
-      request = Typhoeus::Request.new(@source, followlocation: true)
-      request.on_headers do |response|
-        @headers = response.headers || {}
-        @content_type = response.headers["content-type"] rescue nil
-        @response_code = response.code
-        return build_errors(:not_found) if response.code == 404
-        validate_metadata
-      end
-      request.on_body do |chunk|
-        io = StringIO.new(@leading + chunk)
-        io.each_line do |line|
-          break if line_limit_reached?
-          parse_line(line)
+      begin
+        request = Typhoeus::Request.new(@source, followlocation: true)
+        request.on_headers do |response|
+          @headers = response.headers || {}
+          @content_type = response.headers["content-type"] rescue nil
+          @response_code = response.code
+          return build_errors(:not_found) if response.code == 404
+          validate_metadata
         end
-      end
-      request.run
-      # Validate the last line too
-      validate_line(@leading, @current_line) unless @leading == ""
+        request.on_body do |chunk|
+          io = StringIO.new(@leading + chunk)
+          io.each_line do |line|
+            break if line_limit_reached?
+            parse_line(line)
+          end
+        end
+        request.run
+        # Validate the last line too
+        validate_line(@leading, @current_line) unless @leading == ""
       rescue ArgumentError => ae
         build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
         @reported_invalid_encoding = true
@@ -115,8 +119,8 @@ module Csvlint
       parse_contents(input, line)
       @lambda.call(self)
     rescue ArgumentError => ae
-       build_errors(:invalid_encoding, :structure, @current_line, nil, index) unless @reported_invalid_encoding
-       @reported_invalid_encoding = true
+      build_errors(:invalid_encoding, :structure, @current_line, nil, index) unless @reported_invalid_encoding
+      @reported_invalid_encoding = true
     end
 
     # analyses the provided csv and builds errors, warnings and info messages
@@ -128,10 +132,10 @@ module Csvlint
       @csv_options[:encoding] = @encoding
 
       begin
-      row = CSV.parse_line(stream, @csv_options)
-        # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
-        # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
-        # TODO investigate if above would be a drag on memory
+        row = CSV.parse_line(stream, @csv_options)
+          # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
+          # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
+          # TODO investigate if above would be a drag on memory
 
       rescue CSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line)
@@ -249,12 +253,12 @@ module Csvlint
         schema_dialect = {}
       end
       @dialect = {
-        "header" => true,
-        "delimiter" => ",",
-        "skipInitialSpace" => true,
-        "lineTerminator" => :auto,
-        "quoteChar" => '"',
-        "trim" => :true
+          "header" => true,
+          "delimiter" => ",",
+          "skipInitialSpace" => true,
+          "lineTerminator" => :auto,
+          "quoteChar" => '"',
+          "trim" => :true
       }.merge(schema_dialect).merge(@dialect || {})
 
       @csv_header = @csv_header && @dialect["header"]
@@ -398,12 +402,12 @@ module Csvlint
       @source_url = nil
       warn_if_unsuccessful = false
       case @source
-      when StringIO
-        return
-      when File
-        @source_url = "file:#{File.expand_path(@source)}"
-      else
-        @source_url = @source
+        when StringIO
+          return
+        when File
+          @source_url = "file:#{File.expand_path(@source)}"
+        else
+          @source_url = @source
       end
       unless @schema.nil?
         if @schema.tables[@source_url]
@@ -421,7 +425,7 @@ module Csvlint
         begin
           well_known_uri = URI.join(@source_url, "/.well-known/csvm")
           well_known = open(well_known_uri).read
-          # TODO
+            # TODO
         rescue OpenURI::HTTPError, URI::BadURIError
         end
       end
@@ -496,7 +500,7 @@ module Csvlint
     end
 
     def line_limit_reached?
-       @limit_lines.present? && @current_line > @limit_lines
+      @limit_lines.present? && @current_line > @limit_lines
     end
 
     FORMATS = {
