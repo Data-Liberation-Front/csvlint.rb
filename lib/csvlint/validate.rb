@@ -193,7 +193,7 @@ module Csvlint
       end
       @header_processed = true
       build_info_messages(:assumed_header, :structure) if assumed_header
-      
+
       @link_headers = @headers["link"].split(",") rescue nil
       @link_headers.each do |link_header|
         match = LINK_HEADER_REGEXP.match(link_header)
@@ -443,7 +443,7 @@ module Csvlint
           end
         rescue Errno::ENOENT
         rescue OpenURI::HTTPError, URI::BadURIError
-        rescue=> e
+        rescue => e
           STDERR.puts e.class
           STDERR.puts e.message
           STDERR.puts e.backtrace
