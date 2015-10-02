@@ -192,7 +192,6 @@ module Csvlint
           assumed_header = false
         end
         build_warnings(:no_content_type, :context) if @content_type == nil
-        build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       end
       @header_processed = true
