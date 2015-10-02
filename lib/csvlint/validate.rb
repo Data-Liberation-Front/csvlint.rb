@@ -170,6 +170,7 @@ module Csvlint
       # return expected_columns to calling class
       build_warnings(:check_options, :structure) if @expected_columns == 1
       check_consistency
+      check_foreign_keys
       check_mixed_linebreaks
       validate_encoding
     end
