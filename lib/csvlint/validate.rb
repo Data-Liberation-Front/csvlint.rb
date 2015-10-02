@@ -193,6 +193,30 @@ module Csvlint
       end
       @header_processed = true
       build_info_messages(:assumed_header, :structure) if assumed_header
+      
+      @link_headers = @headers["link"].split(",") rescue nil
+      @link_headers.each do |link_header|
+        match = LINK_HEADER_REGEXP.match(link_header)
+        uri = match["uri"].gsub(/(^\<|\>$)/, "")
+        rel = match["rel-relationship"].gsub(/(^\"|\"$)/, "")
+        param = match["param"]
+        param_value = match["param-value"].gsub(/(^\"|\"$)/, "")
+        if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
+          begin
+            url = URI.join(@source_url, uri)
+            schema = Schema.load_from_json(url)
+            if schema.instance_of? Csvlint::Csvw::TableGroup
+              if schema.tables[@source_url]
+                link_schema = schema
+              else
+                warn_if_unsuccessful = true
+                build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
+              end
+            end
+          rescue OpenURI::HTTPError
+          end
+        end
+      end if @link_headers
     end
 
     def header?
@@ -370,7 +394,6 @@ module Csvlint
     end
 
     def locate_schema
-      @link_headers = @headers["link"].split(",") rescue nil
 
       @source_url = nil
       warn_if_unsuccessful = false
@@ -390,28 +413,7 @@ module Csvlint
         end
       end
       link_schema = nil
-      @link_headers.each do |link_header|
-        match = LINK_HEADER_REGEXP.match(link_header)
-        uri = match["uri"].gsub(/(^\<|\>$)/, "")
-        rel = match["rel-relationship"].gsub(/(^\"|\"$)/, "")
-        param = match["param"]
-        param_value = match["param-value"].gsub(/(^\"|\"$)/, "")
-        if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
-          begin
-            url = URI.join(@source_url, uri)
-            schema = Schema.load_from_json(url)
-            if schema.instance_of? Csvlint::Csvw::TableGroup
-              if schema.tables[@source_url]
-                link_schema = schema
-              else
-                warn_if_unsuccessful = true
-                build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
-              end
-            end
-          rescue OpenURI::HTTPError
-          end
-        end
-      end if @link_headers
+
       @schema = link_schema if link_schema
 
       paths = []
@@ -448,6 +450,8 @@ module Csvlint
           raise e
         end
       end
+      # require 'pry'
+      # binding.pry
       build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema) if warn_if_unsuccessful
       @schema = nil
     end
