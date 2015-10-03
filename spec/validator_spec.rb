@@ -381,7 +381,7 @@ describe Csvlint::Validator do
     it "should provide sensible defaults for CSV parsing" do
       validator = Csvlint::Validator.new("http://example.com/example.csv")
       opts = validator.instance_variable_get("@csv_options")
-      opts.should include({
+      expect(opts).to include({
                               :col_sep => ",",
                               :row_sep => :auto,
                               :quote_char => '"',
@@ -396,7 +396,7 @@ describe Csvlint::Validator do
                                                   "delimiter" => "\t",
                                                   "quoteChar" => "'"
                                               })
-      opts.should include({
+      expect(opts).to include({
                               :col_sep => "\t",
                               :row_sep => "\n",
                               :quote_char => "'",
