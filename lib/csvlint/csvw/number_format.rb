@@ -134,7 +134,7 @@ module Csvlint
                 fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{1,#{max_fraction_digits % @fractional_grouping_size}})?" if max_fraction_digits % @fractional_grouping_size > 0
               else
                 fractional_regexp += "([0-9]{#{@fractional_grouping_size}}#{Regexp.escape(@grouping_separator)}){0,#{(max_fraction_digits / @fractional_grouping_size) - 1}}" if max_fraction_digits > @fractional_grouping_size
-                fractional_regexp += "[0-9]{#{@fractional_grouping_size}}"
+                fractional_regexp += "[0-9]{1,#{@fractional_grouping_size}}"
               end
               fractional_regexp = "#{Regexp.escape(@decimal_separator)}#{fractional_regexp}"
               fractional_regexp = "(#{fractional_regexp})?" if min_fraction_digits == 0
