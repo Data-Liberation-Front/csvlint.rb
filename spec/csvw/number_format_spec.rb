@@ -300,6 +300,20 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.parse("12.345,67,8")).to eql(nil)
   end
 
+  it "should parse numbers that match 0.###,### correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("0.###,###")
+    expect(format.parse("1")).to eq(1)
+    expect(format.parse("12.3")).to eql(12.3)
+    expect(format.parse("12.34")).to eql(12.34)
+    expect(format.parse("12.345")).to eq(12.345)
+    expect(format.parse("12.3456")).to eql(nil)
+    expect(format.parse("12.345,6")).to eql(12.3456)
+    expect(format.parse("12.34,56")).to eql(nil)
+    expect(format.parse("12.345,67")).to eq(12.34567)
+    expect(format.parse("12.345,678")).to eql(12.345678)
+    expect(format.parse("12.345,67,8")).to eql(nil)
+  end
+
   it "should parse numbers that match 0.000,### correctly" do
     format = Csvlint::Csvw::NumberFormat.new("0.000,###")
     expect(format.parse("1")).to eq(nil)
