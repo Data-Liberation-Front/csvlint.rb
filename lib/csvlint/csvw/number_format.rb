@@ -50,8 +50,21 @@ module Csvlint
           else
             leading_regexp = "([0-9]{0,#{@secondary_grouping_size - 1}}#{Regexp.escape(@grouping_separator)})?"
             secondary_groups = "([0-9]{#{@secondary_grouping_size}}#{Regexp.escape(@grouping_separator)})*"
-            final_optional_digits = @primary_grouping_size - min_integer_digits > 0 ? "[0-9]{1,#{@primary_grouping_size - min_integer_digits}}" : ""
-            integer_regexp = "(#{leading_regexp}#{secondary_groups}#{final_optional_digits})?[0-9]{#{min_integer_digits}}"
+            if min_integer_digits > @primary_grouping_size
+              remaining_req_digits = min_integer_digits - @primary_grouping_size
+              req_secondary_groups = remaining_req_digits / @secondary_grouping_size > 0 ? "([0-9]{#{@secondary_grouping_size}}#{Regexp.escape(@grouping_separator)}){#{remaining_req_digits / @secondary_grouping_size}}" : ""
+              if remaining_req_digits % @secondary_grouping_size > 0
+                final_req_digits = "[0-9]{#{@secondary_grouping_size - (remaining_req_digits % @secondary_grouping_size)}}"
+                final_opt_digits = "[0-9]{0,#{@secondary_grouping_size - (remaining_req_digits % @secondary_grouping_size)}}"
+                integer_regexp = "((#{leading_regexp}#{secondary_groups}#{final_req_digits})|#{final_opt_digits})[0-9]{#{remaining_req_digits % @secondary_grouping_size}}#{Regexp.escape(@grouping_separator)}#{req_secondary_groups}[0-9]{#{@primary_grouping_size}}"
+              else
+                integer_regexp = "(#{leading_regexp}#{secondary_groups})?#{req_secondary_groups}[0-9]{#{@primary_grouping_size}}"
+              end
+            else
+              final_req_digits = @primary_grouping_size > min_integer_digits ? "[0-9]{#{@primary_grouping_size - min_integer_digits}}" : ""
+              final_opt_digits = @primary_grouping_size > min_integer_digits ? "[0-9]{0,#{@primary_grouping_size - min_integer_digits}}" : ""
+              integer_regexp = "((#{leading_regexp}#{secondary_groups}#{final_req_digits})|#{final_opt_digits})[0-9]{#{min_integer_digits}}"
+            end
           end
 
           numeric_part_regexp += integer_regexp
@@ -66,10 +79,63 @@ module Csvlint
               numeric_part_regexp += fractional_regexp
             else
               fractional_regexp = ""
-              fractional_regexp += "[0-9]{#{min_fraction_digits}}" if min_fraction_digits > 0
-              fractional_regexp += "[0-9]{0,#{@fractional_grouping_size - min_fraction_digits}}" unless min_fraction_digits == @fractional_grouping_size
-              fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{#{@fractional_grouping_size}}){0,#{max_fraction_digits / @fractional_grouping_size}}" if max_fraction_digits / @fractional_grouping_size > 0
-              fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{0,#{max_fraction_digits % @fractional_grouping_size}})?" if max_fraction_digits % @fractional_grouping_size > 0
+
+              if min_fraction_digits > 0
+                if min_fraction_digits >= @fractional_grouping_size
+                  # first group of required digits - something like "[0-9]{3}"
+                  fractional_regexp += "[0-9]{#{@fractional_grouping_size}}"
+                  # additional groups of required digits - something like "(,[0-9]{3}){1}"
+                  fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{#{@fractional_grouping_size}}){#{min_fraction_digits / @fractional_grouping_size - 1}}" if min_fraction_digits / @fractional_grouping_size > 1
+                  fractional_regexp += "#{Regexp.escape(@grouping_separator)}" if min_fraction_digits % @fractional_grouping_size > 0
+                end
+                # additional required digits - something like ",[0-9]{1}"
+                fractional_regexp += "[0-9]{#{min_fraction_digits % @fractional_grouping_size}}" if min_fraction_digits % @fractional_grouping_size > 0
+
+                opt_fractional_digits = max_fraction_digits - min_fraction_digits
+                if opt_fractional_digits > 0
+                  fractional_regexp += "("
+
+                  if min_fraction_digits % @fractional_grouping_size > 0
+                    # optional fractional digits to complete the group
+                    fractional_regexp += "[0-9]{0,#{[opt_fractional_digits, @fractional_grouping_size - (min_fraction_digits % @fractional_grouping_size)].min}}"
+                    fractional_regexp += "|"
+                    fractional_regexp += "[0-9]{#{[opt_fractional_digits, @fractional_grouping_size - (min_fraction_digits % @fractional_grouping_size)].min}}"
+                  else
+                    fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{1,#{@fractional_grouping_size}})?"
+                    fractional_regexp += "|"
+                    fractional_regexp += "#{Regexp.escape(@grouping_separator)}[0-9]{#{@fractional_grouping_size}}"
+                  end
+
+                  remaining_opt_fractional_digits = opt_fractional_digits - (@fractional_grouping_size - (min_fraction_digits % @fractional_grouping_size))
+                  if remaining_opt_fractional_digits > 0
+                    if remaining_opt_fractional_digits % @fractional_grouping_size > 0
+                      # optional fraction digits in groups
+                      fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{#{@fractional_grouping_size}}){0,#{remaining_opt_fractional_digits / @fractional_grouping_size}}" if remaining_opt_fractional_digits > @fractional_grouping_size
+                      # remaining optional fraction digits
+                      fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{1,#{remaining_opt_fractional_digits % @fractional_grouping_size}})?"
+                    else
+                      # optional fraction digits in groups
+                      fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{#{@fractional_grouping_size}}){0,#{(remaining_opt_fractional_digits / @fractional_grouping_size) - 1}}" if remaining_opt_fractional_digits > @fractional_grouping_size
+                      # remaining optional fraction digits
+                      fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{1,#{@fractional_grouping_size}})?"
+                    end
+
+                    # optional fraction digits in groups
+                    fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{#{@fractional_grouping_size}}){0,#{(remaining_opt_fractional_digits / @fractional_grouping_size) - 1}}" if remaining_opt_fractional_digits > @fractional_grouping_size
+                    # remaining optional fraction digits
+                    fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{1,#{remaining_opt_fractional_digits % @fractional_grouping_size}})?" if remaining_opt_fractional_digits % @fractional_grouping_size > 0
+                  end
+                  fractional_regexp += ")"
+                end
+              elsif max_fraction_digits % @fractional_grouping_size > 0
+                # optional fractional digits in groups
+                fractional_regexp += "([0-9]{#{@fractional_grouping_size}}#{Regexp.escape(@grouping_separator)}){0,#{max_fraction_digits / @fractional_grouping_size}}"
+                # remaining optional fraction digits
+                fractional_regexp += "(#{Regexp.escape(@grouping_separator)}[0-9]{1,#{max_fraction_digits % @fractional_grouping_size}})?" if max_fraction_digits % @fractional_grouping_size > 0
+              else
+                fractional_regexp += "([0-9]{#{@fractional_grouping_size}}#{Regexp.escape(@grouping_separator)}){0,#{(max_fraction_digits / @fractional_grouping_size) - 1}}" if max_fraction_digits > @fractional_grouping_size
+                fractional_regexp += "[0-9]{#{@fractional_grouping_size}}"
+              end
               fractional_regexp = "#{Regexp.escape(@decimal_separator)}#{fractional_regexp}"
               fractional_regexp = "(#{fractional_regexp})?" if min_fraction_digits == 0
               numeric_part_regexp += fractional_regexp
