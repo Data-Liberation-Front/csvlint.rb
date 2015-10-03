@@ -292,7 +292,7 @@ module Csvlint
       #TODO 1 - this is a change in logic, rather than straight refactor of previous error building, however original logic is bonkers
       #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
       type = fetch_error(csvException)
-      if !@csv_options[:row_sep].kind_of?(Symbol) && type == :unclosed_quote && !@input.match(@csv_options[:row_sep])
+      if !@csv_options[:row_sep].kind_of?(Symbol) && [:unclosed_quote,:stray_quote].include?(type) && !@input.match(@csv_options[:row_sep])
         build_linebreak_error
       else
         build_errors(type, :structure, lineNo, nil, errChars)
