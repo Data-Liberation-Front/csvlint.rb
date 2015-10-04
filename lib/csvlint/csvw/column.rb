@@ -58,12 +58,14 @@ module Csvlint
           datatype: inherited_properties["datatype"] || { "@id" => "http://www.w3.org/2001/XMLSchema#string" },
           lang: inherited_properties["lang"] || "und",
           null: inherited_properties["null"] || [""],
+          default: inherited_properties["default"] || "",
           about_url: inherited_properties["aboutUrl"],
           property_url: inherited_properties["propertyUrl"],
           value_url: inherited_properties["valueUrl"],
           required: inherited_properties["required"] || false,
           separator: inherited_properties["separator"],
           titles: column_properties["titles"],
+          suppress_output: column_properties["suppressOutput"] ? column_properties["suppressOutput"] : false,
           virtual: column_properties["virtual"] || false,
           annotations: annotations,
           warnings: warnings
@@ -92,6 +94,7 @@ module Csvlint
       end
 
       def parse(string_value, row=nil)
+        string_value = @default if string_value == ""
         return nil if null.include? string_value
         string_values = @separator.nil? ? [string_value] : string_value.split(@separator)
         values = []
@@ -212,6 +215,7 @@ module Csvlint
           "http://www.w3.org/2001/XMLSchema#time" => NO_ADDITIONAL_VALIDATION
         }
 
+        TRIM_VALUE = lambda { |value, format| return value.strip, nil }
         ALL_VALUES_VALID = lambda { |value, format| return value, nil }
 
         NUMERIC_PARSER = lambda { |value, format|
@@ -222,12 +226,12 @@ module Csvlint
         }
 
         DATATYPE_PARSER = {
-          "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral" => ALL_VALUES_VALID,
-          "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML" => ALL_VALUES_VALID,
-          "http://www.w3.org/ns/csvw#JSON" => ALL_VALUES_VALID,
+          "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral" => TRIM_VALUE,
+          "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML" => TRIM_VALUE,
+          "http://www.w3.org/ns/csvw#JSON" => TRIM_VALUE,
           "http://www.w3.org/2001/XMLSchema#anyAtomicType" => ALL_VALUES_VALID,
-          "http://www.w3.org/2001/XMLSchema#anyURI" => ALL_VALUES_VALID,
-          "http://www.w3.org/2001/XMLSchema#base64Binary" => ALL_VALUES_VALID,
+          "http://www.w3.org/2001/XMLSchema#anyURI" => TRIM_VALUE,
+          "http://www.w3.org/2001/XMLSchema#base64Binary" => TRIM_VALUE,
           "http://www.w3.org/2001/XMLSchema#boolean" => lambda { |value, format|
             if format.nil?
               return true, nil if ["true", "1"].include? value
@@ -345,14 +349,14 @@ module Csvlint
             create_date_parser("http://www.w3.org/2001/XMLSchema#gYear", :invalid_gYear),
           "http://www.w3.org/2001/XMLSchema#gYearMonth" =>
             create_date_parser("http://www.w3.org/2001/XMLSchema#gYearMonth", :invalid_gYearMonth),
-          "http://www.w3.org/2001/XMLSchema#hexBinary" => ALL_VALUES_VALID,
-          "http://www.w3.org/2001/XMLSchema#QName" => ALL_VALUES_VALID,
+          "http://www.w3.org/2001/XMLSchema#hexBinary" => TRIM_VALUE,
+          "http://www.w3.org/2001/XMLSchema#QName" => TRIM_VALUE,
           "http://www.w3.org/2001/XMLSchema#string" => ALL_VALUES_VALID,
-          "http://www.w3.org/2001/XMLSchema#normalizedString" => ALL_VALUES_VALID,
-          "http://www.w3.org/2001/XMLSchema#token" => ALL_VALUES_VALID,
-          "http://www.w3.org/2001/XMLSchema#language" => ALL_VALUES_VALID,
-          "http://www.w3.org/2001/XMLSchema#Name" => ALL_VALUES_VALID,
-          "http://www.w3.org/2001/XMLSchema#NMTOKEN" => ALL_VALUES_VALID,
+          "http://www.w3.org/2001/XMLSchema#normalizedString" => TRIM_VALUE,
+          "http://www.w3.org/2001/XMLSchema#token" => TRIM_VALUE,
+          "http://www.w3.org/2001/XMLSchema#language" => TRIM_VALUE,
+          "http://www.w3.org/2001/XMLSchema#Name" => TRIM_VALUE,
+          "http://www.w3.org/2001/XMLSchema#NMTOKEN" => TRIM_VALUE,
           "http://www.w3.org/2001/XMLSchema#time" =>
             create_date_parser("http://www.w3.org/2001/XMLSchema#time", :invalid_time)
         }

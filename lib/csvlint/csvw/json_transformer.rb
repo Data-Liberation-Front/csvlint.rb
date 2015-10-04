@@ -62,9 +62,11 @@ module Csvlint
             end
           else
             table = v.schema.tables[@source]
+            @result["tables"][-1]["@id"] = table.id.to_s if table.id
             table.annotations.each do |a,v|
               @result["tables"][-1][a] = JSONTransformer.transform_annotation(v)
             end
+            @result["tables"][-1]["notes"] = JSONTransformer.transform_annotation(table.notes) unless table.notes.empty?
             if table.columns.empty?
               v.data[0].each_with_index do |h,i|
                 @columns.push Csvlint::Csvw::Column.new(i+1, "_col.#{i+1}")
@@ -81,16 +83,13 @@ module Csvlint
           @columns.each_with_index do |column,i|
             unless data[i].nil?
               base_type = column.datatype["base"] || column.datatype["@id"]
-              if NUMERIC_DATATYPES.include? base_type
-                v = data[i]
-              elsif base_type == "http://www.w3.org/2001/XMLSchema#boolean"
-                v = data[i] 
-              elsif base_type == "http://www.w3.org/2001/XMLSchema#dateTime"
-                v = data[i].to_s.sub!(/\+00:00$/, "")
-              elsif base_type == "http://www.w3.org/2001/XMLSchema#gYear"
-                v = data[i]["year"].to_s
+              if data[i].is_a? Array
+                v = []
+                data[i].each do |d|
+                  v << JSONTransformer.value_to_json(d, base_type)
+                end
               else
-                v = data[i].to_s
+                v = JSONTransformer.value_to_json(data[i], base_type)
               end
               values[column.name] = v
             end
@@ -102,33 +101,35 @@ module Csvlint
           value_urls_appearing_once = []
           value_urls_appearing_many_times = []
           @columns.each_with_index do |column,i|
-            values["_column"] = i
-            values["_sourceColumn"] = i
-            values["_name"] = column.name
+            unless column.suppress_output
+              values["_column"] = i
+              values["_sourceColumn"] = i
+              values["_name"] = column.name
 
-            object_id = column.about_url ? URI.join(@source, column.about_url.expand(values)).to_s : nil
-            if objects[object_id].nil?
-              objects[object_id] = {}
-              objects[object_id]["@id"] = object_id unless object_id.nil?
-            end
-
-            property = property(column, values)
-
-            if column.value_url
-              value = URI.join(@source, column.value_url.expand(values))
-              unless value_urls_appearing_many_times.include? value.to_s
-                if value_urls_appearing_once.include? value.to_s
-                  value_urls_appearing_many_times.push(value.to_s)
-                  value_urls_appearing_once.delete(value.to_s)
-                else
-                  value_urls_appearing_once.push(value.to_s)
-                end
+              object_id = column.about_url ? URI.join(@source, column.about_url.expand(values)).to_s : nil
+              if objects[object_id].nil?
+                objects[object_id] = {}
+                objects[object_id]["@id"] = object_id unless object_id.nil?
               end
-            else
-              value = values[column.name]
-            end
 
-            objects[object_id][property] = value unless value.nil?
+              property = property(column, values)
+
+              if column.value_url
+                value = (values[column.name].nil? && !column.virtual) ? nil : URI.join(@source, column.value_url.expand(values))
+                unless value.nil? || value_urls_appearing_many_times.include?(value.to_s)
+                  if value_urls_appearing_once.include? value.to_s
+                    value_urls_appearing_many_times.push(value.to_s)
+                    value_urls_appearing_once.delete(value.to_s)
+                  else
+                    value_urls_appearing_once.push(value.to_s)
+                  end
+                end
+              else
+                value = values[column.name]
+              end
+
+              objects[object_id][property] = value unless value.nil?
+            end
           end
 
           return nest(objects, value_urls_appearing_once, value_urls_appearing_many_times)
@@ -183,11 +184,26 @@ module Csvlint
           return object
         end
 
+        def JSONTransformer.value_to_json(value, base_type)
+          if NUMERIC_DATATYPES.include? base_type
+            return value
+          elsif base_type == "http://www.w3.org/2001/XMLSchema#boolean"
+            return value
+          elsif base_type == "http://www.w3.org/2001/XMLSchema#dateTime"
+            return value.to_s.sub!(/\+00:00$/, "")
+          elsif base_type == "http://www.w3.org/2001/XMLSchema#gYear"
+            return value["year"].to_s
+          else
+            return value.to_s
+          end
+        end
+
         def JSONTransformer.transform_annotation(value)
-          if value.instance_of? Hash
+          case value
+          when Hash
             if value["@id"]
               return value["@id"].to_s
-            elsif value["@type"]
+            elsif value["@value"]
               return value["@value"]
             else
               result = {}
@@ -196,6 +212,12 @@ module Csvlint
               end
               return result
             end
+          when Array
+            result = []
+            value.each do |v|
+              result << transform_annotation(v)
+            end
+            return result
           else
             return value
           end 
