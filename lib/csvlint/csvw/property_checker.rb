@@ -114,6 +114,13 @@ module Csvlint
             }
           end
 
+          def uri_template_property(type)
+            return lambda { |value, base_url, lang|
+              return URITemplate.new(value), nil, type if value.instance_of? String
+              return "", :invalid_value, type
+            }
+          end
+
           def numeric_property(type)
             return lambda { |value, base_url, lang|
               return value, nil, type if value.kind_of?(Integer) && value >= 0
@@ -194,6 +201,31 @@ module Csvlint
           "@id" => link_property(:common),
           "notes" => array_property(:common),
           "suppressOutput" => boolean_property(:common),
+          "dialect" => lambda { |value, base_url, lang|
+            if value.instance_of? Hash
+              value = value.clone
+              warnings = []
+              value.each do |p,v|
+                if p == "@id"
+                  raise Csvlint::Csvw::MetadataError.new("dialect.@id"), "@id starts with _:" if v =~ /^_:/
+                elsif p == "@type"
+                  raise Csvlint::Csvw::MetadataError.new("dialect.@type"), "@type of dialect is not 'Dialect'" if v != 'Dialect'
+                else
+                  v, warning, type = check_property(p, v, base_url, lang)
+                  if type == :dialect && (warning.nil? || warning.empty?)
+                    value[p] = v
+                  else
+                    value.delete(p)
+                    warnings << :invalid_property unless type == :dialect
+                    warnings += Array(warning)
+                  end
+                end
+              end
+              return value, warnings, :common
+            else
+              return {}, :invalid_value, :common
+            end
+          },
           # inherited properties
           "null" => lambda { |value, base_url, lang|
             case value
@@ -326,9 +358,9 @@ module Csvlint
           },
           "required" => boolean_property(:inherited),
           "ordered" => boolean_property(:inherited),
-          "aboutUrl" => string_property(:inherited),
-          "propertyUrl" => string_property(:inherited),
-          "valueUrl" => string_property(:inherited),
+          "aboutUrl" => uri_template_property(:inherited),
+          "propertyUrl" => uri_template_property(:inherited),
+          "valueUrl" => uri_template_property(:inherited),
           "textDirection" => lambda { |value, base_url, lang|
             value = value.to_sym
             return value, nil, :inherited if [:ltr, :rtl, :auto, :inherit].include? value
@@ -421,31 +453,6 @@ module Csvlint
             return schema, warnings, :table
           },
           "url" => link_property(:table),
-          "dialect" => lambda { |value, base_url, lang|
-            if value.instance_of? Hash
-              value = value.clone
-              warnings = []
-              value.each do |p,v|
-                if p == "@id"
-                  raise Csvlint::Csvw::MetadataError.new("dialect.@id"), "@id starts with _:" if v =~ /^_:/
-                elsif p == "@type"
-                  raise Csvlint::Csvw::MetadataError.new("dialect.@type"), "@type of dialect is not 'Dialect'" if v != 'Dialect'
-                else
-                  v, warning, type = check_property(p, v, base_url, lang)
-                  if type == :dialect && (warning.nil? || warning.empty?)
-                    value[p] = v
-                  else
-                    value.delete(p)
-                    warnings << :invalid_property unless type == :dialect
-                    warnings += Array(warning)
-                  end
-                end
-              end
-              return value, warnings, :table
-            else
-              return {}, :invalid_value, :table
-            end
-          },
           # dialect properties
           "commentPrefix" => string_property(:dialect),
           "delimiter" => string_property(:dialect),

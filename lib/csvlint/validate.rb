@@ -141,7 +141,6 @@ module Csvlint
         build_exception_messages(e, stream, current_line)
       end
 
-      @data << row
       if row
         if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
@@ -164,6 +163,7 @@ module Csvlint
           end
         end
       end
+      @data << row
     end
 
     def finish
@@ -204,13 +204,14 @@ module Csvlint
         rel = match["rel-relationship"].gsub(/(^\"|\"$)/, "")
         param = match["param"]
         param_value = match["param-value"].gsub(/(^\"|\"$)/, "")
+
         if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
           begin
             url = URI.join(@source_url, uri)
             schema = Schema.load_from_json(url)
             if schema.instance_of? Csvlint::Csvw::TableGroup
               if schema.tables[@source_url]
-                link_schema = schema
+                @schema = schema
               else
                 warn_if_unsuccessful = true
                 build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
@@ -253,6 +254,7 @@ module Csvlint
       end
       @dialect = {
           "header" => true,
+          "headerRowCount" => 1,
           "delimiter" => ",",
           "skipInitialSpace" => true,
           "lineTerminator" => :auto,
@@ -415,9 +417,6 @@ module Csvlint
           @schema = nil
         end
       end
-      link_schema = nil
-
-      @schema = link_schema if link_schema
 
       paths = []
       if @source_url =~ /^http(s)?/
@@ -439,6 +438,7 @@ module Csvlint
           if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
               @schema = schema
+              return
             else
               warn_if_unsuccessful = true
               build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
