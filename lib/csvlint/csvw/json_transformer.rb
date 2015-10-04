@@ -4,7 +4,7 @@ module Csvlint
 
       include Csvlint::ErrorCollector
 
-      attr_reader :result, :minimal
+      attr_reader :result, :minimal, :validate
 
       def initialize(source, dialect = {}, schema = nil, options = {})
         reset
@@ -13,23 +13,24 @@ module Csvlint
           "tables" => []
         }
         @minimal = options[:minimal] || false
+        @validate = options[:validate] || false
 
         if schema.nil?
           @result["tables"].push({ "url" => @source })
           @rownum = 0
           @columns = []
 
-          @validator = Csvlint::Validator.new( @source, dialect, schema, { :lambda => lambda { |v| transform(v) } } )
+          @validator = Csvlint::Validator.new( @source, dialect, schema, { :validate => @validate, :lambda => lambda { |v| transform(v) } } )
           @errors += @validator.errors
           @warnings += @validator.warnings
         else
-          schema.tables.keys.each do |table_url|
+          schema.tables.each do |table_url, table|
             @source = table_url
-            @result["tables"].push({ "url" => @source })
+            @result["tables"].push({ "url" => @source }) unless table.suppress_output
             @rownum = 0
             @columns = []
 
-            @validator = Csvlint::Validator.new( @source, dialect, schema, { :lambda => lambda { |v| transform(v) } } )
+            @validator = Csvlint::Validator.new( @source, dialect, schema, { :validate => @validate, :lambda => table.suppress_output ? lambda { |a| nil } : lambda { |v| transform(v) } } )
             @errors += @validator.errors
             @warnings += @validator.warnings
           end
@@ -115,8 +116,8 @@ module Csvlint
             property = property(column, values)
 
             if column.value_url
-              value = URI.join(@source, column.value_url.expand(values))
-              unless value_urls_appearing_many_times.include? value.to_s
+              value = (values[column.name].nil? && !column.virtual) ? nil : URI.join(@source, column.value_url.expand(values))
+              unless value.nil? || value_urls_appearing_many_times.include?(value.to_s)
                 if value_urls_appearing_once.include? value.to_s
                   value_urls_appearing_many_times.push(value.to_s)
                   value_urls_appearing_once.delete(value.to_s)

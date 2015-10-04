@@ -88,7 +88,7 @@ module Csvlint
           validate_value(value, row)
         end unless values.nil?
         validate_required(values, row) if values.nil?
-        return @separator.nil? ? values[0] : values
+        return values && @separator.nil? ? values[0] : values
       end
 
       def parse(string_value, row=nil)

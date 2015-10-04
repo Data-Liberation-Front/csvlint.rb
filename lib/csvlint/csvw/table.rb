@@ -202,6 +202,7 @@ module Csvlint
           notes: notes,
           primary_key: primary_key_valid && !primary_key_columns.empty? ? primary_key_columns : nil,
           schema: table_schema ? table_schema["@id"] : nil,
+          suppress_output: table_properties["suppressOutput"] ? table_properties["suppressOutput"] : false,
           annotations: annotations,
           warnings: warnings
         )
