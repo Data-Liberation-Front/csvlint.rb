@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "open_uri_redirections"
   spec.add_dependency "activesupport"
   spec.add_dependency "addressable"
+  spec.add_dependency "typhoeus"
   spec.add_dependency "escape_utils"
   spec.add_dependency "uri_template"
 

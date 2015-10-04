@@ -128,7 +128,6 @@ The following types of error can be reported:
 * `:unclosed_quote` -- unclosed quoted field
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
-* `:undeclared_header` -- if there is no machine-readable description of whether a header is present (e.g. in a dialect or `Content-Type` header)
 
 ## Warnings
 
@@ -153,8 +152,9 @@ There are also information messages available:
 
 ## Schema Validation
 
-The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON. The structure currently
-follows JSON Table Schema with some extensions and rudinmentary [CSV on the Web Metadata](http://www.w3.org/TR/tabular-metadata/).
+The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON.
+
+The structure currently follows JSON Table Schema with some extensions and rudimentary [CSV on the Web Metadata](http://www.w3.org/TR/tabular-metadata/).
 
 An example JSON Table Schema schema file is:
 
@@ -270,6 +270,22 @@ options = {
 }
 validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
 ```
+
+* :lambda -- Pass a block of code to be called when each line is validated, this will give you access to the `Validator` object. For example, this will return the current line number for every line validated:
+
+```
+options = {
+  lambda: ->(validator) { puts validator.current_line }
+}
+validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+=> 1
+2
+3
+4
+.....
+```
+
+
 
 ## Contributing
 

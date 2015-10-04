@@ -17,7 +17,7 @@ module Csvlint
     def validate_column(value, row=nil, column=nil, all_errors=[])
       reset
       unless all_errors.any?{|error| ((error.type == :invalid_regex) && (error.column == column))}
-        validate_regex(value, row, column)
+        validate_regex(value, row, column, all_errors)
       end
       validate_length(value, row, column)
       validate_values(value, row, column)
@@ -42,7 +42,7 @@ module Csvlint
         end
       end
 
-      def validate_regex(value, row, column)
+      def validate_regex(value, row, column, all_errors)
         pattern = constraints["pattern"]
         if pattern
           begin
@@ -50,10 +50,16 @@ module Csvlint
             build_errors(:pattern, :schema, row, column, value,
             { "pattern" => constraints["pattern"] } ) if !value.nil? && !value.match( constraints["pattern"] )
           rescue RegexpError
-            build_errors(:invalid_regex, :schema, nil, column, ("#{name}: Constraints: Pattern: #{pattern}"),
-              { "pattern" => constraints["pattern"] })
+            build_regex_error(value, row, column, pattern, all_errors)
           end
         end
+      end
+
+      def build_regex_error(value, row, column, pattern, all_errors)
+        return if @regex_error_exists
+        build_errors(:invalid_regex, :schema, nil, column, ("#{name}: Constraints: Pattern: #{pattern}"),
+          { "pattern" => constraints["pattern"] })
+        @regex_error_exists = true
       end
 
       def validate_values(value, row, column)

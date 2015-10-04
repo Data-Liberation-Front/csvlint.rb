@@ -58,12 +58,22 @@ def print_error(index, error, dump, color)
 end
 
 def validate_csv(source, schema, dump)
-  validator = Csvlint::Validator.new( source, nil, schema )
+  @error_count = 0
+  report_lines = lambda do |row|
+    new_errors = row.errors.count
+    if new_errors > @error_count
+      print "!".red
+    else
+      print ".".green
+    end
+    @error_count = new_errors
+  end
+  validator = Csvlint::Validator.new( source, {}, schema, { lambda: report_lines } )
 
   if $stdout.tty?
-    puts "#{source.path || source || "CSV"} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+    puts "\r\n#{source.path || source || "CSV"} is #{validator.valid? ? "VALID".green : "INVALID".red}"
   else
-    puts "#{source.path || source || "CSV"} is #{validator.valid? ? "VALID" : "INVALID"}"
+    puts "\r\n#{source.path || source || "CSV"} is #{validator.valid? ? "VALID" : "INVALID"}"
   end
 
   if validator.errors.size > 0
