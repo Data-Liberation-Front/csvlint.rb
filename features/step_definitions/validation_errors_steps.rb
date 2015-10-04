@@ -53,7 +53,6 @@ Then(/^there should be errors$/) do
 end
 
 Then(/^there should not be errors$/) do
-  STDERR.puts(@errors.inspect)
   expect( @errors.count ).to eq(0)
 end
 

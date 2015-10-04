@@ -30,3 +30,6 @@ env:
   global:
   - secure: hM8Pv/EAZoB4fGGEUwKQQ/2+mgKbUac+PH2cwud25l2MJ64eoKEMZzfy4TF6+XMIzXhlWpsg4s51y6K3+W8pUyRAuwo2MsN5Iee7HnLz+LlYTiT0//iQdAmxQ0JlOyh8vd2SEFBcVfwpp/iZFIHAfbBO73ZDXhtGMEieMk025I0=
   - secure: hsKbZ0kVKVU/e8oVCPJpRmBxbbieN2tVbyjdhJo/UYchcyLWeGAmAj/ApUDL4SyR0HZxpfi+SIsGFNRy5LnrFeCFgY9aZ6u9ma4n0Y2cTElMRt5kvI/c28FehsRjCzAe6W8dxwhJ8wSkvFDNpLml47/iy8bw4a7aUZDdq3OYXck=
+branches:
+  except:
+    - feature-csvw-transformation

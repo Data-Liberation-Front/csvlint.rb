@@ -80,11 +80,13 @@ module Csvlint
           values = {}
           @columns.each_with_index do |column,i|
             unless data[i].nil?
-              base_type = column.datatype["@base"] || column.datatype["@id"]
+              base_type = column.datatype["base"] || column.datatype["@id"]
               if NUMERIC_DATATYPES.include? base_type
                 v = data[i]
               elsif base_type == "http://www.w3.org/2001/XMLSchema#boolean"
                 v = data[i] 
+              elsif base_type == "http://www.w3.org/2001/XMLSchema#dateTime"
+                v = data[i].to_s.sub!(/\+00:00$/, "")
               elsif base_type == "http://www.w3.org/2001/XMLSchema#gYear"
                 v = data[i]["year"].to_s
               else
@@ -97,6 +99,8 @@ module Csvlint
           values["_sourceRow"] = sourceRow
 
           objects = {}
+          value_urls_appearing_once = []
+          value_urls_appearing_many_times = []
           @columns.each_with_index do |column,i|
             values["_column"] = i
             values["_sourceColumn"] = i
@@ -109,11 +113,25 @@ module Csvlint
             end
 
             property = property(column, values)
-            value = column.value_url ? URI.join(@source, column.value_url.expand(values)).to_s : values[column.name]
+
+            if column.value_url
+              value = URI.join(@source, column.value_url.expand(values))
+              unless value_urls_appearing_many_times.include? value.to_s
+                if value_urls_appearing_once.include? value.to_s
+                  value_urls_appearing_many_times.push(value.to_s)
+                  value_urls_appearing_once.delete(value.to_s)
+                else
+                  value_urls_appearing_once.push(value.to_s)
+                end
+              end
+            else
+              value = values[column.name]
+            end
+
             objects[object_id][property] = value unless value.nil?
           end
 
-          return objects.values
+          return nest(objects, value_urls_appearing_once, value_urls_appearing_many_times)
         end
 
         def property(column, values)
@@ -123,10 +141,46 @@ module Csvlint
               url.gsub!(Regexp.new("^#{Regexp.escape(ns)}$"), "#{prefix}")
               url.gsub!(Regexp.new("^#{Regexp.escape(ns)}"), "#{prefix}:")
             end
+            url = "@type" if url == "rdf:type"
             return url
           else
             return column.name
           end
+        end
+
+        def nest(objects, value_urls_appearing_once, value_urls_appearing_many_times)
+          root_objects = []
+          root_object_urls = []
+          first_object_url = nil
+          objects.each do |url,object|
+            first_object_url = url if first_object_url.nil?
+            if value_urls_appearing_many_times.include? url
+              root_object_urls << url
+            elsif !(value_urls_appearing_once.include? url)
+              root_object_urls << url
+            end
+          end
+          root_object_urls << first_object_url if root_object_urls.empty?
+
+          root_object_urls.each do |url|
+            root_objects << nest_recursively(objects[url], root_object_urls, objects)
+          end
+          return root_objects
+        end
+
+        def nest_recursively(object, root_object_urls, objects)
+          object.each do |prop,value|
+            if value.is_a? URI
+              if root_object_urls.include?(value.to_s) || objects[value.to_s].nil?
+                object[prop] = value.to_s
+              else
+                object[prop] = nest_recursively(objects[value.to_s], root_object_urls, objects)
+              end
+            elsif value.is_a? Hash
+              object[prop] = nest_recursively(value, root_object_urls, objects)
+            end
+          end
+          return object
         end
 
         def JSONTransformer.transform_annotation(value)
