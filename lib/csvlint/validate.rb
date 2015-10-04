@@ -33,6 +33,10 @@ module Csvlint
       single_col = false
       io = nil
       begin
+        if @extension =~ /.xls(x)?/
+          build_warnings(:excel, :context)
+          return
+        end
         io = @source.respond_to?(:gets) ? @source : open(@source, :allow_redirections=>:all)
         validate_metadata(io)
         locate_schema unless @schema.instance_of?(Csvlint::Schema)
@@ -77,7 +81,6 @@ module Csvlint
           build_warnings(:encoding, :context) if @encoding != "utf-8"
         end
         build_warnings(:no_content_type, :context) if @content_type == nil
-        build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
 
         if undeclared_header
@@ -266,7 +269,7 @@ module Csvlint
     end
 
     def check_foreign_keys
-      if @schema.instance_of? Csvlint::CsvwTableGroup
+      if @schema.instance_of? Csvlint::Csvw::TableGroup
         @schema.validate_foreign_keys
         @errors += @schema.errors
         @warnings += @schema.warnings
@@ -302,19 +305,19 @@ module Csvlint
           begin
             url = URI.join(@source_url, uri)
             schema = Schema.load_from_json(url)
-            if schema.instance_of? Csvlint::CsvwTableGroup
+            if schema.instance_of? Csvlint::Csvw::TableGroup
               if schema.tables[@source_url]
                 link_schema = schema
               else
                 warn_if_unsuccessful = true
-              #   build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
+                build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
               end
             end
-          rescue OpenURI::HTTPError          
+          rescue OpenURI::HTTPError
           end
         end
       end if @link_headers
-      return @schema = link_schema if link_schema
+      @schema = link_schema if link_schema
 
       paths = []
       if @source_url =~ /^http(s)?/
@@ -333,17 +336,17 @@ module Csvlint
           url = URI.join(@source_url, path)
           url = File.new(url.to_s.sub(/^file:/, "")) if url.to_s =~ /^file:/
           schema = Schema.load_from_json(url)
-          if schema.instance_of? Csvlint::CsvwTableGroup
+          if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
-              return @schema = schema
+              @schema = schema
             else
               warn_if_unsuccessful = true
-            #   build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
+              build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
             end
           end
         rescue Errno::ENOENT
         rescue OpenURI::HTTPError
-        rescue=> e
+        rescue => e
           STDERR.puts e.class
           STDERR.puts e.message
           STDERR.puts e.backtrace
@@ -351,7 +354,7 @@ module Csvlint
         end
       end
       build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema) if warn_if_unsuccessful
-      return @schema = nil
+      @schema = nil
     end
 
     private

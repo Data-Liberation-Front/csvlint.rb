@@ -1,59 +1,8 @@
 require 'spec_helper'
 
-describe Csvlint::CsvwTableGroup do
+describe Csvlint::Csvw::Table do
 
-  it "should inherit null to all columns" do
-    @metadata=<<-EOL
-{
-  "@context": "http://www.w3.org/ns/csvw",
-  "null": true,
-  "tables": [{
-    "url": "test040.csv",
-    "tableSchema": {
-      "columns": [{
-        "titles": "null"
-      }, {
-        "titles": "lang"
-      }, {
-        "titles": "textDirection"
-      }, {
-        "titles": "separator"
-      }, {
-        "titles": "ordered"
-      }, {
-        "titles": "default"
-      }, {
-        "titles": "datatype"
-      }, {
-        "titles": "aboutUrl"
-      }, {
-        "titles": "propertyUrl"
-      }, {
-        "titles": "valueUrl"
-      }]
-    }
-  }]
-}
-    EOL
-    json = JSON.parse( @metadata )
-    table_group = Csvlint::CsvwTableGroup.from_json("http://w3c.github.io/csvw/tests/test040-metadata.json", json)
-
-    expect(table_group.class).to eq(Csvlint::CsvwTableGroup)
-    expect(table_group.annotations.length).to eq(0)
-    expect(table_group.warnings.length).to eq(1)
-    expect(table_group.warnings[0].type).to eq(:invalid_value)
-    expect(table_group.warnings[0].category).to eq(:metadata)
-    expect(table_group.warnings[0].content).to eq("null: true")
-
-    expect(table_group.tables.length).to eq(1)
-    expect(table_group.tables["http://w3c.github.io/csvw/tests/test040.csv"]).to be_a(Csvlint::CsvwTable)
-
-    table = table_group.tables["http://w3c.github.io/csvw/tests/test040.csv"]
-    expect(table.columns.length).to eq(10)
-    expect(table.columns[0].null).to eq([""])
-  end
-
-  context "when parsing CSVW table group metadata" do
+  context "when parsing CSVW table metadata" do
 
     before(:each) do
       @metadata=<<-EOL
@@ -128,16 +77,14 @@ AF,1962,9989846
       stub_request(:get, "http://w3c.github.io/csvw/tests/country_slice.csv").to_return(:status => 200, :body => @country_slice)
     end
 
-    it "should create a table group from pre-parsed CSVW metadata" do
+    it "should create a table from pre-parsed CSVW metadata" do
       json = JSON.parse( @metadata )
-      table_group = Csvlint::CsvwTableGroup.from_json("http://w3c.github.io/csvw/tests/countries.json", json)
+      table = Csvlint::Csvw::Table.from_json(json["tables"][0], "http://w3c.github.io/csvw/tests/countries.json")
 
-      expect(table_group.class).to eq(Csvlint::CsvwTableGroup)
-      expect(table_group.id).to eq(nil)
-      expect(table_group.tables.length).to eq(2)
-      expect(table_group.tables["http://w3c.github.io/csvw/tests/countries.csv"]).to be_a(Csvlint::CsvwTable)
-      expect(table_group.notes.length).to eq(0)
-      expect(table_group.annotations.length).to eq(0)
+      expect(table).to be_a(Csvlint::Csvw::Table)
+      expect(table.url.to_s).to eq("http://w3c.github.io/csvw/tests/countries.csv")
+      expect(table.columns.length).to eq(4)
+      expect(table.columns[0]).to be_a(Csvlint::Csvw::Column)
     end
   end
 end
