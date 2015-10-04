@@ -23,5 +23,6 @@ require 'csvlint/csvw/property_checker'
 require 'csvlint/csvw/column'
 require 'csvlint/csvw/table'
 require 'csvlint/csvw/table_group'
+require 'csvlint/csvw/json_transformer'
 
 require 'csvlint/schema'

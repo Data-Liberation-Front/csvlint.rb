@@ -48,7 +48,8 @@ module Csvlint
         values.each_with_index do |value,i|
           column = columns[i]
           if column
-            column.validate(value, row)
+            v = column.validate(value, row)
+            values[i] = v
             @errors += column.errors
             @warnings += column.warnings
           else
@@ -107,12 +108,12 @@ module Csvlint
         return valid?
       end
 
-      def self.from_json(table_desc, base_url=nil, lang="und", inherited_properties={})
+      def self.from_json(table_desc, base_url=nil, lang="und", common_properties={}, inherited_properties={})
         annotations = {}
         warnings = []
-        table_properties = {}
         columns = []
         notes = []
+        table_properties = common_properties.clone
         inherited_properties = inherited_properties.clone
 
         table_desc.each do |property,value|
@@ -141,6 +142,13 @@ module Csvlint
         primary_key = nil
         if table_schema
           raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.columns"), "schema columns is not an array" unless table_schema["columns"].instance_of? Array
+
+          table_schema.each do |p,v|
+            unless ["columns", "primaryKey", "foreignKeys", "rowTitles"].include? p
+              inherited_properties[p] = v
+            end
+          end
+
           virtual_columns = false
           table_schema["columns"].each_with_index do |column_desc,i|
             if column_desc.instance_of? Hash

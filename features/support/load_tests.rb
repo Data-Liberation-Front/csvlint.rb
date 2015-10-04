@@ -2,7 +2,7 @@ require 'json'
 require 'open-uri'
 require 'uri'
 
-BASE_URI = "http://w3c.github.io/csvw/tests/"
+BASE_URI = "http://www.w3.org/2013/csvw/tests/"
 BASE_PATH = File.join(File.dirname(__FILE__), "..", "fixtures", "csvw")
 FEATURE_BASE_PATH = File.join(File.dirname(__FILE__), "..")
 VALIDATION_FEATURE_FILE_PATH = File.join(FEATURE_BASE_PATH, "csvw_validation_tests.feature")
@@ -32,7 +32,7 @@ end
 
 File.open(SCRIPT_FILE_PATH, 'w') do |file|
 	File.chmod(0755, SCRIPT_FILE_PATH)
-	manifest = JSON.parse( open("http://w3c.github.io/csvw/tests/manifest-validation.jsonld").read )
+	manifest = JSON.parse( open("http://www.w3.org/2013/csvw/tests/manifest-validation.jsonld").read )
 	manifest["entries"].each do |entry|
 		type = "valid"
 		case entry["type"] 
@@ -55,10 +55,10 @@ File.open(SCRIPT_FILE_PATH, 'w') do |file|
 end unless File.exist? SCRIPT_FILE_PATH
 
 File.open(VALIDATION_FEATURE_FILE_PATH, 'w') do |file|
-	file.puts "# Auto-generated file based on standard validation CSVW tests from http://w3c.github.io/csvw/tests/manifest-validation.jsonld"
+	file.puts "# Auto-generated file based on standard validation CSVW tests from http://www.w3.org/2013/csvw/tests/manifest-validation.jsonld"
 	file.puts ""
 
-	manifest = JSON.parse( open("http://w3c.github.io/csvw/tests/manifest-validation.jsonld").read )
+	manifest = JSON.parse( open("http://www.w3.org/2013/csvw/tests/manifest-validation.jsonld").read )
 
 	file.puts "Feature: #{manifest["label"]}"
 	file.puts ""
@@ -116,10 +116,10 @@ File.open(VALIDATION_FEATURE_FILE_PATH, 'w') do |file|
 end unless File.exist? VALIDATION_FEATURE_FILE_PATH
 
 File.open(JSON_TRANSFORMATION_FEATURE_FILE_PATH, 'w') do |file|
-	file.puts "# Auto-generated file based on standard JSON transformation CSVW tests from http://w3c.github.io/csvw/tests/manifest-json.jsonld"
+	file.puts "# Auto-generated file based on standard JSON transformation CSVW tests from http://www.w3.org/2013/csvw/tests/manifest-json.jsonld"
 	file.puts ""
 
-	manifest = JSON.parse( open("http://w3c.github.io/csvw/tests/manifest-json.jsonld").read )
+	manifest = JSON.parse( open("http://www.w3.org/2013/csvw/tests/manifest-json.jsonld").read )
 
 	file.puts "Feature: #{manifest["label"]}"
 	file.puts ""
@@ -162,7 +162,7 @@ File.open(JSON_TRANSFORMATION_FEATURE_FILE_PATH, 'w') do |file|
 		missing_files.each do |uri|
 			file.puts "\t\tAnd there is no file at the url \"#{uri}\"" unless provided_files.include? uri
 		end
-		file.puts "\t\tWhen I transform the CSV into JSON"
+		file.puts "\t\tWhen I transform the CSV into JSON#{entry["option"] && entry["option"]["minimal"] ? " in minimal mode" : ""}"
 		if entry["type"] == "csvt:ToJsonTestWithWarnings"
 			file.puts "\t\tThen there should not be errors"
 			file.puts "\t\tAnd there should be warnings"
@@ -178,4 +178,4 @@ File.open(JSON_TRANSFORMATION_FEATURE_FILE_PATH, 'w') do |file|
 		end
 		file.puts "\t"
 	end
-end # unless File.exist? JSON_TRANSFORMATION_FEATURE_FILE_PATH
+end unless File.exist? JSON_TRANSFORMATION_FEATURE_FILE_PATH

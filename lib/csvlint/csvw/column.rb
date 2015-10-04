@@ -58,7 +58,9 @@ module Csvlint
           datatype: inherited_properties["datatype"] || { "@id" => "http://www.w3.org/2001/XMLSchema#string" },
           lang: inherited_properties["lang"] || "und",
           null: inherited_properties["null"] || [""],
-          property_url: column_desc["propertyUrl"],
+          about_url: inherited_properties["aboutUrl"],
+          property_url: inherited_properties["propertyUrl"],
+          value_url: inherited_properties["valueUrl"],
           required: inherited_properties["required"] || false,
           separator: inherited_properties["separator"],
           titles: column_properties["titles"],
@@ -86,7 +88,7 @@ module Csvlint
           validate_value(value, row)
         end unless values.nil?
         validate_required(values, row) if values.nil?
-        return valid?
+        return @separator.nil? ? values[0] : values
       end
 
       def parse(string_value, row=nil)
