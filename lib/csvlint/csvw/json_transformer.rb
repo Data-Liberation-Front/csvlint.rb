@@ -31,7 +31,7 @@ module Csvlint
             @columns = []
 
             @validator = Csvlint::Validator.new( @source, dialect, schema, { :validate => @validate, :lambda => table.suppress_output ? lambda { |a| nil } : lambda { |v| transform(v) } } )
-            @errors += @validator.errors
+            @warnings += @validator.errors
             @warnings += @validator.warnings
           end
         end
@@ -41,23 +41,29 @@ module Csvlint
 
       private
         def transform(v)
-          return nil unless v.errors.empty?
-          if @columns.empty?
-            initialize_result(v)
-          end
-          if v.current_line > v.dialect["headerRowCount"]
-            @rownum += 1
-            rowdata = transform_data(v.data[-1], v.current_line)
-            row = {
-              "url" => "#{@source}#row=#{v.current_line}",
-              "rownum" => @rownum,
-              "describes" => rowdata
-            }
-            @result["tables"][-1]["row"] << row
+          if v.data[-1]
+            if @columns.empty?
+              initialize_result(v)
+            end
+            if v.current_line > v.dialect["headerRowCount"]
+              @rownum += 1
+              rowdata = transform_data(v.data[-1], v.current_line)
+              row = {
+                "url" => "#{@source}#row=#{v.current_line}",
+                "rownum" => @rownum,
+                "describes" => rowdata
+              }
+              @result["tables"][-1]["row"] << row
+            end
+          else
+            build_errors(:blank_rows, :structure)
           end
         end
 
         def initialize_result(v)
+          unless v.errors.empty?
+            @errors += v.errors
+          end
           if v.schema.nil?
             v.data[0].each_with_index do |h,i|
               @columns.push Csvlint::Csvw::Column.new(i+1, h)
