@@ -24,9 +24,6 @@ module Csvlint
           @errors += @validator.errors
           @warnings += @validator.warnings
         else
-          schema.annotations.each do |a,v|
-            @result[a] = JSONTransformer.transform_annotation(v)
-          end
           schema.tables.each do |table_url, table|
             @source = table_url
             @result["tables"].push({ "url" => @source }) unless table.suppress_output
@@ -66,6 +63,9 @@ module Csvlint
               @columns.push Csvlint::Csvw::Column.new(i+1, h)
             end
           else
+            v.schema.annotations.each do |a,v|
+              @result[a] = JSONTransformer.transform_annotation(v)
+            end
             table = v.schema.tables[@source]
             @result["tables"][-1]["@id"] = table.id.to_s if table.id
             table.annotations.each do |a,v|
