@@ -135,9 +135,9 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.match("12.34")).to eq(true)
     expect(format.match("12.345")).to eq(false)
     expect(format.match("12.34,5")).to eq(true)
-    expect(format.match("12.34,56")).to eq(true)
+    expect(format.match("12.34,56")).to eq(false)
     expect(format.match("12.34,567")).to eq(false)
-    expect(format.match("12.34,56,7")).to eq(true)
+    expect(format.match("12.34,56,7")).to eq(false)
   end
 
   it "should match numbers that match #0.###E#0 correctly" do
@@ -186,6 +186,19 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.parse("123.4")).to eq(nil)
   end
 
+  it "should parse numbers that match #0,000 correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("#0,000")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("12")).to eq(nil)
+    expect(format.parse("123")).to eql(nil)
+    expect(format.parse("1234")).to eq(nil)
+    expect(format.parse("1,234")).to eql(1234)
+    expect(format.parse("1,234,568")).to eql(1234568)
+    expect(format.parse("12,34,568")).to eq(nil)
+    expect(format.parse("12,34")).to eq(nil)
+    expect(format.parse("123.4")).to eq(nil)
+  end
+
   it "should parse numbers that match #,##,#00 correctly" do
     format = Csvlint::Csvw::NumberFormat.new("#,##,#00")
     expect(format.parse("1")).to eq(nil)
@@ -193,8 +206,41 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.parse("123")).to eql(123)
     expect(format.parse("1234")).to eq(nil)
     expect(format.parse("1,234")).to eql(1234)
+    expect(format.parse("12,345")).to eql(12345)
     expect(format.parse("1,234,568")).to eq(nil)
     expect(format.parse("12,34,568")).to eql(1234568)
+    expect(format.parse("12,34")).to eq(nil)
+    expect(format.parse("123.4")).to eq(nil)
+  end
+
+  it "should parse numbers that match #,00,000 correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("#,00,000")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("12")).to eql(nil)
+    expect(format.parse("123")).to eql(nil)
+    expect(format.parse("1234")).to eq(nil)
+    expect(format.parse("1,234")).to eql(nil)
+    expect(format.parse("12,345")).to eql(12345)
+    expect(format.parse("1,234,568")).to eq(nil)
+    expect(format.parse("1,34,568")).to eql(134568)
+    expect(format.parse("12,34,568")).to eql(1234568)
+    expect(format.parse("1,23,45,678")).to eql(12345678)
+    expect(format.parse("12,34")).to eq(nil)
+    expect(format.parse("123.4")).to eq(nil)
+  end
+
+  it "should parse numbers that match 0,00,000 correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("0,00,000")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("12")).to eql(nil)
+    expect(format.parse("123")).to eql(nil)
+    expect(format.parse("1234")).to eq(nil)
+    expect(format.parse("1,234")).to eql(nil)
+    expect(format.parse("12,345")).to eql(nil)
+    expect(format.parse("1,234,568")).to eq(nil)
+    expect(format.parse("1,34,568")).to eql(134568)
+    expect(format.parse("12,34,568")).to eql(1234568)
+    expect(format.parse("1,23,45,678")).to eql(12345678)
     expect(format.parse("12,34")).to eq(nil)
     expect(format.parse("123.4")).to eq(nil)
   end
@@ -235,9 +281,79 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.parse("12.34")).to eql(12.34)
     expect(format.parse("12.345")).to eq(nil)
     expect(format.parse("12.34,5")).to eql(12.345)
-    expect(format.parse("12.34,56")).to eql(12.3456)
+    expect(format.parse("12.34,56")).to eql(nil)
     expect(format.parse("12.34,567")).to eq(nil)
-    expect(format.parse("12.34,56,7")).to eql(12.34567)
+    expect(format.parse("12.34,56,7")).to eql(nil)
+  end
+
+  it "should parse numbers that match 0.0##,### correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("0.0##,###")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("12.3")).to eql(12.3)
+    expect(format.parse("12.34")).to eql(12.34)
+    expect(format.parse("12.345")).to eq(12.345)
+    expect(format.parse("12.3456")).to eql(nil)
+    expect(format.parse("12.345,6")).to eql(12.3456)
+    expect(format.parse("12.34,56")).to eql(nil)
+    expect(format.parse("12.345,67")).to eq(12.34567)
+    expect(format.parse("12.345,678")).to eql(12.345678)
+    expect(format.parse("12.345,67,8")).to eql(nil)
+  end
+
+  it "should parse numbers that match 0.000,### correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("0.000,###")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("12.3")).to eql(nil)
+    expect(format.parse("12.34")).to eql(nil)
+    expect(format.parse("12.345")).to eq(12.345)
+    expect(format.parse("12.3456")).to eql(nil)
+    expect(format.parse("12.345,6")).to eql(12.3456)
+    expect(format.parse("12.34,56")).to eql(nil)
+    expect(format.parse("12.345,67")).to eq(12.34567)
+    expect(format.parse("12.345,678")).to eql(12.345678)
+    expect(format.parse("12.345,67,8")).to eql(nil)
+  end
+
+  it "should parse numbers that match 0.000,0# correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("0.000,0#")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("12.3")).to eql(nil)
+    expect(format.parse("12.34")).to eql(nil)
+    expect(format.parse("12.345")).to eq(nil)
+    expect(format.parse("12.3456")).to eql(nil)
+    expect(format.parse("12.345,6")).to eql(12.3456)
+    expect(format.parse("12.34,56")).to eql(nil)
+    expect(format.parse("12.345,67")).to eq(12.34567)
+    expect(format.parse("12.345,678")).to eql(nil)
+    expect(format.parse("12.345,67,8")).to eql(nil)
+  end
+
+  it "should parse numbers that match 0.000,0## correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("0.000,0##")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("12.3")).to eql(nil)
+    expect(format.parse("12.34")).to eql(nil)
+    expect(format.parse("12.345")).to eq(nil)
+    expect(format.parse("12.3456")).to eql(nil)
+    expect(format.parse("12.345,6")).to eql(12.3456)
+    expect(format.parse("12.34,56")).to eql(nil)
+    expect(format.parse("12.345,67")).to eq(12.34567)
+    expect(format.parse("12.345,678")).to eql(12.345678)
+    expect(format.parse("12.345,67,8")).to eql(nil)
+  end
+
+  it "should parse numbers that match 0.000,000 correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("0.000,000")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("12.3")).to eql(nil)
+    expect(format.parse("12.34")).to eql(nil)
+    expect(format.parse("12.345")).to eq(nil)
+    expect(format.parse("12.3456")).to eql(nil)
+    expect(format.parse("12.345,6")).to eql(nil)
+    expect(format.parse("12.34,56")).to eql(nil)
+    expect(format.parse("12.345,67")).to eq(nil)
+    expect(format.parse("12.345,678")).to eql(12.345678)
+    expect(format.parse("12.345,67,8")).to eql(nil)
   end
 
   it "should parse numbers that match #0.###E#0 correctly" do
