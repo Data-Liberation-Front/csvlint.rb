@@ -316,7 +316,7 @@ module Csvlint
           names << name
         end
       end
-      if @schema
+      if @schema && @validate
         @schema.validate_header(header, @source)
         @errors += @schema.errors
         @warnings += @schema.warnings

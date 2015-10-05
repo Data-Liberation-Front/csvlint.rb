@@ -39,7 +39,7 @@ module Csvlint
           else
             build_errors(:malformed_header, :schema, 1, nil, header, nil)
           end
-        end unless columns.empty?
+        end # unless columns.empty?
         return valid?
       end
 
