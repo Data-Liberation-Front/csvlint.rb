@@ -141,7 +141,10 @@ module Csvlint
         foreign_keys = []
         primary_key = nil
         if table_schema
-          raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.columns"), "schema columns is not an array" unless table_schema["columns"].instance_of? Array
+          unless table_schema["columns"].instance_of? Array
+            table_schema["columns"] = []
+            warnings << Csvlint::ErrorMessage.new(:invalid_value, :metadata, nil, nil, "columns", nil)
+          end
 
           table_schema.each do |p,v|
             unless ["columns", "primaryKey", "foreignKeys", "rowTitles"].include? p
