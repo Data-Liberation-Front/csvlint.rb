@@ -24,6 +24,9 @@ module Csvlint
           @errors += @validator.errors
           @warnings += @validator.warnings
         else
+          schema.annotations.each do |a,v|
+            @result[a] = JSONTransformer.transform_annotation(v)
+          end
           schema.tables.each do |table_url, table|
             @source = table_url
             @result["tables"].push({ "url" => @source }) unless table.suppress_output
