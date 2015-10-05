@@ -115,8 +115,8 @@ module Csvlint
               property = property(column, values)
 
               if column.value_url
-                value = (values[column.name].nil? && !column.virtual) ? nil : URI.join(@source, column.value_url.expand(values))
-                unless value.nil? || value_urls_appearing_many_times.include?(value.to_s)
+                value = value(column, values, property == "@type")
+                unless property == "@type" || value.nil? || value_urls_appearing_many_times.include?(value.to_s)
                   if value_urls_appearing_once.include? value.to_s
                     value_urls_appearing_many_times.push(value.to_s)
                     value_urls_appearing_once.delete(value.to_s)
@@ -137,15 +137,24 @@ module Csvlint
 
         def property(column, values)
           if column.property_url
-            url = URI.join(@source, column.property_url.expand(values)).to_s
-            NAMESPACES.each do |prefix,ns|
-              url.gsub!(Regexp.new("^#{Regexp.escape(ns)}$"), "#{prefix}")
-              url.gsub!(Regexp.new("^#{Regexp.escape(ns)}"), "#{prefix}:")
-            end
+            url = column.property_url.expand(values)
+            url = URI.join(@source, url).to_s
+            url = JSONTransformer.compact_url(url)
             url = "@type" if url == "rdf:type"
             return url
           else
             return column.name
+          end
+        end
+
+        def value(column, values, compact)
+          if values[column.name].nil? && !column.virtual
+            return nil
+          else
+            url = column.value_url.expand(values)
+            url = JSONTransformer.expand_prefixes(url) unless compact
+            url = URI.join(@source, url).to_s
+            return url
           end
         end
 
@@ -221,6 +230,21 @@ module Csvlint
           else
             return value
           end 
+        end
+
+        def JSONTransformer.expand_prefixes(url)
+          NAMESPACES.each do |prefix,ns|
+            url.gsub!(Regexp.new("^#{Regexp.escape(prefix)}:"), "#{ns}")
+          end
+          return url
+        end
+
+        def JSONTransformer.compact_url(url)
+          NAMESPACES.each do |prefix,ns|
+            url.gsub!(Regexp.new("^#{Regexp.escape(ns)}$"), "#{prefix}")
+            url.gsub!(Regexp.new("^#{Regexp.escape(ns)}"), "#{prefix}:")
+          end
+          return url
         end
 
         NAMESPACES = {
