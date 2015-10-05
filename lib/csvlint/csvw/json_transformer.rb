@@ -40,6 +40,7 @@ module Csvlint
 
       private
         def transform(v)
+          return nil unless v.errors.empty?
           if @columns.empty?
             initialize_result(v)
           end
@@ -128,7 +129,14 @@ module Csvlint
                 value = values[column.name]
               end
 
-              objects[object_id][property] = value unless value.nil?
+              unless value.nil?
+                if objects[object_id][property]
+                  objects[object_id][property] = [objects[object_id][property]] unless objects[object_id][property].is_a? Array
+                  objects[object_id][property] << value
+                else
+                  objects[object_id][property] = value
+                end
+              end
             end
           end
 

@@ -117,7 +117,7 @@ module Csvlint
           def uri_template_property(type)
             return lambda { |value, base_url, lang|
               return URITemplate.new(value), nil, type if value.instance_of? String
-              return "", :invalid_value, type
+              return URITemplate.new(""), :invalid_value, type
             }
           end
 
