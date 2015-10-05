@@ -86,6 +86,7 @@ module Csvlint
           values = {}
           @columns.each_with_index do |column,i|
             unless data[i].nil?
+              column_name = column.name || column.default_name
               base_type = column.datatype["base"] || column.datatype["@id"]
               if data[i].is_a? Array
                 v = []
@@ -95,7 +96,7 @@ module Csvlint
               else
                 v = JSONTransformer.value_to_json(data[i], base_type)
               end
-              values[column.name] = v
+              values[column_name] = v
             end
           end
           values["_row"] = @rownum
@@ -106,9 +107,10 @@ module Csvlint
           value_urls_appearing_many_times = []
           @columns.each_with_index do |column,i|
             unless column.suppress_output
+              column_name = column.name || column.default_name
               values["_column"] = i
               values["_sourceColumn"] = i
-              values["_name"] = column.name
+              values["_name"] = column_name
 
               object_id = column.about_url ? URI.join(@source, column.about_url.expand(values)).to_s : nil
               if objects[object_id].nil?
@@ -129,7 +131,7 @@ module Csvlint
                   end
                 end
               else
-                value = values[column.name]
+                value = values[column_name]
               end
 
               unless value.nil?
@@ -154,12 +156,12 @@ module Csvlint
             url = "@type" if url == "rdf:type"
             return url
           else
-            return column.name
+            return column.name || column.default_name
           end
         end
 
         def value(column, values, compact)
-          if values[column.name].nil? && !column.virtual
+          if values[column.name || column.default_name].nil? && !column.virtual
             return nil
           else
             url = column.value_url.expand(values)

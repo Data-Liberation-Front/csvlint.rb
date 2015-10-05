@@ -3,9 +3,9 @@ module Csvlint
     class Column
       include Csvlint::ErrorCollector
 
-      attr_reader :id, :about_url, :datatype, :default, :lang, :name, :null, :number, :ordered, :property_url, :required, :separator, :source_number, :suppress_output, :text_direction, :titles, :value_url, :virtual, :annotations
+      attr_reader :id, :about_url, :datatype, :default, :lang, :name, :null, :number, :ordered, :property_url, :required, :separator, :source_number, :suppress_output, :text_direction, :default_name, :titles, :value_url, :virtual, :annotations
 
-      def initialize(number, name, id: nil, about_url: nil, datatype: { "@id" => "http://www.w3.org/2001/XMLSchema#string" }, default: "", lang: "und", null: [""], ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
+      def initialize(number, name, id: nil, about_url: nil, datatype: { "@id" => "http://www.w3.org/2001/XMLSchema#string" }, default: "", lang: "und", null: [""], ordered: false, property_url: nil, required: false, separator: nil, source_number: nil, suppress_output: false, text_direction: :inherit, default_name: nil, titles: {}, value_url: nil, virtual: false, annotations: [], warnings: [])
         @number = number
         @name = name
         @id = id
@@ -21,6 +21,7 @@ module Csvlint
         @source_number = source_number || number
         @suppress_output = suppress_output
         @text_direction = text_direction
+        @default_name = default_name
         @titles = titles
         @value_url = value_url
         @virtual = virtual
@@ -53,9 +54,7 @@ module Csvlint
           end
         end
 
-        name = column_properties["name"] || column_properties["titles"][lang][0]
-
-        return self.new(number, name,
+        return self.new(number, column_properties["name"],
           id: column_properties["@id"],
           datatype: inherited_properties["datatype"] || { "@id" => "http://www.w3.org/2001/XMLSchema#string" },
           lang: inherited_properties["lang"] || "und",
@@ -66,6 +65,7 @@ module Csvlint
           value_url: inherited_properties["valueUrl"],
           required: inherited_properties["required"] || false,
           separator: inherited_properties["separator"],
+          default_name: column_properties["titles"] && column_properties["titles"][lang] ? column_properties["titles"][lang][0] : nil,
           titles: column_properties["titles"],
           suppress_output: column_properties["suppressOutput"] ? column_properties["suppressOutput"] : false,
           virtual: column_properties["virtual"] || false,
