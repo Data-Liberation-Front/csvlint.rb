@@ -40,8 +40,6 @@ module Csvlint
           end
         rescue Csvlint::Csvw::MetadataError => e
           raise e
-        rescue JSON::ParserError => e
-          raise e
         rescue OpenURI::HTTPError => e
           raise e
         rescue => e

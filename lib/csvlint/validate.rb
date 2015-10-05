@@ -447,6 +447,7 @@ module Csvlint
           end
         rescue Errno::ENOENT
         rescue OpenURI::HTTPError, URI::BadURIError
+        rescue ArgumentError
         rescue => e
           STDERR.puts e.class
           STDERR.puts e.message

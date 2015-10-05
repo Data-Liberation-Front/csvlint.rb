@@ -2,7 +2,25 @@
 
 ## [Unreleased](https://github.com/theodi/csvlint.rb/tree/HEAD)
 
-[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.3...HEAD)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.4...HEAD)
+
+**Closed issues:**
+
+- CSV on the web support [\#141](https://github.com/theodi/csvlint.rb/issues/141)
+
+**Merged pull requests:**
+
+- Recover from `ArgumentError`s when attempting to locate a schema and detect bad schema when JSON is malformed [\#152](https://github.com/theodi/csvlint.rb/pull/152) ([pezholio](https://github.com/pezholio))
+
+- Catch errors if link headers are don't have particular values [\#151](https://github.com/theodi/csvlint.rb/pull/151) ([pezholio](https://github.com/pezholio))
+
+- Rescue excel warning [\#149](https://github.com/theodi/csvlint.rb/pull/149) ([quadrophobiac](https://github.com/quadrophobiac))
+
+- CSVW-based validation! [\#142](https://github.com/theodi/csvlint.rb/pull/142) ([JeniT](https://github.com/JeniT))
+
+## [0.1.4](https://github.com/theodi/csvlint.rb/tree/0.1.4) (2015-08-06)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.3...0.1.4)
 
 **Merged pull requests:**
 
