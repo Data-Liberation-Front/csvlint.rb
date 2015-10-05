@@ -53,7 +53,9 @@ module Csvlint
           end
         end
 
-        return self.new(number, column_properties["name"],
+        name = column_properties["name"] || column_properties["titles"][lang][0]
+
+        return self.new(number, name,
           id: column_properties["@id"],
           datatype: inherited_properties["datatype"] || { "@id" => "http://www.w3.org/2001/XMLSchema#string" },
           lang: inherited_properties["lang"] || "und",
