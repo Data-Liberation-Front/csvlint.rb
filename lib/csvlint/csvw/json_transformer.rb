@@ -154,7 +154,7 @@ module Csvlint
           else
             url = column.value_url.expand(values)
             url = JSONTransformer.expand_prefixes(url) unless compact
-            url = URI.join(@source, url).to_s
+            url = URI.join(@source, url)
             return url
           end
         end
