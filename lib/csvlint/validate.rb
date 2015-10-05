@@ -192,7 +192,6 @@ module Csvlint
           assumed_header = false
         end
         build_warnings(:no_content_type, :context) if @content_type == nil
-        build_warnings(:excel, :context) if @content_type == nil && @extension =~ /.xls(x)?/
         build_errors(:wrong_content_type, :context) unless (@content_type && @content_type =~ /text\/csv/)
       end
       @header_processed = true
@@ -417,7 +416,6 @@ module Csvlint
         end
       end
       link_schema = nil
-
       @schema = link_schema if link_schema
 
       paths = []
@@ -446,7 +444,7 @@ module Csvlint
             end
           end
         rescue Errno::ENOENT
-        rescue OpenURI::HTTPError, URI::BadURIError
+        rescue OpenURI::HTTPError, URI::BadURIError, ArgumentError
         rescue => e
           STDERR.puts e.class
           STDERR.puts e.message
@@ -454,8 +452,6 @@ module Csvlint
           raise e
         end
       end
-      # require 'pry'
-      # binding.pry
       build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema) if warn_if_unsuccessful
       @schema = nil
     end
