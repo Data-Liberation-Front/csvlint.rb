@@ -414,4 +414,17 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.parse("-INF")).to eql(-Float::INFINITY)
   end
 
+  it "should parse numbers including decimal separators when they are specified" do
+    format = Csvlint::Csvw::NumberFormat.new(nil, " ", ",")
+    expect(format.parse("1")).to eql(1)
+    expect(format.parse("12,3")).to eql(12.3)
+    expect(format.parse("12,34")).to eql(12.34)
+    expect(format.parse("12,3E4")).to eql(12.3E4)
+    expect(format.parse("12,3E45")).to eql(12.3E45)
+    expect(format.parse("12,34E5")).to eql(12.34E5)
+    expect(format.parse("1 234")).to eql(1234)
+    expect(format.parse("1 234 567")).to eql(1234567)
+    expect(format.parse("1  234")).to eq(nil)
+  end
+
 end

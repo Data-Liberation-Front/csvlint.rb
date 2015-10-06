@@ -9,7 +9,7 @@ module Csvlint
         @grouping_separator = grouping_separator || (@pattern.nil? ? nil : ",")
         @decimal_separator = decimal_separator || "."
         if pattern.nil?
-          @regexp = Regexp.new("^(([-+]?[0-9]+(#{Regexp.escape(@decimal_separator)}[0-9]+)?([Ee][-+]?[0-9]+)?[%‰]?)|NaN|INF|-INF)$")
+          @regexp = Regexp.new("^(([-+]?[0-9]+(\\.[0-9]+)?([Ee][-+]?[0-9]+)?[%‰]?)|NaN|INF|-INF)$")
         else
           numeric_part_regexp = Regexp.new("(?<numeric_part>([0#Ee]|#{Regexp.escape(@grouping_separator)}|#{Regexp.escape(@decimal_separator)})+)")
           number_format_regexp = Regexp.new("^(?<prefix>.*?)#{numeric_part_regexp}(?<suffix>.*?)$")
@@ -160,6 +160,7 @@ module Csvlint
         if @pattern.nil?
           return nil if !@grouping_separator.nil? && value =~ Regexp.new("((^#{Regexp.escape(@grouping_separator)})|#{Regexp.escape(@grouping_separator)}{2})")
           value.gsub!(@grouping_separator, "") unless @grouping_separator.nil?
+          value.gsub!(@decimal_separator, ".") unless @decimal_separator.nil?
           if value =~ INTEGER_REGEXP
             case value[-1]
             when "%"
@@ -193,7 +194,9 @@ module Csvlint
         else
           match = @regexp.match(value)
           return nil if match.nil?
-          number = match["numeric_part"].gsub(@grouping_separator, "")
+          number = match["numeric_part"]
+          number.gsub!(@grouping_separator, "") unless @grouping_separator.nil?
+          number.gsub!(@decimal_separator, ".") unless @decimal_separator.nil?
           return number.to_i if @integer_pattern
           return number.to_f
         end
