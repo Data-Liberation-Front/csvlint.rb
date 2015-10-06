@@ -163,7 +163,7 @@ module Csvlint
             url = "@type" if url == "rdf:type"
             return url
           else
-            return column.name || column.default_name
+            return column.name || column.default_name || "_col.#{column.number}"
           end
         end
 
