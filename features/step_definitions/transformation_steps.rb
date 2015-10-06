@@ -25,6 +25,7 @@ end
 
 Then(/^the JSON should match that in "(.*?)"$/) do |filename|
   content = File.read( File.join( File.dirname(__FILE__), "..", "fixtures", filename ) )
-  json = JSON.parse(content)
-  expect(@json).to eq(json)
+  actual = JSON.parse(@json)
+  expected = JSON.parse(content)
+  expect(actual).to eq(expected)
 end

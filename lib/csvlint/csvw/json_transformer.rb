@@ -36,6 +36,7 @@ module Csvlint
         end
 
         @result = @result["tables"].map { |t| t["row"].map { |r| r["describes"] } }.flatten if @minimal
+        @result = @result.to_json
       end
 
       private
@@ -213,7 +214,17 @@ module Csvlint
         end
 
         def JSONTransformer.value_to_json(value, base_type)
-          if NUMERIC_DATATYPES.include? base_type
+          if value.is_a? Float
+            if value.nan?
+              return "NaN"
+            elsif value == Float::INFINITY
+              return "INF"
+            elsif value == -Float::INFINITY
+              return "-INF"
+            else
+              return value
+            end
+          elsif NUMERIC_DATATYPES.include? base_type
             return value
           elsif base_type == "http://www.w3.org/2001/XMLSchema#boolean"
             return value
