@@ -358,9 +358,13 @@ module Csvlint
           names << name
         end
       end
-      if @schema && @validate
+      if @schema
         @schema.validate_header(header, @source)
-        @errors += @schema.errors
+        if @validate
+          @errors += @schema.errors
+        else
+          @warnings += @schema.errors
+        end
         @warnings += @schema.warnings
       end
       return valid?
