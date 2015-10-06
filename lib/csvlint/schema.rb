@@ -52,7 +52,7 @@ module Csvlint
 
     end
 
-    def validate_header(header, source_url=nil)
+    def validate_header(header, source_url=nil, validate)
       reset
 
       found_header = header.to_csv(:row_sep => '')
