@@ -128,7 +128,6 @@ The following types of error can be reported:
 * `:unclosed_quote` -- unclosed quoted field
 * `:whitespace` -- a quoted column has leading or trailing whitespace
 * `:line_breaks` -- line breaks were inconsistent or incorrectly specified
-* `:undeclared_header` -- if there is no machine-readable description of whether a header is present (e.g. in a dialect or `Content-Type` header)
 
 ## Warnings
 
@@ -269,6 +268,20 @@ options = {
   limit_lines: 100
 }
 validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+```
+
+* :lambda -- Pass a block of code to be called when each line is validated, this will give you access to the `Validator` object. For example, this will return the current line number for every line validated:
+
+```
+options = {
+  lambda: ->(validator) { puts validator.current_line }
+}
+validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+=> 1
+2
+3
+4
+.....
 ```
 
 ## Contributing

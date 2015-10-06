@@ -14,7 +14,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
     And it is stored at the url "http://example.com/example1.csv"
     And I set header to "true"
     And I ask if there are info messages
-    Then there should be 2 info messages
+    Then there should be 1 info message
     And one of the messages should have the type "nonrfc_line_breaks"
 
   Scenario: CR line endings in file give an info message of type :nonrfc_line_breaks
@@ -22,7 +22,7 @@ Feature: Collect all the tests that should trigger dialect check related errors
     And it is stored at the url "http://example.com/example1.csv"
     And I set header to "true"
     And I ask if there are info messages
-    Then there should be 2 info messages
+    Then there should be 1 info message
     And one of the messages should have the type "nonrfc_line_breaks"
 
   Scenario: CRLF line endings in file produces no info messages of type :nonrfc_line_breaks
@@ -30,13 +30,13 @@ Feature: Collect all the tests that should trigger dialect check related errors
     And it is stored at the url "http://example.com/example1.csv"
     And I set header to "true"
     And I ask if there are info messages
-    Then there should be 1 info message
+    Then there should be 0 info messages
 
 #  :line_breaks
 
   Scenario: Incorrect line endings specified in settings
-    Given I have a CSV file called "cr-line-endings.csv"
-    And I set the line endings to linefeed
+    Given I have a CSV file called "lf-line-endings.csv"
+    And I set the line endings to carriage return
     And it is stored at the url "http://example.com/example1.csv"
     And I ask if there are errors
     Then there should be 1 error

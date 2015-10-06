@@ -27,7 +27,7 @@ Feature: Get validation errors
     And that error should have the row "2"
     And that error should have the content ""Foo","Bar","Baz"
 
-   Scenario: Successfully report a CSV with incorrect whitespace
+  Scenario: Successfully report a CSV with incorrect whitespace
     Given I have a CSV with the following content:
     """
 "col1","col2","col3"
