@@ -29,15 +29,17 @@ module Csvlint
         @warnings += columns.map{|c| c.warnings}.flatten
       end
 
-      def validate_header(headers)
+      def validate_header(headers, strict)
         reset
         headers.each_with_index do |header,i|
           if columns[i]
-            columns[i].validate_header(header)
+            columns[i].validate_header(header, strict)
             @errors += columns[i].errors
             @warnings += columns[i].warnings
-          else
+          elsif strict
             build_errors(:malformed_header, :schema, 1, nil, header, nil)
+          else
+            build_warnings(:malformed_header, :schema, 1, nil, header, nil)
           end
         end # unless columns.empty?
         return valid?

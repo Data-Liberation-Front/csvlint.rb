@@ -359,12 +359,8 @@ module Csvlint
         end
       end
       if @schema
-        @schema.validate_header(header, @source)
-        if @validate
-          @errors += @schema.errors
-        else
-          @warnings += @schema.errors
-        end
+        @schema.validate_header(header, @source, @validate)
+        @errors += @schema.errors
         @warnings += @schema.warnings
       end
       return valid?

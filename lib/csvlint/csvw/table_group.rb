@@ -20,11 +20,11 @@ module Csvlint
         @warnings += @tables.map{|url,table| table.warnings}.flatten
       end
 
-      def validate_header(header, table_url)
+      def validate_header(header, table_url, strict)
         reset
         table_url = "file:#{File.absolute_path(table_url)}" if table_url.instance_of? File
         table = tables[table_url]
-        table.validate_header(header)
+        table.validate_header(header, strict)
         @errors += table.errors
         @warnings += table.warnings
         return valid?
