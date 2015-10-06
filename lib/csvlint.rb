@@ -14,7 +14,6 @@ require 'uri_template'
 require 'csvlint/error_message'
 require 'csvlint/error_collector'
 require 'csvlint/validate'
-require 'csvlint/wrapped_io'
 require 'csvlint/field'
 
 require 'csvlint/csvw/metadata_error'

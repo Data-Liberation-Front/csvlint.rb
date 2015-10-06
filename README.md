@@ -285,8 +285,6 @@ validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, opt
 .....
 ```
 
-
-
 ## Contributing
 
 1. Fork it

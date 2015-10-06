@@ -201,10 +201,10 @@ module Csvlint
       @link_headers = @headers["link"].split(",") rescue nil
       @link_headers.each do |link_header|
         match = LINK_HEADER_REGEXP.match(link_header)
-        uri = match["uri"].gsub(/(^\<|\>$)/, "")
-        rel = match["rel-relationship"].gsub(/(^\"|\"$)/, "")
+        uri = match["uri"].gsub(/(^\<|\>$)/, "") rescue nil
+        rel = match["rel-relationship"].gsub(/(^\"|\"$)/, "") rescue nil
         param = match["param"]
-        param_value = match["param-value"].gsub(/(^\"|\"$)/, "")
+        param_value = match["param-value"].gsub(/(^\"|\"$)/, "") rescue nil
 
         if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
           begin
@@ -446,8 +446,7 @@ module Csvlint
             end
           end
         rescue Errno::ENOENT
-        rescue OpenURI::HTTPError, URI::BadURIError
-        rescue ArgumentError
+        rescue OpenURI::HTTPError, URI::BadURIError, ArgumentError
         rescue => e
           raise e
         end
