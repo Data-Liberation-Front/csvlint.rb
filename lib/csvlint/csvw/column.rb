@@ -74,10 +74,18 @@ module Csvlint
         )
       end
 
-      def validate_header(header)
+      def validate_header(header, strict)
         reset
-        valid_headers = @titles ? @titles.map{ |l,v| v if Column.languages_match(l, lang) }.flatten : []
-        build_errors(:invalid_header, :schema, 1, @number, header, @titles) unless valid_headers.include? header
+        if strict || @titles
+          valid_headers = @titles ? @titles.map{ |l,v| v if Column.languages_match(l, lang) }.flatten : []
+          unless valid_headers.include? header
+            if strict
+              build_errors(:invalid_header, :schema, 1, @number, header, @titles) 
+            else
+              build_warnings(:invalid_header, :schema, 1, @number, header, @titles)
+            end
+          end
+        end
         return valid?
       end
 
