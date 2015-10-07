@@ -287,6 +287,10 @@ module Csvlint
       end
     end
 
+    def row_count
+      data.count
+    end
+
     def build_exception_messages(csvException, errChars, lineNo)
       #TODO 1 - this is a change in logic, rather than straight refactor of previous error building, however original logic is bonkers
       #TODO 2 - using .kind_of? is a very ugly fix here and it meant to work around instances where :auto symbol is preserved in @csv_options
