@@ -2,7 +2,25 @@
 
 ## [Unreleased](https://github.com/theodi/csvlint.rb/tree/HEAD)
 
-[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.4...HEAD)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.0...HEAD)
+
+**Implemented enhancements:**
+
+- Get total rows number about the CSV file that was validated [\#143](https://github.com/theodi/csvlint.rb/issues/143)
+
+**Closed issues:**
+
+- Optimization: Stream CSV [\#122](https://github.com/theodi/csvlint.rb/issues/122)
+
+**Merged pull requests:**
+
+- Add `row\_count` method [\#153](https://github.com/theodi/csvlint.rb/pull/153) ([pezholio](https://github.com/pezholio))
+
+- Streaming validation [\#146](https://github.com/theodi/csvlint.rb/pull/146) ([pezholio](https://github.com/pezholio))
+
+## [0.2.0](https://github.com/theodi/csvlint.rb/tree/0.2.0) (2015-10-05)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.4...0.2.0)
 
 **Closed issues:**
 
