@@ -1,6 +1,16 @@
 module Csvlint
 
   class Validator
+    class LineCSV < CSV
+      ENCODE_RE = Hash.new do |h,str|
+        h[str] = Regexp.new(str)
+      end
+
+      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2273
+      def encode_re(*chunks)
+        ENCODE_RE[encode_str(*chunks)]
+      end
+    end
 
     include Csvlint::ErrorCollector
 
@@ -132,12 +142,12 @@ module Csvlint
       @csv_options[:encoding] = @encoding
 
       begin
-        row = CSV.parse_line(stream, @csv_options)
+        row = LineCSV.parse_line(stream, @csv_options)
           # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
           # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
           # TODO investigate if above would be a drag on memory
 
-      rescue CSV::MalformedCSVError => e
+      rescue LineCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line)
       end
 
@@ -228,7 +238,7 @@ module Csvlint
 
     def report_line_breaks(line_no=nil)
       return if @input !~ /[\r|\n]/ # Return straight away if there's no newline character - i.e. we're on the last line
-      line_break = CSV.new(@input).row_sep
+      line_break = LineCSV.new(@input).row_sep
       @line_breaks << line_break
       unless line_breaks_reported?
         if line_break != "\r\n"
