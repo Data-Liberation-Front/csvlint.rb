@@ -77,7 +77,7 @@ best practices
 	validator.encoding
 	validator.content_type
 	validator.extension
-  validator.row_count
+	validator.row_count
 
 	#retrieve HTTP headers from request
 	validator.headers
