@@ -77,7 +77,7 @@ module Csvlint
           validate_metadata
         end
         request.on_body do |chunk|
-          io = StringIO.new(@leading + chunk)
+          io = StringIO.new(chunk)
           io.each_line do |line|
             break if line_limit_reached?
             parse_line(line)
