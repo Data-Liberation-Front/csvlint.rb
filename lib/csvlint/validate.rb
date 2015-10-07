@@ -6,9 +6,45 @@ module Csvlint
         h[str] = Regexp.new(str)
       end
 
+      ENCODE_STR = Hash.new do |h,encoding_name|
+        h[encoding_name] = Hash.new do |h,chunks|
+          h[chunks] = chunks.map { |chunk| chunk.encode(encoding_name) }.join('')
+        end
+      end
+
+      ESCAPE_RE = Hash.new do |h,re_chars|
+        h[re_chars] = Hash.new do |h,re_esc|
+          h[re_esc] = Hash.new do |h,str|
+            h[str] = str.gsub(re_chars) {|c| re_esc + c}
+          end
+        end
+      end
+
+      # Optimization: Memoize `encode_re`.
       # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2273
       def encode_re(*chunks)
         ENCODE_RE[encode_str(*chunks)]
+      end
+
+      # Optimization: Memoize `encode_str`.
+      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2281
+      def encode_str(*chunks)
+        ENCODE_STR[@encoding.name][chunks]
+      end
+
+      # Optimization: Memoize `escape_re`.
+      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2265
+      def escape_re(str)
+        ESCAPE_RE[@re_chars][@re_esc][str]
+      end
+
+      # Optimization: Disable the CSV library's converters feature.
+      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2100
+      def init_converters(options, field_name = :converters)
+        @converters = []
+        @header_converters = []
+        options.delete(:unconverted_fields)
+        options.delete(field_name)
       end
     end
 
