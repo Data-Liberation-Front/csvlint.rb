@@ -70,39 +70,72 @@ module Csvlint
         # STDERR.puts(@regexp)
         # STDERR.puts(value)
         # STDERR.puts(match.inspect)
+        value = {}
+        match.names.each do |field|
+          unless match[field].nil?
+            case field
+            when "timezone"
+              tz = match["timezone"]
+              tz = "+00:00" if tz == 'Z'
+              tz += ':00' if tz.length == 3
+              tz = "#{tz[0..2]}:#{tz[3..4]}" unless tz =~ /:/
+              value[:timezone] = tz
+            when "second"
+              value[:second] = match["second"].to_f
+            else
+              value[field.to_sym] = match[field].to_i
+            end
+          end
+        end
         case @type
         when "http://www.w3.org/2001/XMLSchema#date"
           begin
-            return Date.new(match["year"].to_i, match["month"].to_i, match["day"].to_i)
+            value[:dateTime] = Date.new(match["year"].to_i, match["month"].to_i, match["day"].to_i)
           rescue ArgumentError
             return nil
           end
         when "http://www.w3.org/2001/XMLSchema#dateTime"
           begin
-            return DateTime.new(match["year"].to_i, match["month"].to_i, match["day"].to_i, match["hour"].to_i, match["minute"].to_i, (match.names.include?("second") ? match["second"].to_f : 0), match.names.include?("timezone") && match["timezone"] ? match["timezone"] : '')
+            value[:dateTime] = DateTime.new(match["year"].to_i, match["month"].to_i, match["day"].to_i, match["hour"].to_i, match["minute"].to_i, (match.names.include?("second") ? match["second"].to_f : 0), match.names.include?("timezone") && match["timezone"] ? match["timezone"] : '')
           rescue ArgumentError
             return nil
           end
         else
-          value = {}
-          match.names.each do |field|
-            unless match[field].nil?
-              case field
-              when "timezone"
-                tz = match["timezone"]
-                tz = "+00:00" if tz == 'Z'
-                tz += ':00' if tz.length == 3
-                tz = "#{tz[0..2]}:#{tz[3..4]}" unless tz =~ /:/
-                value["timezone"] = tz
-              when "second"
-                value["second"] = match["second"].to_f
-              else
-                value[field] = match[field].to_i
-              end
-            end
-          end
-          return value
+          value[:dateTime] = DateTime.new(value["year"] || 0, value["month"] || 1, value["day"] || 1, value["hour"] || 0, value["minute"] || 0, value["second"] || 0, value["timezone"] || "+00:00")
         end
+        if value[:year]
+          if value[:month]
+            if value[:day]
+              if value[:hour]
+                # dateTime
+                value[:string] = "#{format('%04d', value[:year])}-#{format('%02d', value[:month])}-#{format('%02d', value[:day])}T#{format('%02d', value[:hour])}:#{format('%02d', value[:minute] || 0)}:#{format('%02d', value[:second] || 0)}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+              else
+                # date
+                value[:string] = "#{format('%04d', value[:year])}-#{format('%02d', value[:month])}-#{format('%02d', value[:day])}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+              end
+            else
+              # gYearMonth
+              value[:string] = "#{format('%04d', value[:year])}-#{format('%02d', value[:month])}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+            end
+          else
+            # gYear
+            value[:string] = "#{format('%04d', value[:year])}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+          end
+        elsif value[:month]
+          if value[:day]
+            # gMonthDay
+            value[:string] = "--#{format('%02d', value[:month])}-#{format('%02d', value[:day])}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+          else
+            # gMonth
+            value[:string] = "--#{format('%02d', value[:month])}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+          end
+        elsif value[:day]
+          # gDay
+          value[:string] = "---#{format('%02d', value[:day])}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+        else
+          value[:string] = "#{format('%02d', value[:hour])}:#{format('%02d', value[:minute])}:#{format('%02d', value[:second] || 0)}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+        end
+        return value
       end
 
       private

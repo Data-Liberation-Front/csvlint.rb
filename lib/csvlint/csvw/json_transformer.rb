@@ -229,10 +229,9 @@ module Csvlint
             return value
           elsif base_type == "http://www.w3.org/2001/XMLSchema#boolean"
             return value
-          elsif base_type == "http://www.w3.org/2001/XMLSchema#dateTime"
-            return value.to_s.sub!(/\+00:00$/, "")
-          elsif base_type == "http://www.w3.org/2001/XMLSchema#gYear"
-            return value["year"].to_s
+          elsif DATETIME_DATATYPES.include? base_type
+            return value if value.is_a? String
+            return value[:string]
           else
             return value.to_s
           end
@@ -316,11 +315,6 @@ module Csvlint
           "schema" => "http://schema.org/"
         }
 
-        BINARY_DATATYPES = [
-          "http://www.w3.org/2001/XMLSchema#base64Binary",
-          "http://www.w3.org/2001/XMLSchema#hexBinary"
-        ]
-
         NUMERIC_DATATYPES = [
           "http://www.w3.org/2001/XMLSchema#decimal",
           "http://www.w3.org/2001/XMLSchema#integer",
@@ -338,6 +332,18 @@ module Csvlint
           "http://www.w3.org/2001/XMLSchema#negativeInteger",
           "http://www.w3.org/2001/XMLSchema#double",
           "http://www.w3.org/2001/XMLSchema#float"
+        ]
+
+        DATETIME_DATATYPES = [
+          "http://www.w3.org/2001/XMLSchema#date",
+          "http://www.w3.org/2001/XMLSchema#dateTime",
+          "http://www.w3.org/2001/XMLSchema#dateTimeStamp",
+          "http://www.w3.org/2001/XMLSchema#time",
+          "http://www.w3.org/2001/XMLSchema#gYear",
+          "http://www.w3.org/2001/XMLSchema#gYearMonth",
+          "http://www.w3.org/2001/XMLSchema#gMonth",
+          "http://www.w3.org/2001/XMLSchema#gMonthDay",
+          "http://www.w3.org/2001/XMLSchema#gDay",
         ]
 
     end
