@@ -169,10 +169,10 @@ module Csvlint
         end
 
         def validate_value(value, row)
-          build_errors(:min_inclusive, :schema, row, number, value, { "minInclusive" => datatype["minInclusive"] }) if datatype["minInclusive"] && value < datatype["minInclusive"]
-          build_errors(:max_inclusive, :schema, row, number, value, { "maxInclusive" => datatype["maxInclusive"] }) if datatype["maxInclusive"] && value > datatype["maxInclusive"]
-          build_errors(:min_exclusive, :schema, row, number, value, { "minExclusive" => datatype["minExclusive"] }) if datatype["minExclusive"] && value <= datatype["minExclusive"]
-          build_errors(:max_exclusive, :schema, row, number, value, { "maxExclusive" => datatype["maxExclusive"] }) if datatype["maxExclusive"] && value >= datatype["maxExclusive"]
+          build_errors(:min_inclusive, :schema, row, number, value, { "minInclusive" => datatype["minInclusive"] }) if datatype["minInclusive"] && ((value.is_a? Hash) ? (value[:dateTime] < datatype["minInclusive"][:dateTime]) : (value < datatype["minInclusive"]))
+          build_errors(:max_inclusive, :schema, row, number, value, { "maxInclusive" => datatype["maxInclusive"] }) if datatype["maxInclusive"] && ((value.is_a? Hash) ? (value[:dateTime] > datatype["maxInclusive"][:dateTime]) : (value > datatype["maxInclusive"]))
+          build_errors(:min_exclusive, :schema, row, number, value, { "minExclusive" => datatype["minExclusive"] }) if datatype["minExclusive"] && ((value.is_a? Hash) ? (value[:dateTime] <= datatype["minExclusive"][:dateTime]) : (value <= datatype["minExclusive"]))
+          build_errors(:max_exclusive, :schema, row, number, value, { "maxExclusive" => datatype["maxExclusive"] }) if datatype["maxExclusive"] && ((value.is_a? Hash) ? (value[:dateTime] >= datatype["maxExclusive"][:dateTime]) : (value >= datatype["maxExclusive"]))
         end
 
         REGEXP_VALIDATION = lambda { |value, format| value =~ format }
