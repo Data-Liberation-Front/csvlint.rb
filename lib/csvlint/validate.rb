@@ -274,7 +274,7 @@ module Csvlint
 
     def report_line_breaks(line_no=nil)
       return if @input !~ /[\r|\n]/ # Return straight away if there's no newline character - i.e. we're on the last line
-      line_break = LineCSV.new(@input).row_sep
+      line_break = get_line_break(@input)
       @line_breaks << line_break
       unless line_breaks_reported?
         if line_break != "\r\n"
@@ -559,6 +559,15 @@ module Csvlint
 
     def line_limit_reached?
       @limit_lines.present? && @current_line > @limit_lines
+    end
+
+    def get_line_break(line)
+      eol = line.chars.last(2)
+      if eol.first == "\r"
+        "\r\n"
+      else
+        "\n"
+      end
     end
 
     FORMATS = {
