@@ -273,7 +273,7 @@ module Csvlint
     end
 
     def report_line_breaks(line_no=nil)
-      return if @input !~ /[\r|\n]/ # Return straight away if there's no newline character - i.e. we're on the last line
+      return unless @input[-1, 1].include?("\n") # Return straight away if there's no newline character - i.e. we're on the last line
       line_break = get_line_break(@input)
       @line_breaks << line_break
       unless line_breaks_reported?
