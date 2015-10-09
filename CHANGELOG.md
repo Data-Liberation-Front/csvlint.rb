@@ -2,7 +2,27 @@
 
 ## [Unreleased](https://github.com/theodi/csvlint.rb/tree/HEAD)
 
-[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.0...HEAD)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.1...HEAD)
+
+**Closed issues:**
+
+- Eliminate some date and time formats \(for speed\) [\#105](https://github.com/theodi/csvlint.rb/issues/105)
+
+**Merged pull requests:**
+
+- Check characters in validate\_line method [\#160](https://github.com/theodi/csvlint.rb/pull/160) ([pezholio](https://github.com/pezholio))
+
+- Further optimisations [\#159](https://github.com/theodi/csvlint.rb/pull/159) ([pezholio](https://github.com/pezholio))
+
+- More optimizations after \#157 [\#158](https://github.com/theodi/csvlint.rb/pull/158) ([jpmckinney](https://github.com/jpmckinney))
+
+- Memoize the result of CSV\#encode\_re [\#157](https://github.com/theodi/csvlint.rb/pull/157) ([jpmckinney](https://github.com/jpmckinney))
+
+- Don't pass leading string to parse\_line [\#155](https://github.com/theodi/csvlint.rb/pull/155) ([pezholio](https://github.com/pezholio))
+
+## [0.2.1](https://github.com/theodi/csvlint.rb/tree/0.2.1) (2015-10-07)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.0...0.2.1)
 
 **Implemented enhancements:**
 
