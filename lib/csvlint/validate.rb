@@ -113,29 +113,24 @@ module Csvlint
 
     def validate_url
       @current_line = 1
-      begin
-        request = Typhoeus::Request.new(@source, followlocation: true)
-        request.on_headers do |response|
-          @headers = response.headers || {}
-          @content_type = response.headers["content-type"] rescue nil
-          @response_code = response.code
-          return build_errors(:not_found) if response.code == 404
-          validate_metadata
-        end
-        request.on_body do |chunk|
-          io = StringIO.new(chunk)
-          io.each_line do |line|
-            break if line_limit_reached?
-            parse_line(line)
-          end
-        end
-        request.run
-        # Validate the last line too
-        validate_line(@leading, @current_line) unless @leading == ""
-      rescue ArgumentError => ae
-        build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
-        @reported_invalid_encoding = true
+      request = Typhoeus::Request.new(@source, followlocation: true)
+      request.on_headers do |response|
+        @headers = response.headers || {}
+        @content_type = response.headers["content-type"] rescue nil
+        @response_code = response.code
+        return build_errors(:not_found) if response.code == 404
+        validate_metadata
       end
+      request.on_body do |chunk|
+        io = StringIO.new(chunk)
+        io.each_line do |line|
+          break if line_limit_reached?
+          parse_line(line)
+        end
+      end
+      request.run
+      # Validate the last line too
+      validate_line(@leading, @current_line) unless @leading == ""
     end
 
     def parse_line(line)
@@ -154,6 +149,9 @@ module Csvlint
         # If it's not a full line, then prepare to add it to the beginning of the next chunk
         @leading = line
       end
+    rescue ArgumentError => ae
+      build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
+      @reported_invalid_encoding = true
     end
 
     def validate_line(input = nil, index = nil)
@@ -179,10 +177,6 @@ module Csvlint
 
       begin
         row = LineCSV.parse_line(stream, @csv_options)
-          # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
-          # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
-          # TODO investigate if above would be a drag on memory
-
       rescue LineCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line)
       end
