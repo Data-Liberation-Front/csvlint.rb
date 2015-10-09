@@ -67,7 +67,7 @@ module Csvlint
       @dialect = dialect
       @csv_header = true
       @headers = {}
-      @lambda = options[:lambda] || lambda { |a| nil }
+      @lambda = options[:lambda]
       @leading = ""
 
       @limit_lines = options[:limit_lines]
@@ -163,7 +163,7 @@ module Csvlint
       @encoding = input.encoding.to_s
       report_line_breaks(line)
       parse_contents(input, line)
-      @lambda.call(self)
+      @lambda.call(self) unless @lambda.nil?
     rescue ArgumentError => ae
       build_errors(:invalid_encoding, :structure, @current_line, nil, index) unless @reported_invalid_encoding
       @reported_invalid_encoding = true
@@ -273,8 +273,8 @@ module Csvlint
     end
 
     def report_line_breaks(line_no=nil)
-      return if @input !~ /[\r|\n]/ # Return straight away if there's no newline character - i.e. we're on the last line
-      line_break = LineCSV.new(@input).row_sep
+      return unless @input[-1, 1].include?("\n") # Return straight away if there's no newline character - i.e. we're on the last line
+      line_break = get_line_break(@input)
       @line_breaks << line_break
       unless line_breaks_reported?
         if line_break != "\r\n"
@@ -399,26 +399,8 @@ module Csvlint
               :numeric
             elsif uri?(col)
               :uri
-            elsif col[FORMATS[:date_db]] && date_format?(Date, col, '%Y-%m-%d')
-              :date_db
-            elsif col[FORMATS[:date_short]] && date_format?(Date, col, '%e %b')
-              :date_short
-            elsif col[FORMATS[:date_rfc822]] && date_format?(Date, col, '%e %b %Y')
-              :date_rfc822
-            elsif col[FORMATS[:date_long]] && date_format?(Date, col, '%B %e, %Y')
-              :date_long
-            elsif col[FORMATS[:dateTime_time]] && date_format?(Time, col, '%H:%M')
-              :dateTime_time
-            elsif col[FORMATS[:dateTime_hms]] && date_format?(Time, col, '%H:%M:%S')
-              :dateTime_hms
-            elsif col[FORMATS[:dateTime_db]] && date_format?(Time, col, '%Y-%m-%d %H:%M:%S')
-              :dateTime_db
-            elsif col[FORMATS[:dateTime_iso8601]] && date_format?(Time, col, '%Y-%m-%dT%H:%M:%SZ')
-              :dateTime_iso8601
-            elsif col[FORMATS[:dateTime_short]] && date_format?(Time, col, '%d %b %H:%M')
-              :dateTime_short
-            elsif col[FORMATS[:dateTime_long]] && date_format?(Time, col, '%B %d, %Y %H:%M')
-              :dateTime_long
+            elsif possible_date?(col)
+              date_formats(col)
             else
               :string
             end
@@ -539,6 +521,36 @@ module Csvlint
       false
     end
 
+    def possible_date?(col)
+      col[POSSIBLE_DATE_REGEXP]
+    end
+
+    def date_formats(col)
+      if col[FORMATS[:date_db]] && date_format?(Date, col, '%Y-%m-%d')
+        :date_db
+      elsif col[FORMATS[:date_short]] && date_format?(Date, col, '%e %b')
+        :date_short
+      elsif col[FORMATS[:date_rfc822]] && date_format?(Date, col, '%e %b %Y')
+        :date_rfc822
+      elsif col[FORMATS[:date_long]] && date_format?(Date, col, '%B %e, %Y')
+        :date_long
+      elsif col[FORMATS[:dateTime_time]] && date_format?(Time, col, '%H:%M')
+        :dateTime_time
+      elsif col[FORMATS[:dateTime_hms]] && date_format?(Time, col, '%H:%M:%S')
+        :dateTime_hms
+      elsif col[FORMATS[:dateTime_db]] && date_format?(Time, col, '%Y-%m-%d %H:%M:%S')
+        :dateTime_db
+      elsif col[FORMATS[:dateTime_iso8601]] && date_format?(Time, col, '%Y-%m-%dT%H:%M:%SZ')
+        :dateTime_iso8601
+      elsif col[FORMATS[:dateTime_short]] && date_format?(Time, col, '%d %b %H:%M')
+        :dateTime_short
+      elsif col[FORMATS[:dateTime_long]] && date_format?(Time, col, '%B %d, %Y %H:%M')
+        :dateTime_long
+      else
+        :string
+      end
+    end
+
     def date_format?(klass, value, format)
       klass.strptime(value, format).strftime(format) == value
     rescue ArgumentError # invalid date
@@ -547,6 +559,15 @@ module Csvlint
 
     def line_limit_reached?
       @limit_lines.present? && @current_line > @limit_lines
+    end
+
+    def get_line_break(line)
+      eol = line.chars.last(2)
+      if eol.first == "\r"
+        "\r\n"
+      else
+        "\n"
+      end
     end
 
     FORMATS = {
@@ -577,6 +598,7 @@ module Csvlint
     LINK_EXTENSION_REGEXP = Regexp.new("(?<link-extension>(?<param>#{TOKEN_REGEXP})(\\s*=\\s*(?<param-value>#{TOKEN_REGEXP}|#{QUOTED_STRING_REGEXP}))?)")
     LINK_PARAM_REGEXP = Regexp.new("(#{REL_REGEXP}|#{REV_REGEXP}|#{TITLE_REGEXP}|#{ANCHOR_REGEXP}|#{LINK_EXTENSION_REGEXP})")
     LINK_HEADER_REGEXP = Regexp.new("\<#{URI_REGEXP}\>(\\s*;\\s*#{LINK_PARAM_REGEXP})*")
+    POSSIBLE_DATE_REGEXP = Regexp.new("\\A(\\d|\\s\\d#{Date::ABBR_MONTHNAMES.join('|')}#{Date::MONTHNAMES.join('|')})")
 
   end
 end
