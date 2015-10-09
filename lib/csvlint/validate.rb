@@ -177,10 +177,6 @@ module Csvlint
 
       begin
         row = LineCSV.parse_line(stream, @csv_options)
-          # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
-          # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
-          # TODO investigate if above would be a drag on memory
-
       rescue LineCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line)
       end
