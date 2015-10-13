@@ -30,12 +30,12 @@ module Csvlint
         return valid?
       end
 
-      def validate_row(values, row=nil, all_errors=[], table_url)
+      def validate_row(values, row=nil, all_errors=[], table_url, validate)
         reset
         table_url = "file:#{File.absolute_path(table_url)}" if table_url.instance_of? File
         @validated_tables[table_url] = true
         table = tables[table_url]
-        table.validate_row(values, row)
+        table.validate_row(values, row, validate)
         @errors += table.errors
         @warnings += table.warnings
         return valid?

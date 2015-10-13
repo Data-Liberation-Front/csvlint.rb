@@ -45,7 +45,7 @@ module Csvlint
         return valid?
       end
 
-      def validate_row(values, row=nil)
+      def validate_row(values, row=nil, validate=false)
         reset
         values.each_with_index do |value,i|
           column = columns[i]
@@ -58,28 +58,30 @@ module Csvlint
             build_errors(:too_many_values, :schema, row, nil, value, nil)
           end
         end unless columns.empty?
-        unless @primary_key.nil?
-          key = @primary_key.map { |column| column.validate(values[column.number - 1], row) }
-          build_errors(:duplicate_key, :schema, row, nil, key.join(","), @primary_key_values[key]) if @primary_key_values.include?(key)
-          @primary_key_values[key] = row
-        end
-        # build a record of the unique values that are referenced by foreign keys from other tables
-        # so that later we can check whether those foreign keys reference these values
-        @foreign_key_references.each do |foreign_key|
-          referenced_columns = foreign_key["referenced_columns"]
-          key = referenced_columns.map{ |column| column.validate(values[column.number - 1], row) }
-          known_values = @foreign_key_reference_values[foreign_key] = @foreign_key_reference_values[foreign_key] || {}
-          known_values[key] = known_values[key] || []
-          known_values[key] << row
-        end
-        # build a record of the references from this row to other tables
-        # we can't check yet whether these exist in the other tables because
-        # we might not have parsed those other tables
-        @foreign_keys.each do |foreign_key|
-          referencing_columns = foreign_key["referencing_columns"]
-          key = referencing_columns.map{ |column| column.validate(values[column.number - 1], row) }
-          known_values = @foreign_key_values[foreign_key] = @foreign_key_values[foreign_key] || []
-          known_values << key unless known_values.include?(key)
+        if validate
+          unless @primary_key.nil?
+            key = @primary_key.map { |column| column.validate(values[column.number - 1], row) }
+            build_errors(:duplicate_key, :schema, row, nil, key.join(","), @primary_key_values[key]) if @primary_key_values.include?(key)
+            @primary_key_values[key] = row
+          end
+          # build a record of the unique values that are referenced by foreign keys from other tables
+          # so that later we can check whether those foreign keys reference these values
+          @foreign_key_references.each do |foreign_key|
+            referenced_columns = foreign_key["referenced_columns"]
+            key = referenced_columns.map{ |column| column.validate(values[column.number - 1], row) }
+            known_values = @foreign_key_reference_values[foreign_key] = @foreign_key_reference_values[foreign_key] || {}
+            known_values[key] = known_values[key] || []
+            known_values[key] << row
+          end
+          # build a record of the references from this row to other tables
+          # we can't check yet whether these exist in the other tables because
+          # we might not have parsed those other tables
+          @foreign_keys.each do |foreign_key|
+            referencing_columns = foreign_key["referencing_columns"]
+            key = referencing_columns.map{ |column| column.validate(values[column.number - 1], row) }
+            known_values = @foreign_key_values[foreign_key] = @foreign_key_values[foreign_key] || []
+            known_values << key unless known_values.include?(key)
+          end
         end
         return valid?
       end
