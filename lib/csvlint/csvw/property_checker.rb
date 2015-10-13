@@ -302,12 +302,17 @@ module Csvlint
             warnings += convert_value_facet(value, "maxInclusive", value["base"])
             warnings += convert_value_facet(value, "maxExclusive", value["base"])
 
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype cannot specify both minimum/minInclusive (#{value["minInclusive"]}) and minExclusive (#{value["minExclusive"]}" if value["minInclusive"] && value["minExclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype cannot specify both maximum/maxInclusive (#{value["maxInclusive"]}) and maxExclusive (#{value["maxExclusive"]}" if value["maxInclusive"] && value["maxExclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype minInclusive (#{value["minInclusive"]}) cannot be more than maxInclusive (#{value["maxInclusive"]}" if value["minInclusive"] && value["maxInclusive"] && value["minInclusive"] > value["maxInclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype minInclusive (#{value["minInclusive"]}) cannot be more than or equal to maxExclusive (#{value["maxExclusive"]}" if value["minInclusive"] && value["maxExclusive"] && value["minInclusive"] >= value["maxExclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype minExclusive (#{value["minExclusive"]}) cannot be more than or equal to maxExclusive (#{value["maxExclusive"]}" if value["minExclusive"] && value["maxExclusive"] && value["minExclusive"] > value["maxExclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype minExclusive (#{value["minExclusive"]}) cannot be more than maxInclusive (#{value["maxInclusive"]}" if value["minExclusive"] && value["maxInclusive"] && value["minExclusive"] >= value["maxInclusive"]
+            minInclusive = value["minInclusive"].is_a?(Hash) ? value["minInclusive"][:dateTime] : value["minInclusive"]
+            maxInclusive = value["maxInclusive"].is_a?(Hash) ? value["maxInclusive"][:dateTime] : value["maxInclusive"]
+            minExclusive = value["minExclusive"].is_a?(Hash) ? value["minExclusive"][:dateTime] : value["minExclusive"]
+            maxExclusive = value["maxExclusive"].is_a?(Hash) ? value["maxExclusive"][:dateTime] : value["maxExclusive"]
+
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype cannot specify both minimum/minInclusive (#{minInclusive}) and minExclusive (#{minExclusive}" if minInclusive && minExclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype cannot specify both maximum/maxInclusive (#{maxInclusive}) and maxExclusive (#{maxExclusive}" if maxInclusive && maxExclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype minInclusive (#{minInclusive}) cannot be more than maxInclusive (#{maxInclusive}" if minInclusive && maxInclusive && minInclusive > maxInclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype minInclusive (#{minInclusive}) cannot be more than or equal to maxExclusive (#{maxExclusive}" if minInclusive && maxExclusive && minInclusive >= maxExclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype minExclusive (#{minExclusive}) cannot be more than or equal to maxExclusive (#{maxExclusive}" if minExclusive && maxExclusive && minExclusive > maxExclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype minExclusive (#{minExclusive}) cannot be more than maxInclusive (#{maxInclusive}" if minExclusive && maxInclusive && minExclusive >= maxInclusive
 
             raise Csvlint::Csvw::MetadataError.new(""), "datatype length (#{value["length"]}) cannot be less than minLength (#{value["minLength"]}" if value["length"] && value["minLength"] && value["length"] < value["minLength"]
             raise Csvlint::Csvw::MetadataError.new(""), "datatype length (#{value["length"]}) cannot be more than maxLength (#{value["maxLength"]}" if value["length"] && value["maxLength"] && value["length"] > value["maxLength"]
