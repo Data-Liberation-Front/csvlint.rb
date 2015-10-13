@@ -47,12 +47,13 @@ module Csvlint
             end
             if v.current_line > v.dialect["headerRowCount"]
               @rownum += 1
-              rowdata = transform_data(v.data[-1], v.current_line)
+              row_data, row_titles = transform_data(v.data[-1], v.current_line)
               row = {
                 "url" => "#{@source}#row=#{v.current_line}",
                 "rownum" => @rownum,
-                "describes" => rowdata
+                "describes" => row_data
               }
+              row["titles"] = (row_titles.length == 1 ? row_titles[0] : row_titles) unless row_titles.empty?
               @result["tables"][-1]["row"] << row
             end
           else
@@ -64,6 +65,7 @@ module Csvlint
           unless v.errors.empty?
             @errors += v.errors
           end
+          @row_title_columns = []
           if v.schema.nil?
             v.data[0].each_with_index do |h,i|
               @columns.push Csvlint::Csvw::Column.new(i+1, h)
@@ -85,6 +87,9 @@ module Csvlint
             else
               @columns = table.columns
             end
+            table.row_title_columns.each do |c|
+              @row_title_columns << (c.name || c.default_name)
+            end if table.row_title_columns
           end
           @result["tables"][-1]["row"] = []
         end
@@ -108,6 +113,11 @@ module Csvlint
           end
           values["_row"] = @rownum
           values["_sourceRow"] = sourceRow
+
+          row_titles = []
+          @row_title_columns.each do |column_name|
+            row_titles << values[column_name]
+          end
 
           objects = {}
           value_urls_appearing_once = []
@@ -152,7 +162,7 @@ module Csvlint
             end
           end
 
-          return nest(objects, value_urls_appearing_once, value_urls_appearing_many_times)
+          return nest(objects, value_urls_appearing_once, value_urls_appearing_many_times), row_titles
         end
 
         def property(column, values)
