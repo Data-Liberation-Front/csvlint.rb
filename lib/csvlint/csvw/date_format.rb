@@ -108,7 +108,7 @@ module Csvlint
             if value[:day]
               if value[:hour]
                 # dateTime
-                value[:string] = "#{format('%04d', value[:year])}-#{format('%02d', value[:month])}-#{format('%02d', value[:day])}T#{format('%02d', value[:hour])}:#{format('%02d', value[:minute] || 0)}:#{format('%02d', value[:second] || 0)}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+                value[:string] = "#{format('%04d', value[:year])}-#{format('%02d', value[:month])}-#{format('%02d', value[:day])}T#{format('%02d', value[:hour])}:#{format('%02d', value[:minute] || 0)}:#{format('%02g', value[:second] || 0)}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
               else
                 # date
                 value[:string] = "#{format('%04d', value[:year])}-#{format('%02d', value[:month])}-#{format('%02d', value[:day])}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
@@ -133,7 +133,7 @@ module Csvlint
           # gDay
           value[:string] = "---#{format('%02d', value[:day])}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
         else
-          value[:string] = "#{format('%02d', value[:hour])}:#{format('%02d', value[:minute])}:#{format('%02d', value[:second] || 0)}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
+          value[:string] = "#{format('%02d', value[:hour])}:#{format('%02d', value[:minute])}:#{format('%02g', value[:second] || 0)}#{value[:timezone] ? value[:timezone].sub("+00:00", "Z") : ''}"
         end
         return value
       end
