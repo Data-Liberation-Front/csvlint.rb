@@ -2,14 +2,19 @@ module Csvlint
   module Csvw
     class NumberFormat
 
-      attr_reader :pattern, :prefix, :numeric_part, :suffix, :grouping_separator, :decimal_separator, :primary_grouping_size, :secondary_grouping_size, :fractional_grouping_size
+      attr_reader :integer, :pattern, :prefix, :numeric_part, :suffix, :grouping_separator, :decimal_separator, :primary_grouping_size, :secondary_grouping_size, :fractional_grouping_size
 
-      def initialize(pattern=nil, grouping_separator=nil, decimal_separator=".")
+      def initialize(pattern=nil, grouping_separator=nil, decimal_separator=".", integer=false)
+        @integer = integer
         @pattern = pattern
         @grouping_separator = grouping_separator || (@pattern.nil? ? nil : ",")
         @decimal_separator = decimal_separator || "."
         if pattern.nil?
-          @regexp = Regexp.new("^(([-+]?[0-9]+(\\.[0-9]+)?([Ee][-+]?[0-9]+)?[%‰]?)|NaN|INF|-INF)$")
+          if integer
+            @regexp = INTEGER_REGEXP
+          else
+            @regexp = Regexp.new("^(([-+]?[0-9]+(\\.[0-9]+)?([Ee][-+]?[0-9]+)?[%‰]?)|NaN|INF|-INF)$")
+          end
         else
           numeric_part_regexp = Regexp.new("(?<numeric_part>([0#Ee]|#{Regexp.escape(@grouping_separator)}|#{Regexp.escape(@decimal_separator)})+)")
           number_format_regexp = Regexp.new("^(?<prefix>.*?)#{numeric_part_regexp}(?<suffix>.*?)$")
@@ -161,16 +166,7 @@ module Csvlint
           return nil if !@grouping_separator.nil? && value =~ Regexp.new("((^#{Regexp.escape(@grouping_separator)})|#{Regexp.escape(@grouping_separator)}{2})")
           value.gsub!(@grouping_separator, "") unless @grouping_separator.nil?
           value.gsub!(@decimal_separator, ".") unless @decimal_separator.nil?
-          if value =~ INTEGER_REGEXP
-            case value[-1]
-            when "%"
-              return value.to_f / 100
-            when "‰"
-              return value.to_f / 1000
-            else
-              return value.to_i
-            end
-          elsif value =~ @regexp
+          if value =~ @regexp
             case value
             when "NaN"
               return Float::NAN
@@ -185,7 +181,7 @@ module Csvlint
               when "‰"
                 return value.to_f / 1000
               else
-                return value.to_f
+                return @integer ? value.to_i : value.to_f
               end
             end
           else
@@ -197,8 +193,7 @@ module Csvlint
           number = match["numeric_part"]
           number.gsub!(@grouping_separator, "") unless @grouping_separator.nil?
           number.gsub!(@decimal_separator, ".") unless @decimal_separator.nil?
-          return number.to_i if @integer_pattern
-          return number.to_f
+          return @integer ? number.to_i : number.to_f
         end
       end
 
