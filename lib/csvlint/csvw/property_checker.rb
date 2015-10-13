@@ -324,9 +324,9 @@ module Csvlint
               elsif NUMERIC_FORMAT_DATATYPES.include?(value["base"])
                 value["format"] = { "pattern" => value["format"] } if value["format"].instance_of? String
                 begin
-                  value["format"] = Csvlint::Csvw::NumberFormat.new(value["format"]["pattern"], value["format"]["groupChar"], value["format"]["decimalChar"] || ".")
+                  value["format"] = Csvlint::Csvw::NumberFormat.new(value["format"]["pattern"], value["format"]["groupChar"], value["format"]["decimalChar"] || ".", INTEGER_FORMAT_DATATYPES.include?(value["base"]))
                 rescue Csvlint::Csvw::NumberFormatError
-                  value["format"] = Csvlint::Csvw::NumberFormat.new(nil, value["format"]["groupChar"], value["format"]["decimalChar"] || ".")
+                  value["format"] = Csvlint::Csvw::NumberFormat.new(nil, value["format"]["groupChar"], value["format"]["decimalChar"] || ".", INTEGER_FORMAT_DATATYPES.include?(value["base"]))
                   warnings << :invalid_number_format
                 end
               elsif value["base"] == "http://www.w3.org/2001/XMLSchema#boolean"
@@ -645,8 +645,7 @@ module Csvlint
           "http://www.w3.org/2001/XMLSchema#hexBinary"
         ]
 
-        NUMERIC_FORMAT_DATATYPES = [
-          "http://www.w3.org/2001/XMLSchema#decimal",
+        INTEGER_FORMAT_DATATYPES = [
           "http://www.w3.org/2001/XMLSchema#integer",
           "http://www.w3.org/2001/XMLSchema#long",
           "http://www.w3.org/2001/XMLSchema#int",
@@ -659,10 +658,14 @@ module Csvlint
           "http://www.w3.org/2001/XMLSchema#unsignedShort",
           "http://www.w3.org/2001/XMLSchema#unsignedByte",
           "http://www.w3.org/2001/XMLSchema#nonPositiveInteger",
-          "http://www.w3.org/2001/XMLSchema#negativeInteger",
+          "http://www.w3.org/2001/XMLSchema#negativeInteger"
+        ]
+
+        NUMERIC_FORMAT_DATATYPES = [
+          "http://www.w3.org/2001/XMLSchema#decimal",
           "http://www.w3.org/2001/XMLSchema#double",
           "http://www.w3.org/2001/XMLSchema#float"
-        ]
+        ] + INTEGER_FORMAT_DATATYPES
 
         DATE_FORMAT_DATATYPES = [
           "http://www.w3.org/2001/XMLSchema#date",

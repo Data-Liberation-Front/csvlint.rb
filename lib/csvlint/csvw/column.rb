@@ -91,33 +91,32 @@ module Csvlint
 
       def validate(string_value, row=nil)
         reset
-        values = parse(string_value || "", row)
-        # STDERR.puts "#{name} - #{string_value.inspect} - #{values.inspect}"
-        values.each do |value|
-          validate_required(value, row)
-          validate_format(value, row)
-          validate_length(value, row)
-          validate_value(value, row)
-        end unless values.nil?
-        validate_required(values, row) if values.nil?
-        return @separator.nil? ? values[0] : values
-      end
-
-      def parse(string_value, row=nil)
-        string_value = @default if string_value == ""
-        return nil if null.include? string_value
-        string_values = @separator.nil? ? [string_value] : string_value.split(@separator)
-        values = []
-        string_values.each do |s|
-          value, warning = DATATYPE_PARSER[@datatype["base"] || @datatype["@id"]].call(s, @datatype["format"])
-          if warning.nil?
-            values << value
-          else
-            build_errors(warning, :schema, row, @number, s, @datatype)
-            values << s
+        string_value = string_value || @default
+        if null.include? string_value
+          validate_required(nil, row)
+          values = nil
+          return values
+        else
+          string_values = @separator.nil? ? [string_value] : string_value.split(@separator)
+          values = []
+          string_values.each do |s|
+            invalid = false
+            value, warning = DATATYPE_PARSER[@datatype["base"] || @datatype["@id"]].call(s, @datatype["format"])
+            if warning.nil?
+              validate_required(value, row)
+              invalid = !validate_format(value, row) || invalid
+              invalid = !validate_length(value, row) || invalid
+              invalid = !validate_value(value, row) || invalid
+              values << (invalid ? s : value)
+            else
+              build_errors(warning, :schema, row, @number, s, @datatype)
+              values << s
+            end
           end
+          values = (values && @separator.nil?) ? values[0] : values
+          # STDERR.puts "#{name} - #{string_value.inspect} - #{values.inspect}"
+          return values
         end
-        return values
       end
 
       private
@@ -147,32 +146,65 @@ module Csvlint
         end
 
         def validate_required(value, row)
-          build_errors(:required, :schema, row, number, value, { "required" => @required }) if @required && value.nil?
+          if @required && value.nil?
+            build_errors(:required, :schema, row, number, value, { "required" => @required }) 
+            return false
+          end
+          return true
         end
 
         def validate_length(value, row)
+          valid = true
           if datatype["length"] || datatype["minLength"] || datatype["maxLength"]
             length = value.length
             length = value.gsub(/==?$/,"").length * 3 / 4 if datatype["@id"] == "http://www.w3.org/2001/XMLSchema#base64Binary" || datatype["base"] == "http://www.w3.org/2001/XMLSchema#base64Binary"
             length = value.length / 2 if datatype["@id"] == "http://www.w3.org/2001/XMLSchema#hexBinary" || datatype["base"] == "http://www.w3.org/2001/XMLSchema#hexBinary"
 
-            build_errors(:min_length, :schema, row, number, value, { "minLength" => datatype["minLength"] }) if datatype["minLength"] && length < datatype["minLength"]
-            build_errors(:max_length, :schema, row, number, value, { "maxLength" => datatype["maxLength"] }) if datatype["maxLength"] && length > datatype["maxLength"]
-            build_errors(:length, :schema, row, number, value, { "length" => datatype["length"] }) if datatype["length"] && length != datatype["length"]
+            if datatype["minLength"] && length < datatype["minLength"]
+              build_errors(:min_length, :schema, row, number, value, { "minLength" => datatype["minLength"] }) 
+              valid = false
+            end
+            if datatype["maxLength"] && length > datatype["maxLength"]
+              build_errors(:max_length, :schema, row, number, value, { "maxLength" => datatype["maxLength"] }) 
+              valid = false
+            end
+            if datatype["length"] && length != datatype["length"]
+              build_errors(:length, :schema, row, number, value, { "length" => datatype["length"] }) 
+              valid = false
+            end
           end
+          return valid
         end
 
         def validate_format(value, row)
           if datatype["format"]
-            build_errors(:format, :schema, row, number, value, { "format" => datatype["format"] }) unless DATATYPE_FORMAT_VALIDATION[datatype["base"]].call(value, datatype["format"])
+            unless DATATYPE_FORMAT_VALIDATION[datatype["base"]].call(value, datatype["format"])
+              build_errors(:format, :schema, row, number, value, { "format" => datatype["format"] }) 
+              return false
+            end
           end
+          return true
         end
 
         def validate_value(value, row)
-          build_errors(:min_inclusive, :schema, row, number, value, { "minInclusive" => datatype["minInclusive"] }) if datatype["minInclusive"] && ((value.is_a? Hash) ? (value[:dateTime] < datatype["minInclusive"][:dateTime]) : (value < datatype["minInclusive"]))
-          build_errors(:max_inclusive, :schema, row, number, value, { "maxInclusive" => datatype["maxInclusive"] }) if datatype["maxInclusive"] && ((value.is_a? Hash) ? (value[:dateTime] > datatype["maxInclusive"][:dateTime]) : (value > datatype["maxInclusive"]))
-          build_errors(:min_exclusive, :schema, row, number, value, { "minExclusive" => datatype["minExclusive"] }) if datatype["minExclusive"] && ((value.is_a? Hash) ? (value[:dateTime] <= datatype["minExclusive"][:dateTime]) : (value <= datatype["minExclusive"]))
-          build_errors(:max_exclusive, :schema, row, number, value, { "maxExclusive" => datatype["maxExclusive"] }) if datatype["maxExclusive"] && ((value.is_a? Hash) ? (value[:dateTime] >= datatype["maxExclusive"][:dateTime]) : (value >= datatype["maxExclusive"]))
+          valid = true
+          if datatype["minInclusive"] && ((value.is_a? Hash) ? (value[:dateTime] < datatype["minInclusive"][:dateTime]) : (value < datatype["minInclusive"]))
+            build_errors(:min_inclusive, :schema, row, number, value, { "minInclusive" => datatype["minInclusive"] }) 
+            valid = false
+          end
+          if datatype["maxInclusive"] && ((value.is_a? Hash) ? (value[:dateTime] > datatype["maxInclusive"][:dateTime]) : (value > datatype["maxInclusive"]))
+            build_errors(:max_inclusive, :schema, row, number, value, { "maxInclusive" => datatype["maxInclusive"] }) 
+            valid = false
+          end
+          if datatype["minExclusive"] && ((value.is_a? Hash) ? (value[:dateTime] <= datatype["minExclusive"][:dateTime]) : (value <= datatype["minExclusive"]))
+            build_errors(:min_exclusive, :schema, row, number, value, { "minExclusive" => datatype["minExclusive"] }) 
+            valid = false
+          end
+          if datatype["maxExclusive"] && ((value.is_a? Hash) ? (value[:dateTime] >= datatype["maxExclusive"][:dateTime]) : (value >= datatype["maxExclusive"]))
+            build_errors(:max_exclusive, :schema, row, number, value, { "maxExclusive" => datatype["maxExclusive"] }) 
+            valid = false
+          end
+          return valid
         end
 
         REGEXP_VALIDATION = lambda { |value, format| value =~ format }
@@ -228,8 +260,8 @@ module Csvlint
         TRIM_VALUE = lambda { |value, format| return value.strip, nil }
         ALL_VALUES_VALID = lambda { |value, format| return value, nil }
 
-        NUMERIC_PARSER = lambda { |value, format|
-          format = Csvlint::Csvw::NumberFormat.new() if format.nil?
+        NUMERIC_PARSER = lambda { |value, format, integer=false|
+          format = Csvlint::Csvw::NumberFormat.new(nil, nil, ".", integer) if format.nil?
           v = format.parse(value)
           return nil, :invalid_number if v.nil?
           return v, nil
@@ -263,7 +295,7 @@ module Csvlint
             return NUMERIC_PARSER.call(value, format)
           },
           "http://www.w3.org/2001/XMLSchema#integer" => lambda { |value, format|
-            v, w = NUMERIC_PARSER.call(value, format)
+            v, w = NUMERIC_PARSER.call(value, format, true)
             return v, :invalid_integer unless w.nil?
             return nil, :invalid_integer unless v.kind_of? Integer
             return v, w
