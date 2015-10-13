@@ -4,9 +4,9 @@ module Csvlint
 
       include Csvlint::ErrorCollector
 
-      attr_reader :columns, :dialect, :table_direction, :foreign_keys, :foreign_key_references, :id, :notes, :primary_key, :schema, :suppress_output, :transformations, :url, :annotations
+      attr_reader :columns, :dialect, :table_direction, :foreign_keys, :foreign_key_references, :id, :notes, :primary_key, :row_title_columns, :schema, :suppress_output, :transformations, :url, :annotations
 
-      def initialize(url, columns: [], dialect: {}, table_direction: :auto, foreign_keys: [], id: nil, notes: [], primary_key: nil, schema: nil, suppress_output: false, transformations: [], annotations: [], warnings: [])
+      def initialize(url, columns: [], dialect: {}, table_direction: :auto, foreign_keys: [], id: nil, notes: [], primary_key: nil, row_title_columns: [], schema: nil, suppress_output: false, transformations: [], annotations: [], warnings: [])
         @url = url
         @columns = columns
         @dialect = dialect
@@ -19,6 +19,7 @@ module Csvlint
         @notes = notes
         @primary_key = primary_key
         @primary_key_values = {}
+        @row_title_columns = row_title_columns
         @schema = schema
         @suppress_output = suppress_output
         @transformations = transformations
@@ -195,8 +196,11 @@ module Csvlint
           end if foreign_keys
 
           row_titles = table_schema["rowTitles"]
-          row_titles.each_with_index do |row_title,i|
-            raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.rowTitles[#{i}]"), "rowTitles references non-existant column" unless column_names.include? row_title
+          row_title_columns = []
+          row_titles.each_with_index do |row_title|
+            i = column_names.index(row_title)
+            raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.rowTitles[#{i}]"), "rowTitles references non-existant column" unless i
+            row_title_columns << columns[i]
           end if row_titles
 
         end
@@ -208,6 +212,7 @@ module Csvlint
           foreign_keys: foreign_keys || [],
           notes: notes,
           primary_key: primary_key_valid && !primary_key_columns.empty? ? primary_key_columns : nil,
+          row_title_columns: row_title_columns,
           schema: table_schema ? table_schema["@id"] : nil,
           suppress_output: table_properties["suppressOutput"] ? table_properties["suppressOutput"] : false,
           annotations: annotations,
