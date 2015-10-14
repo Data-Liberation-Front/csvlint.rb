@@ -85,7 +85,11 @@ module Csvlint
                 @columns.push Csvlint::Csvw::Column.new(i+1, "_col.#{i+1}")
               end
             else
-              @columns = table.columns
+              @columns = table.columns.clone
+              remainder = v.data[0][table.columns.length..-1]
+              remainder.each_with_index do |h,i|
+                @columns.push Csvlint::Csvw::Column.new(i+1, "_col.#{table.columns.length+i+1}")
+              end if remainder
             end
             table.row_title_columns.each do |c|
               @row_title_columns << (c.name || c.default_name)
