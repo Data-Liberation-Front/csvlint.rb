@@ -101,7 +101,7 @@ module Csvlint
             return nil
           end
         else
-          value[:dateTime] = DateTime.new(value["year"] || 0, value["month"] || 1, value["day"] || 1, value["hour"] || 0, value["minute"] || 0, value["second"] || 0, value["timezone"] || "+00:00")
+          value[:dateTime] = DateTime.new(value[:year] || 0, value[:month] || 1, value[:day] || 1, value[:hour] || 0, value[:minute] || 0, value[:second] || 0, value[:timezone] || "+00:00")
         end
         if value[:year]
           if value[:month]
