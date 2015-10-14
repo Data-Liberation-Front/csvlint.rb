@@ -4,9 +4,16 @@ module Csvlint
 
       attr_reader :integer, :pattern, :prefix, :numeric_part, :suffix, :grouping_separator, :decimal_separator, :primary_grouping_size, :secondary_grouping_size, :fractional_grouping_size
 
-      def initialize(pattern=nil, grouping_separator=nil, decimal_separator=".", integer=false)
-        @integer = integer
+      def initialize(pattern=nil, grouping_separator=nil, decimal_separator=".", integer=nil)
         @pattern = pattern
+        @integer = integer
+        if @integer.nil?
+          if @pattern.nil?
+            @integer = nil
+          else
+            @integer = !@pattern.include?(decimal_separator)
+          end
+        end
         @grouping_separator = grouping_separator || (@pattern.nil? ? nil : ",")
         @decimal_separator = decimal_separator || "."
         if pattern.nil?
@@ -16,7 +23,7 @@ module Csvlint
             @regexp = Regexp.new("^(([-+]?[0-9]+(\\.[0-9]+)?([Ee][-+]?[0-9]+)?[%‰]?)|NaN|INF|-INF)$")
           end
         else
-          numeric_part_regexp = Regexp.new("(?<numeric_part>([0#Ee]|#{Regexp.escape(@grouping_separator)}|#{Regexp.escape(@decimal_separator)})+)")
+          numeric_part_regexp = Regexp.new("(?<numeric_part>[-+]?([0#Ee]|#{Regexp.escape(@grouping_separator)}|#{Regexp.escape(@decimal_separator)})+)")
           number_format_regexp = Regexp.new("^(?<prefix>.*?)#{numeric_part_regexp}(?<suffix>.*?)$")
           match = number_format_regexp.match(pattern)
           raise Csvw::NumberFormatError, "invalid number format" if match.nil?
@@ -33,7 +40,12 @@ module Csvlint
           integer_part = mantissa_parts[0]
           fractional_part = mantissa_parts[1] || ""
 
-          @integer_pattern = exponent_part == "" && fractional_part == ""
+          if ["+", "-"].include?(integer_part[0])
+            numeric_part_regexp = "\\#{integer_part[0]}"
+            integer_part = integer_part[1..-1]
+          else
+            numeric_part_regexp = "[-+]?"
+          end
 
           min_integer_digits = integer_part.gsub(@grouping_separator, "").gsub("#", "").length
           min_fraction_digits = fractional_part.gsub(@grouping_separator, "").gsub("#", "").length
@@ -47,8 +59,6 @@ module Csvlint
 
           fractional_parts = fractional_part.split(@grouping_separator)[0..-2]
           @fractional_grouping_size = fractional_parts[0].length rescue 0
-
-          numeric_part_regexp = "[-+]?"
 
           if @primary_grouping_size == 0
             integer_regexp = "[0-9]*[0-9]{#{min_integer_digits}}"
@@ -181,7 +191,11 @@ module Csvlint
               when "‰"
                 return value.to_f / 1000
               else
-                return @integer ? value.to_i : value.to_f
+                if @integer.nil?
+                  return value.include?(".") ? value.to_f : value.to_i
+                else
+                  return @integer ? value.to_i : value.to_f
+                end
               end
             end
           else
@@ -193,7 +207,10 @@ module Csvlint
           number = match["numeric_part"]
           number.gsub!(@grouping_separator, "") unless @grouping_separator.nil?
           number.gsub!(@decimal_separator, ".") unless @decimal_separator.nil?
-          return @integer ? number.to_i : number.to_f
+          number = @integer ? number.to_i : number.to_f
+          number = number.to_f / 100 if match["prefix"].include?("%") || match["suffix"].include?("%")
+          number = number.to_f / 1000 if match["prefix"].include?("‰") || match["suffix"].include?("‰")
+          return number
         end
       end
 

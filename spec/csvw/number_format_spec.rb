@@ -152,6 +152,7 @@ describe Csvlint::Csvw::NumberFormat do
 
   it "should parse numbers that match ##0 correctly" do
     format = Csvlint::Csvw::NumberFormat.new("##0")
+    expect(format.parse("-1")).to eql(-1)
     expect(format.parse("1")).to eql(1)
     expect(format.parse("12")).to eql(12)
     expect(format.parse("123")).to eql(123)
@@ -378,6 +379,21 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.parse("12.3E4")).to eql(12.3E4)
     expect(format.parse("12.3E45")).to eql(12.3E45)
     expect(format.parse("12.34E5")).to eql(12.34E5)
+  end
+
+  it "should parse numbers that match %000 correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("%000")
+    expect(format.parse("%001")).to eq(0.01)
+    expect(format.parse("%012")).to eq(0.12)
+    expect(format.parse("%123")).to eq(1.23)
+    expect(format.parse("%1234")).to eq(12.34)
+  end
+
+  it "should parse numbers that match -0 correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("-0")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("-1")).to eq(-1)
+    expect(format.parse("-12")).to eq(-12)
   end
 
   it "should parse numbers normally when there is no pattern" do
