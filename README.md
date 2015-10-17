@@ -162,20 +162,26 @@ An example JSON Table Schema schema file is:
 		"fields": [
 			{
 				"name": "id",
-			  	"constraints": { "required": true }
+				"constraints": {
+					"required": true,
+					"type": "http://www.w3.org/TR/xmlschema-2/#integer"
+				}
 			},
-            {
-               	"name": "price",
-               	"constraints": { "required": true, "minLength": 1 }
-            },
-            {
-            	"name": "postcode",
-            	"constraints": {
-            		"required": true,
-            		"pattern": "[A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2}"
-            	}
-            }
-        ]
+			{
+				"name": "price",
+				"constraints": {
+					"required": true,
+					"minLength": 1 
+				}
+			},
+			{
+				"name": "postcode",
+				"constraints": {
+					"required": true,
+					"pattern": "[A-Z]{1,2}[0-9][0-9A-Z]? ?[0-9][A-Z]{2}"
+				}
+			}
+		]
 	}
 
 An equivalent CSV on the Web Metadata file is:
@@ -187,7 +193,8 @@ An equivalent CSV on the Web Metadata file is:
 			"columns": [
 				{
 					"name": "id",
-					"required": true
+					"required": true,
+					"datatype": { "base": "integer" }
 				},
 				{
 					"name": "price",
