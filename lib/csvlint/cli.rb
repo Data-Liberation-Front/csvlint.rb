@@ -17,14 +17,6 @@ module Csvlint
       if options[:schema]
         begin
           schema = Csvlint::Schema.load_from_json(options[:schema])
-        rescue JSON::ParserError => e
-          output_string = "invalid metadata: malformed JSON"
-          if $stdout.tty?
-            puts output_string.colorize(:red)
-          else
-            puts output_string
-          end
-          exit 1
         rescue Csvlint::Csvw::MetadataError => e
           output_string = "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
           if $stdout.tty?
@@ -35,6 +27,16 @@ module Csvlint
           exit 1
         rescue Errno::ENOENT
           puts "#{options[:schema]} not found"
+          exit 1
+        end
+
+        if schema.description == "malformed"
+          output_string = "invalid metadata: malformed JSON"
+          if $stdout.tty?
+            puts output_string.colorize(:red)
+          else
+            puts output_string
+          end
           exit 1
         end
       end
