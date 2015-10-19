@@ -13,25 +13,9 @@ module Csvlint
     def validate(source = nil)
       source = read_source(source)
       schema = get_schema(options[:schema]) if options[:schema]
+      fetch_schema_tables(schema, options) if source.nil?
 
-      valid = true
-      if source.nil?
-        unless schema.instance_of? Csvlint::Csvw::TableGroup
-          return_error "No CSV data to validate."
-        end
-        schema.tables.keys.each do |source|
-          begin
-            source = source.sub("file:","")
-            source = File.new( source )
-          rescue Errno::ENOENT
-            return_error "#{source} not found"
-          end unless source =~ /^http(s)?/
-          valid &= validate_csv(source, schema, options[:dump])
-        end
-      else
-        valid = validate_csv(source, schema, options[:dump])
-      end
-
+      valid = validate_csv(source, schema, options[:dump])
       exit 1 unless valid
     end
 
@@ -71,6 +55,25 @@ module Csvlint
 
         return_error "invalid metadata: malformed JSON" if schema.description == "malformed"
         schema
+      end
+
+      def fetch_schema_tables(schema, options)
+        valid = true
+
+        unless schema.instance_of? Csvlint::Csvw::TableGroup
+          return_error "No CSV data to validate."
+        end
+        schema.tables.keys.each do |source|
+          begin
+            source = source.sub("file:","")
+            source = File.new( source )
+          rescue Errno::ENOENT
+            return_error "#{source} not found"
+          end unless source =~ /^http(s)?/
+          valid &= validate_csv(source, schema, options[:dump])
+        end
+
+        exit 1 unless valid
       end
 
       def print_error(index, error, dump, color)
