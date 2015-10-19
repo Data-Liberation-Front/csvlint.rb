@@ -110,15 +110,6 @@ module Csvlint
 
       def validate_csv(source, schema, dump)
         @error_count = 0
-        report_lines = lambda do |row|
-          new_errors = row.errors.count
-          if new_errors > @error_count
-            print "!".red
-          else
-            print ".".green
-          end
-          @error_count = new_errors
-        end
 
         validator = Csvlint::Validator.new( source, {}, schema, { lambda: report_lines } )
 
@@ -149,6 +140,18 @@ module Csvlint
         end
 
         return validator.valid?
+      end
+
+      def report_lines
+        lambda do |row|
+          new_errors = row.errors.count
+          if new_errors > @error_count
+            print "!".red
+          else
+            print ".".green
+          end
+          @error_count = new_errors
+        end
       end
 
   end
