@@ -166,3 +166,12 @@ NO JSON HERE SON
     When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema.json`
     Then the output should contain "http://example.com/example1.csv is INVALID"
     And the output should contain "1. min_length. Row: 2,2. 5"
+
+  Scenario: CSVw table Schema
+    Given I have a metadata file called "csvw/countries.json"
+    And the metadata is stored at the url "http://w3c.github.io/csvw/tests/countries.json"
+    And I have a file called "csvw/countries.csv" at the url "http://w3c.github.io/csvw/tests/countries.csv"
+    And I have a file called "csvw/country_slice.csv" at the url "http://w3c.github.io/csvw/tests/country_slice.csv"
+    When I run `csvlint --schema http://w3c.github.io/csvw/tests/countries.json`
+    Then the output should contain "http://w3c.github.io/csvw/tests/countries.csv is VALID"
+    And the output should contain "http://w3c.github.io/csvw/tests/country_slice.csv is VALID"
