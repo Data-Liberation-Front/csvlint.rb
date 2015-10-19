@@ -12,34 +12,7 @@ module Csvlint
     option :schema, banner: "FILENAME", desc: "Schema file", aliases: :s
     def validate(source = nil)
       source = read_source(source)
-
-      schema = nil
-      if options[:schema]
-        begin
-          schema = Csvlint::Schema.load_from_json(options[:schema])
-        rescue Csvlint::Csvw::MetadataError => e
-          output_string = "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
-          if $stdout.tty?
-            puts output_string.colorize(:red)
-          else
-            puts output_string
-          end
-          exit 1
-        rescue OpenURI::HTTPError
-          puts "#{options[:schema]} not found"
-          exit 1
-        end
-
-        if schema.description == "malformed"
-          output_string = "invalid metadata: malformed JSON"
-          if $stdout.tty?
-            puts output_string.colorize(:red)
-          else
-            puts output_string
-          end
-          exit 1
-        end
-      end
+      schema = get_schema(options[:schema]) if options[:schema]
 
       valid = true
       if source.nil?
@@ -89,6 +62,35 @@ module Csvlint
             end
           end
         end
+      end
+
+      def get_schema(schema)
+        begin
+          schema = Csvlint::Schema.load_from_json(schema)
+        rescue Csvlint::Csvw::MetadataError => e
+          output_string = "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
+          if $stdout.tty?
+            puts output_string.colorize(:red)
+          else
+            puts output_string
+          end
+          exit 1
+        rescue OpenURI::HTTPError
+          puts "#{options[:schema]} not found"
+          exit 1
+        end
+
+        if schema.description == "malformed"
+          output_string = "invalid metadata: malformed JSON"
+          if $stdout.tty?
+            puts output_string.colorize(:red)
+          else
+            puts output_string
+          end
+          exit 1
+        end
+
+        schema
       end
 
       def print_error(index, error, dump, color)
