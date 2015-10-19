@@ -99,6 +99,12 @@ module Csvlint
         end
       end
 
+      def print_errors(errors, dump)
+        if errors.size > 0
+          errors.each_with_index { |error, i| print_error(i, error, dump, :red)  }
+        end
+      end
+
       def return_error(message)
         if $stdout.tty?
           puts message.colorize(:red)
@@ -127,17 +133,8 @@ module Csvlint
           puts "\r\n#{csv} is #{validator.valid? ? "VALID" : "INVALID"}"
         end
 
-        if validator.errors.size > 0
-          validator.errors.each_with_index do |error, i|
-            print_error(i, error, dump, :red)
-          end
-        end
-
-        if validator.warnings.size > 0
-          validator.warnings.each_with_index do |error, i|
-            print_error(i, error, dump, :yellow)
-          end
-        end
+        print_errors(validator.errors, dump)
+        print_errors(validator.warnings, dump)
 
         return validator.valid?
       end
