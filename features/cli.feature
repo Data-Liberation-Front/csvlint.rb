@@ -14,3 +14,9 @@ Feature: CSVlint CLI
   Scenario: Valid CSV from file
     When I run `csvlint ../../features/fixtures/valid.csv`
     Then the output should contain "valid.csv is VALID"
+
+  # This is a hacky way of saying to run `cat features/fixtures/valid.csv | csvlint`
+  Scenario: Valid CSV from pipe
+    Given I have stubbed ARGF to contain "features/fixtures/valid.csv"
+    When I run `csvlint`
+    Then the output should contain "CSV is VALID"
