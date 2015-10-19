@@ -17,16 +17,14 @@ module Csvlint
       valid = true
       if source.nil?
         unless schema.instance_of? Csvlint::Csvw::TableGroup
-          puts "No CSV data to validate."
-          exit 1
+          return_error "No CSV data to validate."
         end
         schema.tables.keys.each do |source|
           begin
             source = source.sub("file:","")
             source = File.new( source )
           rescue Errno::ENOENT
-            puts "#{source} not found"
-            exit 1
+            return_error "#{source} not found"
           end unless source =~ /^http(s)?/
           valid &= validate_csv(source, schema, options[:dump])
         end
@@ -47,8 +45,7 @@ module Csvlint
           if !$stdin.tty?
             return StringIO.new(ARGF.read)
           elsif !options[:schema]
-            puts "No CSV data to validate"
-            exit 1
+            return_error "No CSV data to validate"
           end
         else
           if source =~ /^http(s)?/
@@ -57,8 +54,7 @@ module Csvlint
             begin
               return File.new( source )
             rescue Errno::ENOENT
-              puts "#{source} not found"
-              exit 1
+              return_error "#{source} not found"
             end
           end
         end
@@ -68,28 +64,12 @@ module Csvlint
         begin
           schema = Csvlint::Schema.load_from_json(schema)
         rescue Csvlint::Csvw::MetadataError => e
-          output_string = "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
-          if $stdout.tty?
-            puts output_string.colorize(:red)
-          else
-            puts output_string
-          end
-          exit 1
+          return_error "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
         rescue OpenURI::HTTPError
-          puts "#{options[:schema]} not found"
-          exit 1
+          return_error "#{options[:schema]} not found"
         end
 
-        if schema.description == "malformed"
-          output_string = "invalid metadata: malformed JSON"
-          if $stdout.tty?
-            puts output_string.colorize(:red)
-          else
-            puts output_string
-          end
-          exit 1
-        end
-
+        return_error "invalid metadata: malformed JSON" if schema.description == "malformed"
         schema
       end
 
@@ -113,6 +93,15 @@ module Csvlint
         if dump
           pp error
         end
+      end
+
+      def return_error(message)
+        if $stdout.tty?
+          puts message.colorize(:red)
+        else
+          puts message
+        end
+        exit 1
       end
 
       def validate_csv(source, schema, dump)
