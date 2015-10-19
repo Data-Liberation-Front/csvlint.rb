@@ -21,6 +21,16 @@ Feature: CSVlint CLI
     When I run `csvlint`
     Then the output should contain "CSV is VALID"
 
+  Scenario: Invalid CSV from url
+    Given I have a CSV with the following content:
+    """
+    "Foo",	"Bar"	,	"Baz"
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    When I run `csvlint http://example.com/example1.csv`
+    Then the output should contain "http://example.com/example1.csv is INVALID"
+    And the output should contain "whitespace"
+
   Scenario: Specify schema
     Given I have a CSV with the following content:
     """
