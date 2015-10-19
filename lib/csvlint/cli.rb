@@ -27,21 +27,22 @@ module Csvlint
         if source.nil?
           # If no source is present, try reading from stdin
           if !$stdin.tty?
-            return StringIO.new(ARGF.read)
+            source = StringIO.new(ARGF.read)
           elsif !options[:schema]
             return_error "No CSV data to validate"
           end
         else
-          if source =~ /^http(s)?/
-            return source
-          else
+          # If the source isn't a URL, it's a file
+          unless source =~ /^http(s)?/
             begin
-              return File.new( source )
+              source = File.new( source )
             rescue Errno::ENOENT
               return_error "#{source} not found"
             end
           end
         end
+
+        source
       end
 
       def get_schema(schema)
