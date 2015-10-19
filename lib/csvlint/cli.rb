@@ -13,6 +13,7 @@ module Csvlint
     def validate(source = nil)
       source = read_source(source)
       schema = get_schema(options[:schema]) if options[:schema]
+
       fetch_schema_tables(schema, options) if source.nil?
 
       valid = validate_csv(source, schema, options[:dump])
@@ -54,7 +55,10 @@ module Csvlint
           return_error "#{options[:schema]} not found"
         end
 
-        return_error "invalid metadata: malformed JSON" if schema.description == "malformed"
+        if schema.class == Csvlint::Schema && schema.description == "malformed"
+          return_error "invalid metadata: malformed JSON"
+        end
+
         schema
       end
 

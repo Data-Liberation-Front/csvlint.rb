@@ -100,3 +100,56 @@ NO JSON HERE SON
     And there is no file at the url "http://example.com/schema404.json"
     When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema404.json`
     Then the output should contain "http://example.com/schema404.json not found"
+
+  Scenario: Valid CSVw schema
+    Given I have a CSV with the following content:
+    """
+"Bob","1234","bob@example.org"
+"Alice","5","alice@example.com"
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    And I have metadata with the following content:
+    """
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "http://example.com/example1.csv",
+  "dialect": { "header": false },
+  "tableSchema": {
+    "columns": [
+            { "name": "Name", "required": true },
+            { "name": "Id", "required": true, "datatype": { "base": "string", "minLength": 1 } },
+            { "name": "Email", "required": true }
+      ]
+  }
+}
+    """
+    And the schema is stored at the url "http://example.com/schema.json"
+    When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema.json`
+    Then the output should contain "http://example.com/example1.csv is VALID"
+
+  Scenario: CSVw schema with invalid CSV
+    Given I have a CSV with the following content:
+    """
+"Bob","1234","bob@example.org"
+"Alice","5","alice@example.com"
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    And I have metadata with the following content:
+    """
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "http://example.com/example1.csv",
+  "dialect": { "header": false },
+  "tableSchema": {
+    "columns": [
+            { "name": "Name", "required": true },
+            { "name": "Id", "required": true, "datatype": { "base": "string", "minLength": 3 } },
+            { "name": "Email", "required": true }
+      ]
+  }
+}
+    """
+    And the schema is stored at the url "http://example.com/schema.json"
+    When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema.json`
+    Then the output should contain "http://example.com/example1.csv is INVALID"
+    And the output should contain "1. min_length. Row: 2,2. 5"
