@@ -10,9 +10,7 @@ Feature: CSVlint CLI
     And it is stored at the url "http://example.com/example1.csv"
     When I run `csvlint http://example.com/example1.csv`
     Then the output should contain "http://example.com/example1.csv is VALID"
-    And the output should contain "..."
 
   Scenario: Valid CSV from file
     When I run `csvlint ../../features/fixtures/valid.csv`
     Then the output should contain "valid.csv is VALID"
-    And the output should contain "..."
