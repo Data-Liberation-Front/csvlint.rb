@@ -89,3 +89,14 @@ NO JSON HERE SON
     And the schema is stored at the url "http://example.com/schema.json"
     When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema.json`
     Then the output should contain "invalid metadata: malformed JSON"
+
+  Scenario: Schema that 404s
+    Given I have a CSV with the following content:
+    """
+"Bob","1234","bob@example.org"
+"Alice","5","alice@example.com"
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    And there is no file at the url "http://example.com/schema404.json"
+    When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema404.json`
+    Then the output should contain "http://example.com/schema404.json not found"

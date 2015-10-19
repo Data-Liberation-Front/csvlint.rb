@@ -25,7 +25,7 @@ module Csvlint
             puts output_string
           end
           exit 1
-        rescue Errno::ENOENT
+        rescue OpenURI::HTTPError
           puts "#{options[:schema]} not found"
           exit 1
         end
