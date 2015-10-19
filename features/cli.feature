@@ -34,6 +34,10 @@ Feature: CSVlint CLI
     When I run `csvlint ../../features/fixtures/non-existent-file.csv`
     Then the output should contain "non-existent-file.csv not found"
 
+  Scenario: No file or URL specified
+    When I run `csvlint`
+    Then the output should contain "No CSV data to validate"
+
   Scenario: Invalid CSV from url
     Given I have a CSV with the following content:
     """
