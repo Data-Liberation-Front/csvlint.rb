@@ -21,6 +21,19 @@ Feature: CSVlint CLI
     When I run `csvlint`
     Then the output should contain "CSV is VALID"
 
+  Scenario: URL that 404s
+    Given there is no file at the url "http://example.com/example1.csv"
+    And there is no file at the url "http://example.com/.well-known/csvm"
+    And there is no file at the url "http://example.com/example1.csv-metadata.json"
+    And there is no file at the url "http://example.com/csv-metadata.json"
+    When I run `csvlint http://example.com/example1.csv`
+    Then the output should contain "http://example.com/example1.csv is INVALID"
+    And the output should contain "not_found"
+
+  Scenario: File doesn't exist
+    When I run `csvlint ../../features/fixtures/non-existent-file.csv`
+    Then the output should contain "non-existent-file.csv not found"
+
   Scenario: Invalid CSV from url
     Given I have a CSV with the following content:
     """

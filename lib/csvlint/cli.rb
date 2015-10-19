@@ -13,7 +13,6 @@ module Csvlint
     def validate(source = nil)
       source = read_source(source)
       schema = get_schema(options[:schema]) if options[:schema]
-
       fetch_schema_tables(schema, options) if source.nil?
 
       valid = validate_csv(source, schema, options[:dump])
