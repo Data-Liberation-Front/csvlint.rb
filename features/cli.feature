@@ -38,6 +38,21 @@ Feature: CSVlint CLI
     When I run `csvlint`
     Then the output should contain "No CSV data to validate"
 
+  Scenario: No file or URL specified, but schema specified
+    Given I have a schema with the following content:
+    """
+{
+  "fields": [
+          { "name": "Name", "constraints": { "required": true } },
+          { "name": "Id", "constraints": { "required": true, "minLength": 1 } },
+          { "name": "Email", "constraints": { "required": true } }
+    ]
+}
+    """
+    And the schema is stored at the url "http://example.com/schema.json"
+    When I run `csvlint --schema http://example.com/schema.json`
+    Then the output should contain "No CSV data to validate"
+
   Scenario: Invalid CSV from url
     Given I have a CSV with the following content:
     """
