@@ -104,8 +104,9 @@ Feature: CSVlint CLI
 NO JSON HERE SON
     """
     And the schema is stored at the url "http://example.com/schema.json"
+    Then nothing should be outputted to STDERR
     When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema.json`
-    Then the output should contain "invalid metadata: malformed JSON"
+    And the output should contain "invalid metadata: malformed JSON"
 
   Scenario: Schema that 404s
     Given I have a CSV with the following content:

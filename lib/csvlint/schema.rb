@@ -29,7 +29,7 @@ module Csvlint
         return Csvlint::Csvw::TableGroup.from_json(uri, json)
       end
 
-      def load_from_json(uri)
+      def load_from_json(uri, output_errors = true)
         begin
           json = JSON.parse( open(uri).read )
           if json["@context"]
@@ -43,9 +43,11 @@ module Csvlint
         rescue OpenURI::HTTPError, Errno::ENOENT => e
           raise e
         rescue => e
-          STDERR.puts e.class
-          STDERR.puts e.message
-          STDERR.puts e.backtrace
+          if output_errors === true
+            STDERR.puts e.class
+            STDERR.puts e.message
+            STDERR.puts e.backtrace
+          end
           return Schema.new(nil, [], "malformed", "malformed")
         end
       end
