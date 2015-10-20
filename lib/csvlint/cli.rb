@@ -19,8 +19,6 @@ module Csvlint
       exit 1 unless valid
     end
 
-    default_task :validate
-
     private
 
       def read_source(source)
