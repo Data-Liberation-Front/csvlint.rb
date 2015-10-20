@@ -118,6 +118,16 @@ NO JSON HERE SON
     When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema404.json`
     Then the output should contain "http://example.com/schema404.json not found"
 
+  Scenario: Schema that doesn't exist
+    Given I have a CSV with the following content:
+    """
+"Bob","1234","bob@example.org"
+"Alice","5","alice@example.com"
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    When I run `csvlint http://example.com/example1.csv --schema /fake/file/path.json`
+    Then the output should contain "/fake/file/path.json not found"
+
   Scenario: Valid CSVw schema
     Given I have a CSV with the following content:
     """

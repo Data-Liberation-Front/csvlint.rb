@@ -48,7 +48,7 @@ module Csvlint
           schema = Csvlint::Schema.load_from_json(schema)
         rescue Csvlint::Csvw::MetadataError => e
           return_error "invalid metadata: #{e.message}#{" at " + e.path if e.path}"
-        rescue OpenURI::HTTPError
+        rescue OpenURI::HTTPError, Errno::ENOENT
           return_error "#{options[:schema]} not found"
         end
 

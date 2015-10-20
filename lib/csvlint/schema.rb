@@ -40,7 +40,7 @@ module Csvlint
           end
         rescue Csvlint::Csvw::MetadataError => e
           raise e
-        rescue OpenURI::HTTPError => e
+        rescue OpenURI::HTTPError, Errno::ENOENT => e
           raise e
         rescue => e
           STDERR.puts e.class
