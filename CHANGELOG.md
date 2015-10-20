@@ -2,7 +2,23 @@
 
 ## [Unreleased](https://github.com/theodi/csvlint.rb/tree/HEAD)
 
-[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.1...HEAD)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.2...HEAD)
+
+**Closed issues:**
+
+- Include field name with error [\#161](https://github.com/theodi/csvlint.rb/issues/161)
+
+- Refactor the binary [\#150](https://github.com/theodi/csvlint.rb/issues/150)
+
+**Merged pull requests:**
+
+- Refactor CLI [\#163](https://github.com/theodi/csvlint.rb/pull/163) ([pezholio](https://github.com/pezholio))
+
+- Update schema file example to clarify type [\#162](https://github.com/theodi/csvlint.rb/pull/162) ([wachunga](https://github.com/wachunga))
+
+## [0.2.2](https://github.com/theodi/csvlint.rb/tree/0.2.2) (2015-10-09)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.1...0.2.2)
 
 **Closed issues:**
 
