@@ -26,8 +26,7 @@ module Csvlint
           # If no source is present, try reading from stdin
           if !$stdin.tty?
             source = StringIO.new(ARGF.read) rescue nil
-          elsif !options[:schema]
-            return_error "No CSV data to validate"
+            return_error "No CSV data to validate" if !options[:schema] && source.nil?
           end
         else
           # If the source isn't a URL, it's a file
