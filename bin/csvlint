@@ -3,4 +3,4 @@ $:.unshift File.join( File.dirname(__FILE__), "..", "lib")
 
 require 'csvlint/cli'
 
-Csvlint::Cli.start(ARGV.dup.unshift("validate"))
+Csvlint::Cli.start

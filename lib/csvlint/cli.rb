@@ -7,9 +7,9 @@ require 'thor'
 module Csvlint
   class Cli < Thor
 
-    desc "csvlint myfile.csv", "Validates a CSV from a file or URL"
+    desc "myfile.csv OR csvlint http://example.com/myfile.csv", "Supports validating CSV files to check their syntax and contents"
     option :dump_errors, desc: "Pretty print error and warning objects.", type: :boolean, aliases: :d
-    option :schema, banner: "FILENAME", desc: "Schema file", aliases: :s
+    option :schema, banner: "FILENAME OR URL", desc: "Schema file", aliases: :s
     def validate(source = nil)
       source = read_source(source)
       schema = get_schema(options[:schema]) if options[:schema]
@@ -18,6 +18,12 @@ module Csvlint
       valid = validate_csv(source, schema, options[:dump])
       exit 1 unless valid
     end
+
+    def help
+      self.class.command_help(shell, :validate)
+    end
+
+    default_task :validate
 
     private
 
