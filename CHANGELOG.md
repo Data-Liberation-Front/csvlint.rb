@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/theodi/csvlint.rb/tree/HEAD)
 
-[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.2...HEAD)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.3...HEAD)
+
+**Merged pull requests:**
+
+- Fixes for CLI [\#164](https://github.com/theodi/csvlint.rb/pull/164) ([pezholio](https://github.com/pezholio))
+
+## [0.2.3](https://github.com/theodi/csvlint.rb/tree/0.2.3) (2015-10-20)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.2...0.2.3)
 
 **Closed issues:**
 
