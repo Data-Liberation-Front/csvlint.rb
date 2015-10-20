@@ -12,10 +12,10 @@ module Csvlint
     option :schema, banner: "FILENAME OR URL", desc: "Schema file", aliases: :s
     def validate(source = nil)
       source = read_source(source)
-      schema = get_schema(options[:schema]) if options[:schema]
-      fetch_schema_tables(schema, options) if source.nil?
+      @schema = get_schema(options[:schema]) if options[:schema]
+      fetch_schema_tables(@schema, options) if source.nil?
 
-      valid = validate_csv(source, schema, options[:dump])
+      valid = validate_csv(source, @schema, options[:dump])
       exit 1 unless valid
     end
 
@@ -90,7 +90,11 @@ module Csvlint
         if error.row || error.column
           location = "#{error.row ? "Row" : "Column"}: #{location}"
         end
-        output_string = "#{index+1}. #{error.type}"
+        output_string = "#{index+1}. "
+        if error.column && @schema && @schema.class == Csvlint::Schema
+          output_string += "#{@schema.fields[error.column - 1].name}: "
+        end
+        output_string += "#{error.type}"
         output_string += ". #{location}" unless location.empty?
         output_string += ". #{error.content}" if error.content
 

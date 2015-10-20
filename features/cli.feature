@@ -104,7 +104,7 @@ Feature: CSVlint CLI
     And the schema is stored at the url "http://example.com/schema.json"
     When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema.json`
     Then the output should contain "http://example.com/example1.csv is INVALID"
-    And the output should contain "1. min_length. Row: 2,2. 5"
+    And the output should contain "1. Id: min_length. Row: 2,2. 5"
     And the output should contain "1. malformed_header. Row: 1. Bob,1234,bob@example.org"
 
   Scenario: Invalid schema
