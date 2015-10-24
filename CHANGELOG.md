@@ -2,7 +2,69 @@
 
 ## [Unreleased](https://github.com/theodi/csvlint.rb/tree/HEAD)
 
-[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.4...HEAD)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.3...HEAD)
+
+**Merged pull requests:**
+
+- Fixes for CLI [\#164](https://github.com/theodi/csvlint.rb/pull/164) ([pezholio](https://github.com/pezholio))
+
+## [0.2.3](https://github.com/theodi/csvlint.rb/tree/0.2.3) (2015-10-20)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.2...0.2.3)
+
+**Closed issues:**
+
+- Include field name with error [\#161](https://github.com/theodi/csvlint.rb/issues/161)
+
+- Refactor the binary [\#150](https://github.com/theodi/csvlint.rb/issues/150)
+
+**Merged pull requests:**
+
+- Refactor CLI [\#163](https://github.com/theodi/csvlint.rb/pull/163) ([pezholio](https://github.com/pezholio))
+
+- Update schema file example to clarify type [\#162](https://github.com/theodi/csvlint.rb/pull/162) ([wachunga](https://github.com/wachunga))
+
+## [0.2.2](https://github.com/theodi/csvlint.rb/tree/0.2.2) (2015-10-09)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.1...0.2.2)
+
+**Closed issues:**
+
+- Eliminate some date and time formats \(for speed\) [\#105](https://github.com/theodi/csvlint.rb/issues/105)
+
+**Merged pull requests:**
+
+- Check characters in validate\_line method [\#160](https://github.com/theodi/csvlint.rb/pull/160) ([pezholio](https://github.com/pezholio))
+
+- Further optimisations [\#159](https://github.com/theodi/csvlint.rb/pull/159) ([pezholio](https://github.com/pezholio))
+
+- More optimizations after \#157 [\#158](https://github.com/theodi/csvlint.rb/pull/158) ([jpmckinney](https://github.com/jpmckinney))
+
+- Memoize the result of CSV\#encode\_re [\#157](https://github.com/theodi/csvlint.rb/pull/157) ([jpmckinney](https://github.com/jpmckinney))
+
+- Don't pass leading string to parse\_line [\#155](https://github.com/theodi/csvlint.rb/pull/155) ([pezholio](https://github.com/pezholio))
+
+## [0.2.1](https://github.com/theodi/csvlint.rb/tree/0.2.1) (2015-10-07)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.0...0.2.1)
+
+**Implemented enhancements:**
+
+- Get total rows number about the CSV file that was validated [\#143](https://github.com/theodi/csvlint.rb/issues/143)
+
+**Closed issues:**
+
+- Optimization: Stream CSV [\#122](https://github.com/theodi/csvlint.rb/issues/122)
+
+**Merged pull requests:**
+
+- Add `row\_count` method [\#153](https://github.com/theodi/csvlint.rb/pull/153) ([pezholio](https://github.com/pezholio))
+
+- Streaming validation [\#146](https://github.com/theodi/csvlint.rb/pull/146) ([pezholio](https://github.com/pezholio))
+
+## [0.2.0](https://github.com/theodi/csvlint.rb/tree/0.2.0) (2015-10-05)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.4...0.2.0)
 
 **Closed issues:**
 

@@ -1,6 +1,52 @@
 module Csvlint
 
   class Validator
+    class LineCSV < CSV
+      ENCODE_RE = Hash.new do |h,str|
+        h[str] = Regexp.new(str)
+      end
+
+      ENCODE_STR = Hash.new do |h,encoding_name|
+        h[encoding_name] = Hash.new do |h,chunks|
+          h[chunks] = chunks.map { |chunk| chunk.encode(encoding_name) }.join('')
+        end
+      end
+
+      ESCAPE_RE = Hash.new do |h,re_chars|
+        h[re_chars] = Hash.new do |h,re_esc|
+          h[re_esc] = Hash.new do |h,str|
+            h[str] = str.gsub(re_chars) {|c| re_esc + c}
+          end
+        end
+      end
+
+      # Optimization: Memoize `encode_re`.
+      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2273
+      def encode_re(*chunks)
+        ENCODE_RE[encode_str(*chunks)]
+      end
+
+      # Optimization: Memoize `encode_str`.
+      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2281
+      def encode_str(*chunks)
+        ENCODE_STR[@encoding.name][chunks]
+      end
+
+      # Optimization: Memoize `escape_re`.
+      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2265
+      def escape_re(str)
+        ESCAPE_RE[@re_chars][@re_esc][str]
+      end
+
+      # Optimization: Disable the CSV library's converters feature.
+      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2100
+      def init_converters(options, field_name = :converters)
+        @converters = []
+        @header_converters = []
+        options.delete(:unconverted_fields)
+        options.delete(field_name)
+      end
+    end
 
     include Csvlint::ErrorCollector
 
@@ -21,7 +67,7 @@ module Csvlint
       @dialect = dialect
       @csv_header = true
       @headers = {}
-      @lambda = options[:lambda] || lambda { |a| nil }
+      @lambda = options[:lambda]
       @validate = options[:validate].nil? ? true : options[:validate]
       @leading = ""
 
@@ -68,29 +114,24 @@ module Csvlint
 
     def validate_url
       @current_line = 1
-      begin
-        request = Typhoeus::Request.new(@source, followlocation: true)
-        request.on_headers do |response|
-          @headers = response.headers || {}
-          @content_type = response.headers["content-type"] rescue nil
-          @response_code = response.code
-          return build_errors(:not_found) if response.code == 404
-          validate_metadata
-        end
-        request.on_body do |chunk|
-          io = StringIO.new(@leading + chunk)
-          io.each_line do |line|
-            break if line_limit_reached?
-            parse_line(line)
-          end
-        end
-        request.run
-        # Validate the last line too
-        validate_line(@leading, @current_line) unless @leading == ""
-      rescue ArgumentError => ae
-        build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
-        @reported_invalid_encoding = true
+      request = Typhoeus::Request.new(@source, followlocation: true)
+      request.on_headers do |response|
+        @headers = response.headers || {}
+        @content_type = response.headers["content-type"] rescue nil
+        @response_code = response.code
+        return build_errors(:not_found) if response.code == 404
+        validate_metadata
       end
+      request.on_body do |chunk|
+        io = StringIO.new(chunk)
+        io.each_line do |line|
+          break if line_limit_reached?
+          parse_line(line)
+        end
+      end
+      request.run
+      # Validate the last line too
+      validate_line(@leading, @current_line) unless @leading == ""
     end
 
     def parse_line(line)
@@ -109,6 +150,9 @@ module Csvlint
         # If it's not a full line, then prepare to add it to the beginning of the next chunk
         @leading = line
       end
+    rescue ArgumentError => ae
+      build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
+      @reported_invalid_encoding = true
     end
 
     def validate_line(input = nil, index = nil)
@@ -118,7 +162,7 @@ module Csvlint
       @encoding = input.encoding.to_s
       report_line_breaks(line)
       parse_contents(input, line)
-      @lambda.call(self)
+      @lambda.call(self) unless @lambda.nil?
     rescue ArgumentError => ae
       build_errors(:invalid_encoding, :structure, @current_line, nil, index) unless @reported_invalid_encoding
       @reported_invalid_encoding = true
@@ -133,12 +177,8 @@ module Csvlint
       @csv_options[:encoding] = @encoding
 
       begin
-        row = CSV.parse_line(stream, @csv_options)
-          # this is a one line substitute for CSV.new followed by row = CSV.shift. a CSV Row class is required
-          # CSV.parse will return an array of arrays which breaks subsequent each_with_index invocations
-          # TODO investigate if above would be a drag on memory
-
-      rescue CSV::MalformedCSVError => e
+        row = LineCSV.parse_line(stream, @csv_options)
+      rescue LineCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line)
       end
 
@@ -229,8 +269,8 @@ module Csvlint
     end
 
     def report_line_breaks(line_no=nil)
-      return if @input !~ /[\r|\n]/ # Return straight away if there's no newline character - i.e. we're on the last line
-      line_break = CSV.new(@input).row_sep
+      return unless @input[-1, 1].include?("\n") # Return straight away if there's no newline character - i.e. we're on the last line
+      line_break = get_line_break(@input)
       @line_breaks << line_break
       unless line_breaks_reported?
         if line_break != "\r\n"
@@ -288,6 +328,10 @@ module Csvlint
       else
         @line_breaks.uniq.first
       end
+    end
+
+    def row_count
+      data.count
     end
 
     def build_exception_messages(csvException, errChars, lineNo)
@@ -352,26 +396,8 @@ module Csvlint
               :numeric
             elsif uri?(col)
               :uri
-            elsif col[FORMATS[:date_db]] && date_format?(Date, col, '%Y-%m-%d')
-              :date_db
-            elsif col[FORMATS[:date_short]] && date_format?(Date, col, '%e %b')
-              :date_short
-            elsif col[FORMATS[:date_rfc822]] && date_format?(Date, col, '%e %b %Y')
-              :date_rfc822
-            elsif col[FORMATS[:date_long]] && date_format?(Date, col, '%B %e, %Y')
-              :date_long
-            elsif col[FORMATS[:dateTime_time]] && date_format?(Time, col, '%H:%M')
-              :dateTime_time
-            elsif col[FORMATS[:dateTime_hms]] && date_format?(Time, col, '%H:%M:%S')
-              :dateTime_hms
-            elsif col[FORMATS[:dateTime_db]] && date_format?(Time, col, '%Y-%m-%d %H:%M:%S')
-              :dateTime_db
-            elsif col[FORMATS[:dateTime_iso8601]] && date_format?(Time, col, '%Y-%m-%dT%H:%M:%SZ')
-              :dateTime_iso8601
-            elsif col[FORMATS[:dateTime_short]] && date_format?(Time, col, '%d %b %H:%M')
-              :dateTime_short
-            elsif col[FORMATS[:dateTime_long]] && date_format?(Time, col, '%B %d, %Y %H:%M')
-              :dateTime_long
+            elsif possible_date?(col)
+              date_formats(col)
             else
               :string
             end
@@ -489,6 +515,36 @@ module Csvlint
       false
     end
 
+    def possible_date?(col)
+      col[POSSIBLE_DATE_REGEXP]
+    end
+
+    def date_formats(col)
+      if col[FORMATS[:date_db]] && date_format?(Date, col, '%Y-%m-%d')
+        :date_db
+      elsif col[FORMATS[:date_short]] && date_format?(Date, col, '%e %b')
+        :date_short
+      elsif col[FORMATS[:date_rfc822]] && date_format?(Date, col, '%e %b %Y')
+        :date_rfc822
+      elsif col[FORMATS[:date_long]] && date_format?(Date, col, '%B %e, %Y')
+        :date_long
+      elsif col[FORMATS[:dateTime_time]] && date_format?(Time, col, '%H:%M')
+        :dateTime_time
+      elsif col[FORMATS[:dateTime_hms]] && date_format?(Time, col, '%H:%M:%S')
+        :dateTime_hms
+      elsif col[FORMATS[:dateTime_db]] && date_format?(Time, col, '%Y-%m-%d %H:%M:%S')
+        :dateTime_db
+      elsif col[FORMATS[:dateTime_iso8601]] && date_format?(Time, col, '%Y-%m-%dT%H:%M:%SZ')
+        :dateTime_iso8601
+      elsif col[FORMATS[:dateTime_short]] && date_format?(Time, col, '%d %b %H:%M')
+        :dateTime_short
+      elsif col[FORMATS[:dateTime_long]] && date_format?(Time, col, '%B %d, %Y %H:%M')
+        :dateTime_long
+      else
+        :string
+      end
+    end
+
     def date_format?(klass, value, format)
       klass.strptime(value, format).strftime(format) == value
     rescue ArgumentError # invalid date
@@ -497,6 +553,15 @@ module Csvlint
 
     def line_limit_reached?
       @limit_lines.present? && @current_line > @limit_lines
+    end
+
+    def get_line_break(line)
+      eol = line.chars.last(2)
+      if eol.first == "\r"
+        "\r\n"
+      else
+        "\n"
+      end
     end
 
     FORMATS = {
@@ -527,6 +592,7 @@ module Csvlint
     LINK_EXTENSION_REGEXP = Regexp.new("(?<link-extension>(?<param>#{TOKEN_REGEXP})(\\s*=\\s*(?<param-value>#{TOKEN_REGEXP}|#{QUOTED_STRING_REGEXP}))?)")
     LINK_PARAM_REGEXP = Regexp.new("(#{REL_REGEXP}|#{REV_REGEXP}|#{TITLE_REGEXP}|#{ANCHOR_REGEXP}|#{LINK_EXTENSION_REGEXP})")
     LINK_HEADER_REGEXP = Regexp.new("\<#{URI_REGEXP}\>(\\s*;\\s*#{LINK_PARAM_REGEXP})*")
+    POSSIBLE_DATE_REGEXP = Regexp.new("\\A(\\d|\\s\\d#{Date::ABBR_MONTHNAMES.join('|')}#{Date::MONTHNAMES.join('|')})")
 
   end
 end

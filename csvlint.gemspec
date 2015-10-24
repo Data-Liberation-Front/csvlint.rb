@@ -26,6 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "typhoeus"
   spec.add_dependency "escape_utils"
   spec.add_dependency "uri_template"
+  spec.add_dependency "thor"
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
@@ -40,4 +41,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "coveralls"
   spec.add_development_dependency "pry"
   spec.add_development_dependency "github_changelog_generator"
+  spec.add_development_dependency "aruba"
+
 end

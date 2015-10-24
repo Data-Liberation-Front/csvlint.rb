@@ -566,6 +566,14 @@ describe Csvlint::Validator do
     expect( data[2] ).to eql ['3','2','1']
   end
 
+  it "should count the total number of rows read" do
+    stub_request(:get, "http://example.com/example.csv").to_return(:status => 200,
+        :headers=>{"Content-Type" => "text/csv; header=present"},
+        :body => File.read(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')))
+    validator = Csvlint::Validator.new("http://example.com/example.csv")
+    expect(validator.row_count).to eq(3)
+  end
+
   it "should limit number of lines read" do
     stub_request(:get, "http://example.com/example.csv").to_return(:status => 200,
     :headers=>{"Content-Type" => "text/csv; header=present"},
