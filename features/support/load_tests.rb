@@ -85,11 +85,15 @@ File.open(VALIDATION_FEATURE_FILE_PATH, 'w') do |file|
 				file.puts "\t\tAnd the metadata is stored at the url \"#{metadata}\""
 			end
 			provided_files << action_uri.to_s
-			missing_files = [				  
-  				URI.join(action_uri, '/.well-known/csvm').to_s,
-  				"#{action_uri}-metadata.json",
-  				URI.join(action_uri, 'csv-metadata.json').to_s
-			]
+			if entry["name"].include?("/.well-known/csvm")
+				file.puts "\t\tAnd I have a file called \"w3.org/.well-known/csvm\" at the url \"http://www.w3.org/.well-known/csvm\""
+	  			missing_files << "#{action_uri}.json"
+	  			missing_files << URI.join(action_uri, 'csvm.json').to_s
+			else
+				missing_files << URI.join(action_uri, '/.well-known/csvm').to_s
+			end
+  			missing_files << "#{action_uri}-metadata.json"
+  			missing_files << URI.join(action_uri, 'csv-metadata.json').to_s
 		end
 		entry["implicit"].each do |implicit|
 			implicit_uri, implicit_file = cache_file(implicit)
@@ -146,11 +150,15 @@ File.open(JSON_TRANSFORMATION_FEATURE_FILE_PATH, 'w') do |file|
 				file.puts "\t\tAnd the metadata is stored at the url \"#{metadata}\""
 			end
 			provided_files << action_uri.to_s
-			missing_files = [				  
-  				URI.join(action_uri, '/.well-known/csvm').to_s,
-  				"#{action_uri}-metadata.json",
-  				URI.join(action_uri, 'csv-metadata.json').to_s
-			]
+			if entry["name"].include?("/.well-known/csvm")
+				file.puts "\t\tAnd I have a file called \"w3.org/.well-known/csvm\" at the url \"http://www.w3.org/.well-known/csvm\""
+	  			missing_files << "#{action_uri}.json"
+	  			missing_files << URI.join(action_uri, 'csvm.json').to_s
+			else
+				missing_files << URI.join(action_uri, '/.well-known/csvm').to_s
+			end
+  			missing_files << "#{action_uri}-metadata.json"
+  			missing_files << URI.join(action_uri, 'csv-metadata.json').to_s
 		end
 		entry["implicit"].each do |implicit|
 			implicit_uri, implicit_file = cache_file(implicit)

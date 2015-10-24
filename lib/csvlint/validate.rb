@@ -446,8 +446,7 @@ module Csvlint
       if @source_url =~ /^http(s)?/
         begin
           well_known_uri = URI.join(@source_url, "/.well-known/csvm")
-          well_known = open(well_known_uri).read
-            # TODO
+          paths = open(well_known_uri).read.split("\n")
         rescue OpenURI::HTTPError, URI::BadURIError
         end
       end
