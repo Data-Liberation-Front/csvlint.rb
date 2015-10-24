@@ -160,6 +160,7 @@ module Csvlint
                 if objects[object_id][property]
                   objects[object_id][property] = [objects[object_id][property]] unless objects[object_id][property].is_a? Array
                   objects[object_id][property] << value
+                  objects[object_id][property].flatten!
                 else
                   objects[object_id][property] = value
                 end
