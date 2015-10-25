@@ -6,7 +6,6 @@ BASE_URI = "http://www.w3.org/2013/csvw/tests/"
 BASE_PATH = File.join(File.dirname(__FILE__), "..", "fixtures", "csvw")
 FEATURE_BASE_PATH = File.join(File.dirname(__FILE__), "..")
 VALIDATION_FEATURE_FILE_PATH = File.join(FEATURE_BASE_PATH, "csvw_validation_tests.feature")
-JSON_TRANSFORMATION_FEATURE_FILE_PATH = File.join(FEATURE_BASE_PATH, "csvw_json_transformation_tests.feature")
 SCRIPT_FILE_PATH = File.join(File.dirname(__FILE__), "..", "..", "bin", "run-csvw-tests")
 
 Dir.mkdir(BASE_PATH) unless Dir.exist?(BASE_PATH)
@@ -118,72 +117,3 @@ File.open(VALIDATION_FEATURE_FILE_PATH, 'w') do |file|
 		file.puts "\t"
 	end
 end unless File.exist? VALIDATION_FEATURE_FILE_PATH
-
-File.open(JSON_TRANSFORMATION_FEATURE_FILE_PATH, 'w') do |file|
-	file.puts "# Auto-generated file based on standard JSON transformation CSVW tests from http://www.w3.org/2013/csvw/tests/manifest-json.jsonld"
-	file.puts ""
-
-	manifest = JSON.parse( open("http://www.w3.org/2013/csvw/tests/manifest-json.jsonld").read )
-
-	file.puts "Feature: #{manifest["label"]}"
-	file.puts ""
-	
-	manifest["entries"].each do |entry|
-		action_uri, action_file = cache_file(entry["action"])
-		metadata = nil
-		provided_files = []
-		missing_files = []
-		file.puts "\t# #{entry["id"]}"
-		file.puts "\t# #{entry["comment"]}"
-		file.puts "\tScenario: #{entry["id"]} #{entry["name"].gsub("<", "less than")}"
-		if entry["action"].end_with?(".json")
-			file.puts "\t\tGiven I have a metadata file called \"csvw/#{entry["action"]}\""
-			file.puts "\t\tAnd the metadata is stored at the url \"#{action_uri}\""
-		else
-			file.puts "\t\tGiven I have a CSV file called \"csvw/#{entry["action"]}\""
-			file.puts "\t\tAnd it has a Link header holding \"#{entry["httpLink"]}\"" if entry["httpLink"]
-			file.puts "\t\tAnd it is stored at the url \"#{action_uri}\""
-			if entry["option"] && entry["option"]["metadata"]
-				# no need to store the file here, as it will be listed in the 'implicit' list, which all get stored
-				metadata = URI.join(BASE_URI, entry["option"]["metadata"])
-				file.puts "\t\tAnd I have a metadata file called \"csvw/#{entry["option"]["metadata"]}\""
-				file.puts "\t\tAnd the metadata is stored at the url \"#{metadata}\""
-			end
-			provided_files << action_uri.to_s
-			if entry["name"].include?("/.well-known/csvm")
-				file.puts "\t\tAnd I have a file called \"w3.org/.well-known/csvm\" at the url \"http://www.w3.org/.well-known/csvm\""
-	  			missing_files << "#{action_uri}.json"
-	  			missing_files << URI.join(action_uri, 'csvm.json').to_s
-			else
-				missing_files << URI.join(action_uri, '/.well-known/csvm').to_s
-			end
-  			missing_files << "#{action_uri}-metadata.json"
-  			missing_files << URI.join(action_uri, 'csv-metadata.json').to_s
-		end
-		entry["implicit"].each do |implicit|
-			implicit_uri, implicit_file = cache_file(implicit)
-			provided_files << implicit_uri.to_s
-			unless implicit_uri == metadata
-				file.puts "\t\tAnd I have a file called \"csvw/#{implicit}\" at the url \"#{implicit_uri}\""
-			end
-		end if entry["implicit"]
-		missing_files.each do |uri|
-			file.puts "\t\tAnd there is no file at the url \"#{uri}\"" unless provided_files.include? uri
-		end
-		file.puts "\t\tWhen I transform the CSV into JSON#{entry["option"] && entry["option"]["minimal"] ? " in minimal mode" : ""}"
-		if entry["type"] == "csvt:ToJsonTestWithWarnings"
-			file.puts "\t\tThen there should not be errors"
-			file.puts "\t\tAnd there should be warnings"
-		elsif entry["type"] == "csvt:NegativeJsonTest"
-	    	file.puts "\t\tThen there should be errors"
-		else
-		    file.puts "\t\tThen there should not be errors"
-		    file.puts "\t\tAnd there should not be warnings"
-		end
-		if entry["result"]
-			result_uri, result_file = cache_file(entry["result"])
-			file.puts "\t\tAnd the JSON should match that in \"csvw/#{entry["result"]}\""
-		end
-		file.puts "\t"
-	end
-end unless File.exist? JSON_TRANSFORMATION_FEATURE_FILE_PATH
