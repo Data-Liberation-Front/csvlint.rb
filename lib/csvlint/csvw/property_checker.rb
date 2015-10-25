@@ -67,6 +67,12 @@ module Csvlint
                 value[p] = v
               end
               return value, warnings
+            when String
+              if lang == "und"
+                return value, nil
+              else
+                return { "@value" => value, "@language" => lang }, nil
+              end
             else
               return value, nil
             end
