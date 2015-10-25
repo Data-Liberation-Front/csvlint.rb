@@ -58,11 +58,10 @@ module Csvlint
                 else
                   if p[0] == "@"
                     raise Csvlint::Csvw::MetadataError.new(), "common property has property other than @id, @type, @value or @language beginning with @ (#{p})"
+                  else
+                    v, w = check_common_property_value(v, base_url, lang)
+                    warnings += Array(w)
                   end
-                end
-                if v.instance_of? Hash
-                  v, w = check_common_property_value(v, base_url, lang)
-                  warnings += Array(w)
                 end
                 value[p] = v
               end
@@ -73,6 +72,15 @@ module Csvlint
               else
                 return { "@value" => value, "@language" => lang }, nil
               end
+            when Array
+              values = []
+              warnings = []
+              value.each do |v|
+                v, w = check_common_property_value(v, base_url, lang)
+                warnings += Array(w)
+                values << v
+              end
+              return values, warnings
             else
               return value, nil
             end
