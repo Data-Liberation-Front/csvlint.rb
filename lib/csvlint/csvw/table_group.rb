@@ -20,22 +20,22 @@ module Csvlint
         @warnings += @tables.map{|url,table| table.warnings}.flatten
       end
 
-      def validate_header(header, table_url)
+      def validate_header(header, table_url, strict)
         reset
         table_url = "file:#{File.absolute_path(table_url)}" if table_url.instance_of? File
         table = tables[table_url]
-        table.validate_header(header)
+        table.validate_header(header, strict)
         @errors += table.errors
         @warnings += table.warnings
         return valid?
       end
 
-      def validate_row(values, row=nil, all_errors=[], table_url)
+      def validate_row(values, row=nil, all_errors=[], table_url, validate)
         reset
         table_url = "file:#{File.absolute_path(table_url)}" if table_url.instance_of? File
         @validated_tables[table_url] = true
         table = tables[table_url]
-        table.validate_row(values, row)
+        table.validate_row(values, row, validate)
         @errors += table.errors
         @warnings += table.warnings
         return valid?
@@ -93,10 +93,10 @@ module Csvlint
               annotations[property] = v
             elsif type == :common
               common_properties[property] = v
-            elsif type == :column
-              warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "#{property}", nil)
-            else
+            elsif type == :inherited
               inherited_properties[property] = v
+            else
+              warnings << Csvlint::ErrorMessage.new(:invalid_property, :metadata, nil, nil, "#{property}", nil)
             end
           end
         end
@@ -118,7 +118,7 @@ module Csvlint
             end
             table_url = URI.join(base_url, table_url).to_s
             table_desc["url"] = table_url
-            table = Csvlint::Csvw::Table.from_json(table_desc, base_url, lang, inherited_properties)
+            table = Csvlint::Csvw::Table.from_json(table_desc, base_url, lang, common_properties, inherited_properties)
             tables[table_url] = table
           else
             warnings << Csvlint::ErrorMessage.new(:invalid_table_description, :metadata, nil, nil, "#{table_desc}", nil)
@@ -154,7 +154,7 @@ module Csvlint
           end
         end
 
-        return self.new(base_url, id: id, tables: tables, notes: json["notes"] || [], annotations: annotations, warnings: warnings)
+        return self.new(base_url, id: id, tables: tables, notes: common_properties["notes"] || [], annotations: annotations, warnings: warnings)
       end
 
       private

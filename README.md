@@ -153,8 +153,9 @@ There are also information messages available:
 
 ## Schema Validation
 
-The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON. The structure currently
-follows JSON Table Schema with some extensions and rudinmentary [CSV on the Web Metadata](http://www.w3.org/TR/tabular-metadata/).
+The library supports validating data against a schema. A schema configuration can be provided as a Hash or parsed from JSON.
+
+The structure currently follows JSON Table Schema with some extensions and rudimentary [CSV on the Web Metadata](http://www.w3.org/TR/tabular-metadata/).
 
 An example JSON Table Schema schema file is:
 

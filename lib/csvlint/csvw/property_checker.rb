@@ -58,15 +58,29 @@ module Csvlint
                 else
                   if p[0] == "@"
                     raise Csvlint::Csvw::MetadataError.new(), "common property has property other than @id, @type, @value or @language beginning with @ (#{p})"
+                  else
+                    v, w = check_common_property_value(v, base_url, lang)
+                    warnings += Array(w)
                   end
-                end
-                if v.instance_of? Hash
-                  v, w = check_common_property_value(v, base_url, lang)
-                  warnings += Array(w)
                 end
                 value[p] = v
               end
               return value, warnings
+            when String
+              if lang == "und"
+                return value, nil
+              else
+                return { "@value" => value, "@language" => lang }, nil
+              end
+            when Array
+              values = []
+              warnings = []
+              value.each do |v|
+                v, w = check_common_property_value(v, base_url, lang)
+                warnings += Array(w)
+                values << v
+              end
+              return values, warnings
             else
               return value, nil
             end
@@ -111,6 +125,13 @@ module Csvlint
             return lambda { |value, base_url, lang|
               return value, nil, type if value.instance_of? String
               return "", :invalid_value, type
+            }
+          end
+
+          def uri_template_property(type)
+            return lambda { |value, base_url, lang|
+              return URITemplate.new(value), nil, type if value.instance_of? String
+              return URITemplate.new(""), :invalid_value, type
             }
           end
 
@@ -192,8 +213,43 @@ module Csvlint
           "@base" => link_property(:context),
           # common properties
           "@id" => link_property(:common),
-          "notes" => array_property(:common),
+          "notes" => lambda { |value, base_url, lang| 
+            return false, :invalid_value, :common unless value.instance_of? Array
+            values = []
+            warnings = []
+            value.each do |v|
+              v, w = check_common_property_value(v, base_url, lang)
+              values << v
+              warnings += w
+            end
+            return values, warnings, :common
+          },
           "suppressOutput" => boolean_property(:common),
+          "dialect" => lambda { |value, base_url, lang|
+            if value.instance_of? Hash
+              value = value.clone
+              warnings = []
+              value.each do |p,v|
+                if p == "@id"
+                  raise Csvlint::Csvw::MetadataError.new("dialect.@id"), "@id starts with _:" if v =~ /^_:/
+                elsif p == "@type"
+                  raise Csvlint::Csvw::MetadataError.new("dialect.@type"), "@type of dialect is not 'Dialect'" if v != 'Dialect'
+                else
+                  v, warning, type = check_property(p, v, base_url, lang)
+                  if type == :dialect && (warning.nil? || warning.empty?)
+                    value[p] = v
+                  else
+                    value.delete(p)
+                    warnings << :invalid_property unless type == :dialect
+                    warnings += Array(warning)
+                  end
+                end
+              end
+              return value, warnings, :common
+            else
+              return {}, :invalid_value, :common
+            end
+          },
           # inherited properties
           "null" => lambda { |value, base_url, lang|
             case value
@@ -270,12 +326,17 @@ module Csvlint
             warnings += convert_value_facet(value, "maxInclusive", value["base"])
             warnings += convert_value_facet(value, "maxExclusive", value["base"])
 
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype cannot specify both minimum/minInclusive (#{value["minInclusive"]}) and minExclusive (#{value["minExclusive"]}" if value["minInclusive"] && value["minExclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype cannot specify both maximum/maxInclusive (#{value["maxInclusive"]}) and maxExclusive (#{value["maxExclusive"]}" if value["maxInclusive"] && value["maxExclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype minInclusive (#{value["minInclusive"]}) cannot be more than maxInclusive (#{value["maxInclusive"]}" if value["minInclusive"] && value["maxInclusive"] && value["minInclusive"] > value["maxInclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype minInclusive (#{value["minInclusive"]}) cannot be more than or equal to maxExclusive (#{value["maxExclusive"]}" if value["minInclusive"] && value["maxExclusive"] && value["minInclusive"] >= value["maxExclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype minExclusive (#{value["minExclusive"]}) cannot be more than or equal to maxExclusive (#{value["maxExclusive"]}" if value["minExclusive"] && value["maxExclusive"] && value["minExclusive"] > value["maxExclusive"]
-            raise Csvlint::Csvw::MetadataError.new(""), "datatype minExclusive (#{value["minExclusive"]}) cannot be more than maxInclusive (#{value["maxInclusive"]}" if value["minExclusive"] && value["maxInclusive"] && value["minExclusive"] >= value["maxInclusive"]
+            minInclusive = value["minInclusive"].is_a?(Hash) ? value["minInclusive"][:dateTime] : value["minInclusive"]
+            maxInclusive = value["maxInclusive"].is_a?(Hash) ? value["maxInclusive"][:dateTime] : value["maxInclusive"]
+            minExclusive = value["minExclusive"].is_a?(Hash) ? value["minExclusive"][:dateTime] : value["minExclusive"]
+            maxExclusive = value["maxExclusive"].is_a?(Hash) ? value["maxExclusive"][:dateTime] : value["maxExclusive"]
+
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype cannot specify both minimum/minInclusive (#{minInclusive}) and minExclusive (#{minExclusive}" if minInclusive && minExclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype cannot specify both maximum/maxInclusive (#{maxInclusive}) and maxExclusive (#{maxExclusive}" if maxInclusive && maxExclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype minInclusive (#{minInclusive}) cannot be more than maxInclusive (#{maxInclusive}" if minInclusive && maxInclusive && minInclusive > maxInclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype minInclusive (#{minInclusive}) cannot be more than or equal to maxExclusive (#{maxExclusive}" if minInclusive && maxExclusive && minInclusive >= maxExclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype minExclusive (#{minExclusive}) cannot be more than or equal to maxExclusive (#{maxExclusive}" if minExclusive && maxExclusive && minExclusive > maxExclusive
+            raise Csvlint::Csvw::MetadataError.new(""), "datatype minExclusive (#{minExclusive}) cannot be more than maxInclusive (#{maxInclusive}" if minExclusive && maxInclusive && minExclusive >= maxInclusive
 
             raise Csvlint::Csvw::MetadataError.new(""), "datatype length (#{value["length"]}) cannot be less than minLength (#{value["minLength"]}" if value["length"] && value["minLength"] && value["length"] < value["minLength"]
             raise Csvlint::Csvw::MetadataError.new(""), "datatype length (#{value["length"]}) cannot be more than maxLength (#{value["maxLength"]}" if value["length"] && value["maxLength"] && value["length"] > value["maxLength"]
@@ -292,9 +353,9 @@ module Csvlint
               elsif NUMERIC_FORMAT_DATATYPES.include?(value["base"])
                 value["format"] = { "pattern" => value["format"] } if value["format"].instance_of? String
                 begin
-                  value["format"] = Csvlint::Csvw::NumberFormat.new(value["format"]["pattern"], value["format"]["groupChar"], value["format"]["decimalChar"] || ".")
+                  value["format"] = Csvlint::Csvw::NumberFormat.new(value["format"]["pattern"], value["format"]["groupChar"], value["format"]["decimalChar"] || ".", INTEGER_FORMAT_DATATYPES.include?(value["base"]))
                 rescue Csvlint::Csvw::NumberFormatError
-                  value["format"] = Csvlint::Csvw::NumberFormat.new(nil, value["format"]["groupChar"], value["format"]["decimalChar"] || ".")
+                  value["format"] = Csvlint::Csvw::NumberFormat.new(nil, value["format"]["groupChar"], value["format"]["decimalChar"] || ".", INTEGER_FORMAT_DATATYPES.include?(value["base"]))
                   warnings << :invalid_number_format
                 end
               elsif value["base"] == "http://www.w3.org/2001/XMLSchema#boolean"
@@ -326,9 +387,9 @@ module Csvlint
           },
           "required" => boolean_property(:inherited),
           "ordered" => boolean_property(:inherited),
-          "aboutUrl" => string_property(:inherited),
-          "propertyUrl" => string_property(:inherited),
-          "valueUrl" => string_property(:inherited),
+          "aboutUrl" => uri_template_property(:inherited),
+          "propertyUrl" => uri_template_property(:inherited),
+          "valueUrl" => uri_template_property(:inherited),
           "textDirection" => lambda { |value, base_url, lang|
             value = value.to_sym
             return value, nil, :inherited if [:ltr, :rtl, :auto, :inherit].include? value
@@ -421,31 +482,6 @@ module Csvlint
             return schema, warnings, :table
           },
           "url" => link_property(:table),
-          "dialect" => lambda { |value, base_url, lang|
-            if value.instance_of? Hash
-              value = value.clone
-              warnings = []
-              value.each do |p,v|
-                if p == "@id"
-                  raise Csvlint::Csvw::MetadataError.new("dialect.@id"), "@id starts with _:" if v =~ /^_:/
-                elsif p == "@type"
-                  raise Csvlint::Csvw::MetadataError.new("dialect.@type"), "@type of dialect is not 'Dialect'" if v != 'Dialect'
-                else
-                  v, warning, type = check_property(p, v, base_url, lang)
-                  if type == :dialect && (warning.nil? || warning.empty?)
-                    value[p] = v
-                  else
-                    value.delete(p)
-                    warnings << :invalid_property unless type == :dialect
-                    warnings += Array(warning)
-                  end
-                end
-              end
-              return value, warnings, :table
-            else
-              return {}, :invalid_value, :table
-            end
-          },
           # dialect properties
           "commentPrefix" => string_property(:dialect),
           "delimiter" => string_property(:dialect),
@@ -566,6 +602,12 @@ module Csvlint
           "xhv" => "http://www.w3.org/1999/xhtml/vocab#",
           "xml" => "http://www.w3.org/XML/1998/namespace",
           "xsd" => "http://www.w3.org/2001/XMLSchema#",
+          "csvw" => "http://www.w3.org/ns/csvw#",
+          "cnt" => "http://www.w3.org/2008/content",
+          "earl" => "http://www.w3.org/ns/earl#",
+          "ht" => "http://www.w3.org/2006/http#",
+          "oa" => "http://www.w3.org/ns/oa#",
+          "ptr" => "http://www.w3.org/2009/pointers#",
           "cc" => "http://creativecommons.org/ns#",
           "ctag" => "http://commontag.org/ns#",
           "dc" => "http://purl.org/dc/terms/",
@@ -638,8 +680,7 @@ module Csvlint
           "http://www.w3.org/2001/XMLSchema#hexBinary"
         ]
 
-        NUMERIC_FORMAT_DATATYPES = [
-          "http://www.w3.org/2001/XMLSchema#decimal",
+        INTEGER_FORMAT_DATATYPES = [
           "http://www.w3.org/2001/XMLSchema#integer",
           "http://www.w3.org/2001/XMLSchema#long",
           "http://www.w3.org/2001/XMLSchema#int",
@@ -652,10 +693,14 @@ module Csvlint
           "http://www.w3.org/2001/XMLSchema#unsignedShort",
           "http://www.w3.org/2001/XMLSchema#unsignedByte",
           "http://www.w3.org/2001/XMLSchema#nonPositiveInteger",
-          "http://www.w3.org/2001/XMLSchema#negativeInteger",
+          "http://www.w3.org/2001/XMLSchema#negativeInteger"
+        ]
+
+        NUMERIC_FORMAT_DATATYPES = [
+          "http://www.w3.org/2001/XMLSchema#decimal",
           "http://www.w3.org/2001/XMLSchema#double",
           "http://www.w3.org/2001/XMLSchema#float"
-        ]
+        ] + INTEGER_FORMAT_DATATYPES
 
         DATE_FORMAT_DATATYPES = [
           "http://www.w3.org/2001/XMLSchema#date",

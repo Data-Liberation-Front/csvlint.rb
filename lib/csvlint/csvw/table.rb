@@ -4,9 +4,9 @@ module Csvlint
 
       include Csvlint::ErrorCollector
 
-      attr_reader :columns, :dialect, :table_direction, :foreign_keys, :foreign_key_references, :id, :notes, :primary_key, :schema, :suppress_output, :transformations, :url, :annotations
+      attr_reader :columns, :dialect, :table_direction, :foreign_keys, :foreign_key_references, :id, :notes, :primary_key, :row_title_columns, :schema, :suppress_output, :transformations, :url, :annotations
 
-      def initialize(url, columns: [], dialect: {}, table_direction: :auto, foreign_keys: [], id: nil, notes: [], primary_key: nil, schema: nil, suppress_output: false, transformations: [], annotations: [], warnings: [])
+      def initialize(url, columns: [], dialect: {}, table_direction: :auto, foreign_keys: [], id: nil, notes: [], primary_key: nil, row_title_columns: [], schema: nil, suppress_output: false, transformations: [], annotations: [], warnings: [])
         @url = url
         @columns = columns
         @dialect = dialect
@@ -19,6 +19,7 @@ module Csvlint
         @notes = notes
         @primary_key = primary_key
         @primary_key_values = {}
+        @row_title_columns = row_title_columns
         @schema = schema
         @suppress_output = suppress_output
         @transformations = transformations
@@ -29,54 +30,59 @@ module Csvlint
         @warnings += columns.map{|c| c.warnings}.flatten
       end
 
-      def validate_header(headers)
+      def validate_header(headers, strict)
         reset
         headers.each_with_index do |header,i|
           if columns[i]
-            columns[i].validate_header(header)
+            columns[i].validate_header(header, strict)
             @errors += columns[i].errors
             @warnings += columns[i].warnings
-          else
+          elsif strict
             build_errors(:malformed_header, :schema, 1, nil, header, nil)
+          else
+            build_warnings(:malformed_header, :schema, 1, nil, header, nil)
           end
-        end unless columns.empty?
+        end # unless columns.empty?
         return valid?
       end
 
-      def validate_row(values, row=nil)
+      def validate_row(values, row=nil, validate=false)
         reset
         values.each_with_index do |value,i|
           column = columns[i]
           if column
-            column.validate(value, row)
+            v = column.validate(value, row)
+            values[i] = v
             @errors += column.errors
             @warnings += column.warnings
           else
             build_errors(:too_many_values, :schema, row, nil, value, nil)
           end
         end unless columns.empty?
-        unless @primary_key.nil?
-          key = @primary_key.map { |column| column.parse(values[column.number - 1], row) }
-          build_errors(:duplicate_key, :schema, row, nil, key.join(","), @primary_key_values[key]) if @primary_key_values.include?(key)
-          @primary_key_values[key] = row
-        end
-        # build a record of the unique values that are referenced by foreign keys from other tables
-        # so that later we can check whether those foreign keys reference these values
-        @foreign_key_references.each do |foreign_key|
-          referenced_columns = foreign_key["referenced_columns"]
-          key = referenced_columns.map{ |column| column.parse(values[column.number - 1], row) }
-          known_values = @foreign_key_reference_values[foreign_key] = @foreign_key_reference_values[foreign_key] || {}
-          known_values[key] = known_values[key] || []
-          known_values[key] << row
-        end
-        # build a record of the references from this row to other tables
-        # we can't check yet whether these exist in the other tables because
-        # we might not have parsed those other tables
-        @foreign_keys.each do |foreign_key|
-          referencing_columns = foreign_key["referencing_columns"]
-          key = referencing_columns.map{ |column| column.parse(values[column.number - 1], row) }
-          known_values = @foreign_key_values[foreign_key] = @foreign_key_values[foreign_key] || []
-          known_values << key unless known_values.include?(key)
+        if validate
+          unless @primary_key.nil?
+            key = @primary_key.map { |column| column.validate(values[column.number - 1], row) }
+            build_errors(:duplicate_key, :schema, row, nil, key.join(","), @primary_key_values[key]) if @primary_key_values.include?(key)
+            @primary_key_values[key] = row
+          end
+          # build a record of the unique values that are referenced by foreign keys from other tables
+          # so that later we can check whether those foreign keys reference these values
+          @foreign_key_references.each do |foreign_key|
+            referenced_columns = foreign_key["referenced_columns"]
+            key = referenced_columns.map{ |column| column.validate(values[column.number - 1], row) }
+            known_values = @foreign_key_reference_values[foreign_key] = @foreign_key_reference_values[foreign_key] || {}
+            known_values[key] = known_values[key] || []
+            known_values[key] << row
+          end
+          # build a record of the references from this row to other tables
+          # we can't check yet whether these exist in the other tables because
+          # we might not have parsed those other tables
+          @foreign_keys.each do |foreign_key|
+            referencing_columns = foreign_key["referencing_columns"]
+            key = referencing_columns.map{ |column| column.validate(values[column.number - 1], row) }
+            known_values = @foreign_key_values[foreign_key] = @foreign_key_values[foreign_key] || []
+            known_values << key unless known_values.include?(key)
+          end
         end
         return valid?
       end
@@ -107,19 +113,16 @@ module Csvlint
         return valid?
       end
 
-      def self.from_json(table_desc, base_url=nil, lang="und", inherited_properties={})
+      def self.from_json(table_desc, base_url=nil, lang="und", common_properties={}, inherited_properties={})
         annotations = {}
         warnings = []
-        table_properties = {}
         columns = []
-        notes = []
+        table_properties = common_properties.clone
         inherited_properties = inherited_properties.clone
 
         table_desc.each do |property,value|
           if property =="@type"
             raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].@type"), "@type of table is not 'Table'" unless value == 'Table'
-          elsif property == "notes"
-            notes = value
           else
             v, warning, type = Csvw::PropertyChecker.check_property(property, value, base_url, lang)
             warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) } unless warning.nil? || warning.empty?
@@ -140,7 +143,17 @@ module Csvlint
         foreign_keys = []
         primary_key = nil
         if table_schema
-          raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.columns"), "schema columns is not an array" unless table_schema["columns"].instance_of? Array
+          unless table_schema["columns"].instance_of? Array
+            table_schema["columns"] = []
+            warnings << Csvlint::ErrorMessage.new(:invalid_value, :metadata, nil, nil, "columns", nil)
+          end
+
+          table_schema.each do |p,v|
+            unless ["columns", "primaryKey", "foreignKeys", "rowTitles"].include? p
+              inherited_properties[p] = v
+            end
+          end
+
           virtual_columns = false
           table_schema["columns"].each_with_index do |column_desc,i|
             if column_desc.instance_of? Hash
@@ -180,8 +193,11 @@ module Csvlint
           end if foreign_keys
 
           row_titles = table_schema["rowTitles"]
-          row_titles.each_with_index do |row_title,i|
-            raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.rowTitles[#{i}]"), "rowTitles references non-existant column" unless column_names.include? row_title
+          row_title_columns = []
+          row_titles.each_with_index do |row_title|
+            i = column_names.index(row_title)
+            raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.rowTitles[#{i}]"), "rowTitles references non-existant column" unless i
+            row_title_columns << columns[i]
           end if row_titles
 
         end
@@ -191,9 +207,11 @@ module Csvlint
           columns: columns,
           dialect: table_properties["dialect"],
           foreign_keys: foreign_keys || [],
-          notes: notes,
+          notes: table_properties["notes"] || [],
           primary_key: primary_key_valid && !primary_key_columns.empty? ? primary_key_columns : nil,
+          row_title_columns: row_title_columns,
           schema: table_schema ? table_schema["@id"] : nil,
+          suppress_output: table_properties["suppressOutput"] ? table_properties["suppressOutput"] : false,
           annotations: annotations,
           warnings: warnings
         )
