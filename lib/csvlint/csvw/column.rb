@@ -108,14 +108,13 @@ module Csvlint
               invalid = !validate_format(value, row) || invalid
               invalid = !validate_length(value, row) || invalid
               invalid = !validate_value(value, row) || invalid
-              values << (invalid ? s : value)
+              values << (invalid ? { :invalid => s } : value)
             else
               build_errors(warning, :schema, row, @number, s, @datatype)
-              values << s
+              values << { :invalid => s }
             end
           end
           values = (values && @separator.nil?) ? values[0] : values
-          # STDERR.puts "#{name} - #{string_value.inspect} - #{values.inspect}"
           return values
         end
       end

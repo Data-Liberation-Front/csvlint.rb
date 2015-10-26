@@ -11,7 +11,7 @@ describe Csvlint::Csvw::Column do
   it "should generate errors for string values that aren't long enough" do
     column = Csvlint::Csvw::Column.new(1, "foo", datatype: { "base" => "http://www.w3.org/2001/XMLSchema#string", "minLength" => 4 })
     value = column.validate("bar", 2)
-    expect(value).to eq("bar")
+    expect(value).to eq({ :invalid => "bar" })
     expect(column.errors.length).to eq(1)
   end
 
