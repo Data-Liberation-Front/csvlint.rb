@@ -65,6 +65,7 @@ module Csvlint
           value_url: inherited_properties["valueUrl"],
           required: inherited_properties["required"] || false,
           separator: inherited_properties["separator"],
+          ordered: inherited_properties["ordered"] || false,
           default_name: column_properties["titles"] && column_properties["titles"][lang] ? column_properties["titles"][lang][0] : nil,
           titles: column_properties["titles"],
           suppress_output: column_properties["suppressOutput"] ? column_properties["suppressOutput"] : false,
