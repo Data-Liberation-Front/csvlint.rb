@@ -117,15 +117,12 @@ module Csvlint
         annotations = {}
         warnings = []
         columns = []
-        notes = []
         table_properties = common_properties.clone
         inherited_properties = inherited_properties.clone
 
         table_desc.each do |property,value|
           if property =="@type"
             raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].@type"), "@type of table is not 'Table'" unless value == 'Table'
-          elsif property == "notes"
-            notes = value
           else
             v, warning, type = Csvw::PropertyChecker.check_property(property, value, base_url, lang)
             warnings += Array(warning).map{ |w| Csvlint::ErrorMessage.new(w, :metadata, nil, nil, "#{property}: #{value}", nil) } unless warning.nil? || warning.empty?
@@ -210,7 +207,7 @@ module Csvlint
           columns: columns,
           dialect: table_properties["dialect"],
           foreign_keys: foreign_keys || [],
-          notes: notes,
+          notes: table_properties["notes"] || [],
           primary_key: primary_key_valid && !primary_key_columns.empty? ? primary_key_columns : nil,
           row_title_columns: row_title_columns,
           schema: table_schema ? table_schema["@id"] : nil,
