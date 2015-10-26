@@ -42,5 +42,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry"
   spec.add_development_dependency "github_changelog_generator"
   spec.add_development_dependency "aruba"
+  spec.add_development_dependency "rdf"
+  spec.add_development_dependency "rdf-turtle"
 
 end
