@@ -154,7 +154,7 @@ module Csvlint
           end
         end
 
-        return self.new(base_url, id: id, tables: tables, notes: json["notes"] || [], annotations: annotations, warnings: warnings)
+        return self.new(base_url, id: id, tables: tables, notes: common_properties["notes"] || [], annotations: annotations, warnings: warnings)
       end
 
       private

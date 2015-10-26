@@ -213,7 +213,17 @@ module Csvlint
           "@base" => link_property(:context),
           # common properties
           "@id" => link_property(:common),
-          "notes" => array_property(:common),
+          "notes" => lambda { |value, base_url, lang| 
+            return false, :invalid_value, :common unless value.instance_of? Array
+            values = []
+            warnings = []
+            value.each do |v|
+              v, w = check_common_property_value(v, base_url, lang)
+              values << v
+              warnings += w
+            end
+            return values, warnings, :common
+          },
           "suppressOutput" => boolean_property(:common),
           "dialect" => lambda { |value, base_url, lang|
             if value.instance_of? Hash
@@ -592,6 +602,12 @@ module Csvlint
           "xhv" => "http://www.w3.org/1999/xhtml/vocab#",
           "xml" => "http://www.w3.org/XML/1998/namespace",
           "xsd" => "http://www.w3.org/2001/XMLSchema#",
+          "csvw" => "http://www.w3.org/ns/csvw#",
+          "cnt" => "http://www.w3.org/2008/content",
+          "earl" => "http://www.w3.org/ns/earl#",
+          "ht" => "http://www.w3.org/2006/http#",
+          "oa" => "http://www.w3.org/ns/oa#",
+          "ptr" => "http://www.w3.org/2009/pointers#",
           "cc" => "http://creativecommons.org/ns#",
           "ctag" => "http://commontag.org/ns#",
           "dc" => "http://purl.org/dc/terms/",
