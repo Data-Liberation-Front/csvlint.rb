@@ -10,6 +10,7 @@ class EarlFormatter
     @graph << [ CSVLINT, RDF.type, EARL.Software ]
     @graph << [ CSVLINT, RDF::DOAP.name, "csvlint" ]
     @graph << [ CSVLINT, RDF::DC.title, "csvlint" ]
+    @graph << [ CSVLINT, RDF::DOAP.description, "CSV validator" ]
     @graph << [ CSVLINT, RDF::DOAP.homepage, RDF::Resource.new("https://github.com/theodi/csvlint.rb") ]
     @graph << [ CSVLINT, RDF::DOAP.license, RDF::Resource.new("https://raw.githubusercontent.com/theodi/csvlint.rb/master/LICENSE.md") ]
     @graph << [ CSVLINT, RDF::DOAP["programming-language"], "Ruby" ]
