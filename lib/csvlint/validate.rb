@@ -68,6 +68,7 @@ module Csvlint
       @csv_header = true
       @headers = {}
       @lambda = options[:lambda]
+      @batch = options[:batch] ||= 1
       @leading = ""
 
       @limit_lines = options[:limit_lines]
@@ -104,10 +105,11 @@ module Csvlint
 
     def validate_stream
       @current_line = 1
-      @source.each_line do |line|
+      @source.each_in_batches(@batch) do |batch|
         break if line_limit_reached?
-        parse_line(line)
+        parse_batch(batch)
       end
+      # Validate the last line too
       validate_line(@leading, @current_line) unless @leading == ""
     end
 
@@ -123,14 +125,21 @@ module Csvlint
       end
       request.on_body do |chunk|
         io = StringIO.new(chunk)
-        io.each_line do |line|
+        io.each_in_batches(@batch) do |batch|
           break if line_limit_reached?
-          parse_line(line)
+          parse_batch(batch)
         end
       end
       request.run
       # Validate the last line too
       validate_line(@leading, @current_line) unless @leading == ""
+    end
+
+    def parse_batch(batch)
+      batch.each do |line|
+        break if line_limit_reached?
+        parse_line(line)
+      end
     end
 
     def parse_line(line)
@@ -143,7 +152,7 @@ module Csvlint
         else
           validate_line(line, @current_line)
           @leading = ""
-          @current_line = @current_line+1
+          @current_line += 1
         end
       else
         # If it's not a full line, then prepare to add it to the beginning of the next chunk

@@ -11,6 +11,7 @@ require 'mime/types'
 require 'open_uri_redirections'
 require 'uri_template'
 
+require 'csvlint/io'
 require 'csvlint/error_message'
 require 'csvlint/error_collector'
 require 'csvlint/validate'
