@@ -606,6 +606,28 @@ describe Csvlint::Validator do
 
   end
 
+  context "with a after validation lambda" do
+
+    it "should call a lambda for each batch" do
+      @count = 0
+      mylambda = lambda { |_validator, _rows| @count = @count + 1 }
+      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch: 3 })
+      expect(@count).to eq(1)
+    end
+
+    it "reports back the each batch with error" do
+      @results = []
+      mylambda = lambda { |_validator, rows| @results << rows }
+      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch: 3 })
+      expect(@results.count).to eq(1)
+      data = validator.data
+      expect(@results.first[0]).to match_array([data[0], nil])
+      expect(@results.first[1]).to match_array([data[1], nil])
+      expect(@results.first[2]).to match_array([data[2], nil])
+    end
+
+  end
+
   # Commented out because there is currently no way to mock redirects with Typhoeus and WebMock - see https://github.com/bblimke/webmock/issues/237
   # it "should follow redirects to SSL" do
   #   stub_request(:get, "http://example.com/redirect").to_return(:status => 301, :headers=>{"Location" => "https://example.com/example.csv"})

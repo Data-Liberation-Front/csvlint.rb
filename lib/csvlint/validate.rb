@@ -68,6 +68,7 @@ module Csvlint
       @csv_header = true
       @headers = {}
       @lambda = options[:lambda]
+      @after_validation_lambda = options[:after_validation_lambda]
       @batch = options[:batch] ||= 1
       @leading = ""
 
@@ -140,6 +141,7 @@ module Csvlint
         break if line_limit_reached?
         parse_line(line)
       end
+      @after_validation_lambda.call(self, @data.take(batch.size).zip(@errors.take(batch.size))) unless @after_validation_lambda.nil? || batch.empty?
     end
 
     def parse_line(line)
