@@ -171,7 +171,7 @@ An example JSON Table Schema schema file is:
 				"name": "price",
 				"constraints": {
 					"required": true,
-					"minLength": 1 
+					"minLength": 1
 				}
 			},
 			{
@@ -292,6 +292,19 @@ validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, opt
 .....
 ```
 
+* :after_validation_lambda -- Pass a block of code to be called after each line is validated, this will give you access to the `Validator` object and an `Array` of `Array` object `[ [ [1,2,3], Csvlint::ErrorMessage] ] ]` or `[ [ [1,2,3], nil] ] ]` if validation succeeded.
+
+You can combinate `:after_validation_lambda` and `:batch` to retreive results by batch size.
+```
+options = {
+  batch: 2,
+  after_validation_lambda: ->(validator, row) { puts row }
+}
+validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+=> [ [ [1,2,3], Csvlint::ErrorMessage] ], [ [2,3,4], nil] ] ]
+=> [ [ [4,5,6], nil] ], [ [7,8,9], Csvlint::ErrorMessage] ] ]
+.....
+```
 ## Contributing
 
 1. Fork it
