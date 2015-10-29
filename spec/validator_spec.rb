@@ -617,13 +617,13 @@ describe Csvlint::Validator do
 
     it "reports back the each batch with error" do
       @results = []
-      mylambda = lambda { |_validator, rows| @results << rows }
+      mylambda = lambda { |_validator, rows| @results = rows }
       validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch: 3 })
-      expect(@results.count).to eq(1)
+      expect(@results.count).to eq(3)
       data = validator.data
-      expect(@results.first[0]).to match_array([data[0], nil])
-      expect(@results.first[1]).to match_array([data[1], nil])
-      expect(@results.first[2]).to match_array([data[2], nil])
+      expect(@results[1]).to match_array([data[0], nil])
+      expect(@results[2]).to match_array([data[1], nil])
+      expect(@results[3]).to match_array([data[2], nil])
     end
 
   end

@@ -50,7 +50,7 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :encoding, :content_type, :extension, :headers, :link_headers, :dialect, :csv_header, :schema, :data, :current_line
+    attr_reader :encoding, :content_type, :extension, :headers, :link_headers, :dialect, :csv_header, :schema, :data_with_rows, :current_line
 
     ERROR_MATCHERS = {
         "Missing or stray quote" => :stray_quote,
@@ -82,9 +82,13 @@ module Csvlint
       @errors += @schema.errors unless @schema.nil?
       @warnings += @schema.warnings unless @schema.nil?
 
-      @data = [] # it may be advisable to flush this on init?
+      @data_with_rows = {} # it may be advisable to flush this on init?
 
       validate
+    end
+
+    def data
+      @data_with_rows.values
     end
 
     def validate
@@ -140,8 +144,24 @@ module Csvlint
       batch.each do |line|
         break if line_limit_reached?
         parse_line(line)
-      end
-      @after_validation_lambda.call(self, @data.last(batch.size).zip(@errors.last(batch.size))) unless @after_validation_lambda.nil? || batch.empty?
+      end unless !batch
+      call_after_validation_lambda(batch) unless @after_validation_lambda.nil? || !batch || batch.empty?
+    end
+
+
+    def call_after_validation_lambda(batch)
+      data_for_lambda = {}
+
+      # Formats errors as {row_number: CsvLint::ErrorMessage}
+      errors_with_rows = {}
+      @errors.each { |e| errors_with_rows[e.row] = e }
+
+      # Match data with their errors as {row_number: CsvLint::ErrorMessage}
+      keys = @data_with_rows.keys.last(batch.size)
+      keys.each { |k| data_for_lambda[k] = [@data_with_rows[k] , errors_with_rows[k]] }
+
+      # Call lambda
+      @after_validation_lambda.call(self, data_for_lambda)
     end
 
     def parse_line(line)
@@ -192,7 +212,7 @@ module Csvlint
         build_exception_messages(e, stream, current_line)
       end
 
-      @data << row
+      @data_with_rows[current_line] = row
       if row
         if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
@@ -339,7 +359,7 @@ module Csvlint
     end
 
     def row_count
-      data.count
+      @data_with_rows.keys.count
     end
 
     def build_exception_messages(csvException, errChars, lineNo)
