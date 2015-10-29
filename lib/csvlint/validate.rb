@@ -144,8 +144,8 @@ module Csvlint
       batch.each do |line|
         break if line_limit_reached?
         parse_line(line)
-      end unless !batch
-      call_after_validation_lambda(batch) unless @after_validation_lambda.nil? || !batch || batch.empty?
+      end
+      call_after_validation_lambda(batch) if !@after_validation_lambda.nil? && !batch.empty?
     end
 
 

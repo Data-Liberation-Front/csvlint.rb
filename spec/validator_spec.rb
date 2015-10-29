@@ -615,8 +615,18 @@ describe Csvlint::Validator do
       expect(@count).to eq(1)
     end
 
-    it "reports back the each batch with error" do
+    it "reports back the each batch with no errors and no batch" do
       @results = []
+      mylambda = lambda { |_validator, rows| @results << rows }
+      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda})
+      expect(@results.count).to eq(3)
+      data = validator.data
+      expect(@results[0][1]).to match_array([data[0], nil])
+      expect(@results[1][2]).to match_array([data[1], nil])
+      expect(@results[2][3]).to match_array([data[2], nil])
+    end
+
+    it "reports back the each batch with no errors and one batch" do
       mylambda = lambda { |_validator, rows| @results = rows }
       validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch: 3 })
       expect(@results.count).to eq(3)
