@@ -621,19 +621,18 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda})
       expect(@results.count).to eq(3)
       data = validator.data
-      expect(@results[0][1]).to match_array([data[0], nil])
-      expect(@results[1][2]).to match_array([data[1], nil])
-      expect(@results[2][3]).to match_array([data[2], nil])
+      expect(@results[0]).to eq ({1 => [data[0], nil]})
+      expect(@results[1]).to eq ({2 => [data[1], nil]})
+      expect(@results[2]).to eq ({3 => [data[2], nil]})
     end
 
-    it "reports back the each batch with no errors and one batch" do
-      mylambda = lambda { |_validator, rows| @results = rows }
+    it "reports back the each batch with no errors and batch of 3" do
+      @results = []
+      mylambda = lambda { |_validator, rows| @results << rows }
       validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch: 3 })
-      expect(@results.count).to eq(3)
+      expect(@results.count).to eq(1)
       data = validator.data
-      expect(@results[1]).to match_array([data[0], nil])
-      expect(@results[2]).to match_array([data[1], nil])
-      expect(@results[3]).to match_array([data[2], nil])
+      expect(@results[0]).to eq ({1 => [data[0], nil], 2 => [data[1], nil], 3 => [data[2], nil]})
     end
 
   end
