@@ -39,7 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-pride"
   spec.add_development_dependency "rspec-expectations"
   spec.add_development_dependency "coveralls"
-  spec.add_development_dependency "pry"
+  spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "github_changelog_generator"
   spec.add_development_dependency "aruba"
 
