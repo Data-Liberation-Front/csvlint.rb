@@ -154,7 +154,7 @@ module Csvlint
 
       # Formats errors as {row_number: CsvLint::ErrorMessage}
       errors_with_rows = {}
-      @errors.each { |e| errors_with_rows[e.row] = e }
+      @errors.last(batch.size).each { |e| errors_with_rows[e.row] = e }
 
       # Match data with their errors as {row_number: CsvLint::ErrorMessage}
       keys = @data_with_rows.keys.last(batch.size)
