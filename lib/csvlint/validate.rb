@@ -141,11 +141,13 @@ module Csvlint
     end
 
     def parse_batch(batch)
+      @before_row_count = row_count
       batch.each do |line|
         break if line_limit_reached?
         parse_line(line)
       end
-      call_after_validation_lambda(batch) if !@after_validation_lambda.nil? && !batch.empty?
+      @after_row_count = row_count
+      call_after_validation_lambda(batch) if @after_validation_lambda && !batch.empty?
     end
 
 
@@ -154,10 +156,10 @@ module Csvlint
 
       # Formats errors as {row_number: CsvLint::ErrorMessage}
       errors_with_rows = {}
-      @errors.last(batch.size).each { |e| errors_with_rows[e.row] = e }
+      @errors.each { |e| errors_with_rows[e.row] = e }
 
-      # Match data with their errors as {row_number: CsvLint::ErrorMessage}
-      keys = @data_with_rows.keys.last(batch.size)
+      # Match data with their errors
+      keys = @data_with_rows.keys.last(@after_row_count - @before_row_count)
       keys.each { |k| data_for_lambda[k] = [@data_with_rows[k] , errors_with_rows[k]] }
 
       # Call lambda
@@ -359,7 +361,7 @@ module Csvlint
     end
 
     def row_count
-      @data_with_rows.keys.count
+      @data_with_rows.size
     end
 
     def build_exception_messages(csvException, errChars, lineNo)
