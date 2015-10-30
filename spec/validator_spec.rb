@@ -611,14 +611,14 @@ describe Csvlint::Validator do
     it "should call a lambda for each batch" do
       @count = 0
       mylambda = lambda { |_validator, _rows| @count = @count + 1 }
-      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch: 2 })
+      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch_size: 2 })
       expect(@count).to eq(2)
     end
 
     it "reports back the each batch with no errors and batch of 3" do
       @results = []
       mylambda = lambda { |_validator, rows| @results << rows }
-      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch: 3 })
+      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch_size: 3 })
       expect(@results.count).to eq(1)
       data = validator.data
       expect(@results[0]).to eq ({1 => [data[0], nil], 2 => [data[1], nil], 3 => [data[2], nil]})
@@ -627,7 +627,7 @@ describe Csvlint::Validator do
     it "reports back the each batch with no errors and batch of 2" do
       @results = []
       mylambda = lambda { |_validator, rows| @results << rows }
-      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch: 2 })
+      validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','valid.csv')), {}, nil, { after_validation_lambda: mylambda, batch_size: 2 })
       expect(@results.count).to eq(2)
       data = validator.data
       expect(@results[0]).to eq ({1 => [data[0], nil], 2 => [data[1], nil]})

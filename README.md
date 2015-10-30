@@ -294,10 +294,10 @@ validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, opt
 
 * :after_validation_lambda -- Pass a block of code to be called after each line is validated, this will give you access to the `Validator` object and an `Hash` of `Array` object `1: [[1,2,3], Csvlint::ErrorMessage]` or `1: [[1,2,3], nil]` if validation succeeded.
 
-You can combinate `:after_validation_lambda` and `:batch` to retrieve results by batch size.
+You can combinate `:after_validation_lambda` and `:batch_size` to retrieve results by batch size.
 ```
 options = {
-  batch: 2,
+  batch_size: 2,
   after_validation_lambda: ->(validator, row) { puts row }
 }
 validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )

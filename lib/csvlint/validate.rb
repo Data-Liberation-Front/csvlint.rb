@@ -69,7 +69,7 @@ module Csvlint
       @headers = {}
       @lambda = options[:lambda]
       @after_validation_lambda = options[:after_validation_lambda]
-      @batch = options[:batch] ||= 1
+      @batch_size = options[:batch_size] ||= 1
       @leading = ""
 
       @limit_lines = options[:limit_lines]
@@ -110,7 +110,7 @@ module Csvlint
 
     def validate_stream
       @current_line = 1
-      @source.each_in_batches(@batch) do |batch|
+      @source.each_in_batches(@batch_size) do |batch|
         break if line_limit_reached?
         parse_batch(batch)
       end
@@ -130,7 +130,7 @@ module Csvlint
       end
       request.on_body do |chunk|
         io = StringIO.new(chunk)
-        io.each_in_batches(@batch) do |batch|
+        io.each_in_batches(@batch_size) do |batch|
           break if line_limit_reached?
           parse_batch(batch)
         end
