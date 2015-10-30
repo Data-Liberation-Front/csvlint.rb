@@ -10,7 +10,7 @@ class IO
         lines = []
       end
     end
-    yield lines
+    yield lines, index
   end
 end
 
