@@ -17,7 +17,7 @@ Feature: CSVlint CLI
 
   # This is a hacky way of saying to run `cat features/fixtures/valid.csv | csvlint`
   Scenario: Valid CSV from pipe
-    Given I have stubbed ARGF to contain "features/fixtures/valid.csv"
+    Given I have stubbed stdin to contain "features/fixtures/valid.csv"
     When I run `csvlint`
     Then the output should contain "CSV is VALID"
 
@@ -35,11 +35,13 @@ Feature: CSVlint CLI
     Then the output should contain "non-existent-file.csv not found"
 
   Scenario: No file or URL specified
+    Given I have stubbed stdin to contain nothing
     When I run `csvlint`
     Then the output should contain "No CSV data to validate"
 
   Scenario: No file or URL specified, but schema specified
-    Given I have a schema with the following content:
+    Given I have stubbed stdin to contain nothing
+    And I have a schema with the following content:
     """
 {
   "fields": [
@@ -198,7 +200,8 @@ NO JSON HERE SON
     And the output should contain "1. min_length. Row: 2,2. 5"
 
   Scenario: CSVw table Schema
-    Given I have a metadata file called "csvw/countries.json"
+    Given I have stubbed stdin to contain nothing
+    And I have a metadata file called "csvw/countries.json"
     And the metadata is stored at the url "http://w3c.github.io/csvw/tests/countries.json"
     And I have a file called "csvw/countries.csv" at the url "http://w3c.github.io/csvw/tests/countries.csv"
     And I have a file called "csvw/country_slice.csv" at the url "http://w3c.github.io/csvw/tests/country_slice.csv"
