@@ -1,8 +1,16 @@
 # Change Log
 
-## [Unreleased](https://github.com/theodi/csvlint.rb/tree/HEAD)
+## [0.2.5](https://github.com/theodi/csvlint.rb/tree/0.2.5) (2015-11-16)
 
-[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.3...HEAD)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.4...0.2.5)
+
+**Merged pull requests:**
+
+- Use STDIN instead of ARGF [\#169](https://github.com/theodi/csvlint.rb/pull/169) ([pezholio](https://github.com/pezholio))
+
+## [0.2.4](https://github.com/theodi/csvlint.rb/tree/0.2.4) (2015-10-20)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.3...0.2.4)
 
 **Merged pull requests:**
 
