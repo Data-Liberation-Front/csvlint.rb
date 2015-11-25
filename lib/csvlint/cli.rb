@@ -81,7 +81,7 @@ module Csvlint
           rescue Errno::ENOENT
             return_error "#{source} not found"
           end unless source =~ /^http(s)?/
-          valid &= validate_csv(source, schema, options[:dump_errors])
+          valid &= validate_csv(source, schema, options[:dump_errors], options[:werror])
         end
 
         exit 1 unless valid
