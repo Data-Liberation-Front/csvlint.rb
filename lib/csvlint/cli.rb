@@ -8,14 +8,18 @@ module Csvlint
   class Cli < Thor
 
     desc "myfile.csv OR csvlint http://example.com/myfile.csv", "Supports validating CSV files to check their syntax and contents"
+
     option :dump_errors, desc: "Pretty print error and warning objects.", type: :boolean, aliases: :d
     option :schema, banner: "FILENAME OR URL", desc: "Schema file", aliases: :s
+    option :werror, desc: "Make all warnings into errors", type: :boolean, aliases: :w
+
     def validate(source = nil)
       source = read_source(source)
       @schema = get_schema(options[:schema]) if options[:schema]
       fetch_schema_tables(@schema, options) if source.nil?
 
-      valid = validate_csv(source, @schema, options[:dump])
+      valid = validate_csv(source, @schema, options[:dump_errors], options[:werror])
+
       exit 1 unless valid
     end
 
@@ -77,7 +81,7 @@ module Csvlint
           rescue Errno::ENOENT
             return_error "#{source} not found"
           end unless source =~ /^http(s)?/
-          valid &= validate_csv(source, schema, options[:dump])
+          valid &= validate_csv(source, schema, options[:dump_errors])
         end
 
         exit 1 unless valid
@@ -124,7 +128,7 @@ module Csvlint
         exit 1
       end
 
-      def validate_csv(source, schema, dump)
+      def validate_csv(source, schema, dump, werror)
         @error_count = 0
 
         validator = Csvlint::Validator.new( source, {}, schema, { lambda: report_lines } )
@@ -143,9 +147,10 @@ module Csvlint
           puts "\r\n#{csv} is #{validator.valid? ? "VALID" : "INVALID"}"
         end
 
-        print_errors(validator.errors, dump)
+        print_errors(validator.errors,   dump)
         print_errors(validator.warnings, dump)
 
+        return false if werror && validator.warnings.size > 0
         return validator.valid?
       end
 
