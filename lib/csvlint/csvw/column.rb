@@ -291,7 +291,7 @@ module Csvlint
           "http://www.w3.org/2001/XMLSchema#dateTimeStamp" =>
             create_date_parser("http://www.w3.org/2001/XMLSchema#dateTimeStamp", :invalid_date_time_stamp),
           "http://www.w3.org/2001/XMLSchema#decimal" => lambda { |value, format|
-            return nil, :invalid_decimal if value =~ /(E|^(NaN|INF|-INF)$)/
+            return nil, :invalid_decimal if value =~ /(E|e|^(NaN|INF|-INF)$)/
             return NUMERIC_PARSER.call(value, format)
           },
           "http://www.w3.org/2001/XMLSchema#integer" => lambda { |value, format|
