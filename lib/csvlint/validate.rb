@@ -68,6 +68,7 @@ module Csvlint
       @csv_header = true
       @headers = {}
       @lambda = options[:lambda]
+      @validate = options[:validate].nil? ? true : options[:validate]
       @leading = ""
 
       @limit_lines = options[:limit_lines]
