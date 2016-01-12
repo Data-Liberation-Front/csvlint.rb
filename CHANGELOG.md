@@ -1,5 +1,19 @@
 # Change Log
 
+## [0.3.0](https://github.com/theodi/csvlint.rb/tree/0.3.0) (2016-01-12)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.6...0.3.0)
+
+**Merged pull requests:**
+
+- still increment current\_line after invalid\_encoding error [\#174](https://github.com/theodi/csvlint.rb/pull/174) ([wjordan213](https://github.com/wjordan213))
+
+- Support for CSV on the Web transformations [\#173](https://github.com/theodi/csvlint.rb/pull/173) ([JeniT](https://github.com/JeniT))
+
+## [0.2.6](https://github.com/theodi/csvlint.rb/tree/0.2.6) (2015-11-16)
+
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.5...0.2.6)
+
 ## [0.2.5](https://github.com/theodi/csvlint.rb/tree/0.2.5) (2015-11-16)
 
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.4...0.2.5)
