@@ -54,7 +54,7 @@ module Csvlint
 
     end
 
-    def validate_header(header, source_url=nil)
+    def validate_header(header, source_url=nil, validate=true)
       reset
 
       found_header = header.to_csv(:row_sep => '')
@@ -65,7 +65,7 @@ module Csvlint
       return valid?
     end
 
-    def validate_row(values, row=nil, all_errors=[], source_url=nil)
+    def validate_row(values, row=nil, all_errors=[], source_url=nil, validate=true)
       reset
       if values.length < fields.length
         fields[values.size..-1].each_with_index do |field, i|

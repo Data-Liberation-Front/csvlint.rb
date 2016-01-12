@@ -68,6 +68,7 @@ module Csvlint
       @csv_header = true
       @headers = {}
       @lambda = options[:lambda]
+      @validate = options[:validate].nil? ? true : options[:validate]
       @leading = ""
 
       @limit_lines = options[:limit_lines]
@@ -182,7 +183,6 @@ module Csvlint
         build_exception_messages(e, stream, current_line)
       end
 
-      @data << row
       if row
         if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
@@ -196,7 +196,7 @@ module Csvlint
           build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
           # Builds errors and warnings related to the provided schema file
           if @schema
-            @schema.validate_row(row, current_line, all_errors, @source)
+            @schema.validate_row(row, current_line, all_errors, @source, @validate)
             @errors += @schema.errors
             all_errors += @schema.errors
             @warnings += @schema.warnings
@@ -205,6 +205,7 @@ module Csvlint
           end
         end
       end
+      @data << row
     end
 
     def finish
@@ -215,7 +216,7 @@ module Csvlint
       # return expected_columns to calling class
       build_warnings(:check_options, :structure) if @expected_columns == 1
       check_consistency
-      check_foreign_keys
+      check_foreign_keys if @validate
       check_mixed_linebreaks
       validate_encoding
     end
@@ -251,7 +252,7 @@ module Csvlint
             schema = Schema.load_from_json(url)
             if schema.instance_of? Csvlint::Csvw::TableGroup
               if schema.tables[@source_url]
-                link_schema = schema
+                @schema = schema
               else
                 warn_if_unsuccessful = true
                 build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
@@ -294,6 +295,7 @@ module Csvlint
       end
       @dialect = {
           "header" => true,
+          "headerRowCount" => 1,
           "delimiter" => ",",
           "skipInitialSpace" => true,
           "lineTerminator" => :auto,
@@ -359,7 +361,7 @@ module Csvlint
         end
       end
       if @schema
-        @schema.validate_header(header, @source)
+        @schema.validate_header(header, @source, @validate)
         @errors += @schema.errors
         @warnings += @schema.warnings
       end
@@ -442,15 +444,11 @@ module Csvlint
           @schema = nil
         end
       end
-      link_schema = nil
-      @schema = link_schema if link_schema
-
       paths = []
       if @source_url =~ /^http(s)?/
         begin
           well_known_uri = URI.join(@source_url, "/.well-known/csvm")
-          well_known = open(well_known_uri).read
-            # TODO
+          paths = open(well_known_uri).read.split("\n")
         rescue OpenURI::HTTPError, URI::BadURIError
         end
       end
@@ -465,6 +463,7 @@ module Csvlint
           if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
               @schema = schema
+              return
             else
               warn_if_unsuccessful = true
               build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
@@ -473,9 +472,6 @@ module Csvlint
         rescue Errno::ENOENT
         rescue OpenURI::HTTPError, URI::BadURIError, ArgumentError
         rescue => e
-          STDERR.puts e.class
-          STDERR.puts e.message
-          STDERR.puts e.backtrace
           raise e
         end
       end

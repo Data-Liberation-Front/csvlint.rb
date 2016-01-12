@@ -152,6 +152,7 @@ describe Csvlint::Csvw::NumberFormat do
 
   it "should parse numbers that match ##0 correctly" do
     format = Csvlint::Csvw::NumberFormat.new("##0")
+    expect(format.parse("-1")).to eql(-1)
     expect(format.parse("1")).to eql(1)
     expect(format.parse("12")).to eql(12)
     expect(format.parse("123")).to eql(123)
@@ -380,6 +381,21 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.parse("12.34E5")).to eql(12.34E5)
   end
 
+  it "should parse numbers that match %000 correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("%000")
+    expect(format.parse("%001")).to eq(0.01)
+    expect(format.parse("%012")).to eq(0.12)
+    expect(format.parse("%123")).to eq(1.23)
+    expect(format.parse("%1234")).to eq(12.34)
+  end
+
+  it "should parse numbers that match -0 correctly" do
+    format = Csvlint::Csvw::NumberFormat.new("-0")
+    expect(format.parse("1")).to eq(nil)
+    expect(format.parse("-1")).to eq(-1)
+    expect(format.parse("-12")).to eq(-12)
+  end
+
   it "should parse numbers normally when there is no pattern" do
     format = Csvlint::Csvw::NumberFormat.new()
     expect(format.parse("1")).to eql(1)
@@ -412,6 +428,19 @@ describe Csvlint::Csvw::NumberFormat do
     expect(format.parse("NaN").nan?).to eq(true)
     expect(format.parse("INF")).to eql(Float::INFINITY)
     expect(format.parse("-INF")).to eql(-Float::INFINITY)
+  end
+
+  it "should parse numbers including decimal separators when they are specified" do
+    format = Csvlint::Csvw::NumberFormat.new(nil, " ", ",")
+    expect(format.parse("1")).to eql(1)
+    expect(format.parse("12,3")).to eql(12.3)
+    expect(format.parse("12,34")).to eql(12.34)
+    expect(format.parse("12,3E4")).to eql(12.3E4)
+    expect(format.parse("12,3E45")).to eql(12.3E45)
+    expect(format.parse("12,34E5")).to eql(12.34E5)
+    expect(format.parse("1 234")).to eql(1234)
+    expect(format.parse("1 234 567")).to eql(1234567)
+    expect(format.parse("1  234")).to eq(nil)
   end
 
 end

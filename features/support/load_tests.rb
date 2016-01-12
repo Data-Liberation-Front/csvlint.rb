@@ -2,9 +2,10 @@ require 'json'
 require 'open-uri'
 require 'uri'
 
-BASE_URI = "http://w3c.github.io/csvw/tests/"
+BASE_URI = "http://www.w3.org/2013/csvw/tests/"
 BASE_PATH = File.join(File.dirname(__FILE__), "..", "fixtures", "csvw")
-FEATURE_FILE_PATH = File.join(File.dirname(__FILE__), "..", "csvw_validation_tests.feature")
+FEATURE_BASE_PATH = File.join(File.dirname(__FILE__), "..")
+VALIDATION_FEATURE_FILE_PATH = File.join(FEATURE_BASE_PATH, "csvw_validation_tests.feature")
 SCRIPT_FILE_PATH = File.join(File.dirname(__FILE__), "..", "..", "bin", "run-csvw-tests")
 
 Dir.mkdir(BASE_PATH) unless Dir.exist?(BASE_PATH)
@@ -30,7 +31,7 @@ end
 
 File.open(SCRIPT_FILE_PATH, 'w') do |file|
 	File.chmod(0755, SCRIPT_FILE_PATH)
-	manifest = JSON.parse( open("http://w3c.github.io/csvw/tests/manifest-validation.jsonld").read )
+	manifest = JSON.parse( open("http://www.w3.org/2013/csvw/tests/manifest-validation.jsonld").read )
 	manifest["entries"].each do |entry|
 		type = "valid"
 		case entry["type"] 
@@ -52,11 +53,11 @@ File.open(SCRIPT_FILE_PATH, 'w') do |file|
 	end
 end unless File.exist? SCRIPT_FILE_PATH
 
-File.open(FEATURE_FILE_PATH, 'w') do |file|
-	file.puts "# Auto-generated file based on standard validation CSVW tests from http://w3c.github.io/csvw/tests/manifest-validation.jsonld"
+File.open(VALIDATION_FEATURE_FILE_PATH, 'w') do |file|
+	file.puts "# Auto-generated file based on standard validation CSVW tests from http://www.w3.org/2013/csvw/tests/manifest-validation.jsonld"
 	file.puts ""
 
-	manifest = JSON.parse( open("http://w3c.github.io/csvw/tests/manifest-validation.jsonld").read )
+	manifest = JSON.parse( open("http://www.w3.org/2013/csvw/tests/manifest-validation.jsonld").read )
 
 	file.puts "Feature: #{manifest["label"]}"
 	file.puts ""
@@ -83,11 +84,15 @@ File.open(FEATURE_FILE_PATH, 'w') do |file|
 				file.puts "\t\tAnd the metadata is stored at the url \"#{metadata}\""
 			end
 			provided_files << action_uri.to_s
-			missing_files = [				  
-  				URI.join(action_uri, '/.well-known/csvm').to_s,
-  				"#{action_uri}-metadata.json",
-  				URI.join(action_uri, 'csv-metadata.json').to_s
-			]
+			if entry["name"].include?("/.well-known/csvm")
+				file.puts "\t\tAnd I have a file called \"w3.org/.well-known/csvm\" at the url \"http://www.w3.org/.well-known/csvm\""
+	  			missing_files << "#{action_uri}.json"
+	  			missing_files << URI.join(action_uri, 'csvm.json').to_s
+			else
+				missing_files << URI.join(action_uri, '/.well-known/csvm').to_s
+			end
+  			missing_files << "#{action_uri}-metadata.json"
+  			missing_files << URI.join(action_uri, 'csv-metadata.json').to_s
 		end
 		entry["implicit"].each do |implicit|
 			implicit_uri, implicit_file = cache_file(implicit)
@@ -104,11 +109,11 @@ File.open(FEATURE_FILE_PATH, 'w') do |file|
 			file.puts "\t\tThen there should not be errors"
 			file.puts "\t\tAnd there should be warnings"
 		elsif entry["type"] == "csvt:NegativeValidationTest"
-	    file.puts "\t\tThen there should be errors"
+	    	file.puts "\t\tThen there should be errors"
 		else
-	    file.puts "\t\tThen there should not be errors"
-	    file.puts "\t\tAnd there should not be warnings"
+		    file.puts "\t\tThen there should not be errors"
+		    file.puts "\t\tAnd there should not be warnings"
 		end
 		file.puts "\t"
 	end
-end unless File.exist? FEATURE_FILE_PATH
+end unless File.exist? VALIDATION_FEATURE_FILE_PATH
