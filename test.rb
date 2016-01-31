@@ -33,4 +33,4 @@ CSV
 
 validator = Csvlint::Validator.new( StringIO.new( csv ) , {}, csv_schema)
 puts  "a" if validator.valid?
-puts validator.errors
+validator.errors.each {|e| puts "Row: #{e.row} Col: #{e.column}, Category #{e.category}: Type #{e.type}, Content #{e.content}, Constraints: #{e.constraints}" }
