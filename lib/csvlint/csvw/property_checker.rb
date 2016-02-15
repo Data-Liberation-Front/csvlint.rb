@@ -11,7 +11,14 @@ module Csvlint
             value, warnings = check_common_property_value(value, base_url, lang)
             return value, warnings, :annotation
           else
-            return value, :invalid_property, nil
+            # property name must be an absolute URI
+            begin
+              return value, :invalid_property, nil if URI(property).scheme.nil?
+              value, warnings = check_common_property_value(value, base_url, lang)
+              return value, warnings, :annotation
+            rescue
+              return value, :invalid_property, nil
+            end
           end
         end
 
