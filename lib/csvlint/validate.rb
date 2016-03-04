@@ -184,6 +184,7 @@ module Csvlint
       end
     rescue ArgumentError => ae
       build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
+      @current_line += 1
       @reported_invalid_encoding = true
     end
 
