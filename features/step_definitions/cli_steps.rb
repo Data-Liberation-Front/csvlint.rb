@@ -9,3 +9,21 @@ end
 Then(/^nothing should be outputted to STDERR$/) do
   expect(STDERR).to_not receive(:puts)
 end
+
+Then(/^the output should contain JSON$/) do
+  @json = JSON.parse(all_stdout)
+  expect(@json['validation']).to be_present
+end
+
+Then(/^the JSON should have a state of "(.*?)"$/) do |state|
+  expect(@json['validation']['state']).to eq(state)
+end
+
+Then(/^the JSON should have (\d+) error$/) do |count|
+  @index = count.to_i - 1
+  expect(@json['validation']['errors'].count).to eq(count.to_i)
+end
+
+Then(/^that error should have the "(.*?)" "(.*?)"$/) do |k, v|
+  expect(@json['validation']['errors'][@index][k].to_s).to eq(v)
+end

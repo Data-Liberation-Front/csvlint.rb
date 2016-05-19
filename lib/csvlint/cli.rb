@@ -10,12 +10,13 @@ module Csvlint
     desc "myfile.csv OR csvlint http://example.com/myfile.csv", "Supports validating CSV files to check their syntax and contents"
     option :dump_errors, desc: "Pretty print error and warning objects.", type: :boolean, aliases: :d
     option :schema, banner: "FILENAME OR URL", desc: "Schema file", aliases: :s
+    option :json, desc: "Output errors as JSON", type: :boolean, aliases: :j
     def validate(source = nil)
       source = read_source(source)
       @schema = get_schema(options[:schema]) if options[:schema]
       fetch_schema_tables(@schema, options) if source.nil?
 
-      valid = validate_csv(source, @schema, options[:dump])
+      valid = validate_csv(source, @schema, options[:dump], options[:json])
       exit 1 unless valid
     end
 
@@ -77,7 +78,7 @@ module Csvlint
           rescue Errno::ENOENT
             return_error "#{source} not found"
           end unless source =~ /^http(s)?/
-          valid &= validate_csv(source, schema, options[:dump])
+          valid &= validate_csv(source, schema, options[:dump], nil)
         end
 
         exit 1 unless valid
@@ -124,10 +125,14 @@ module Csvlint
         exit 1
       end
 
-      def validate_csv(source, schema, dump)
+      def validate_csv(source, schema, dump, json)
         @error_count = 0
 
-        validator = Csvlint::Validator.new( source, {}, schema, { lambda: report_lines } )
+        if json === true
+          validator = Csvlint::Validator.new( source, {}, schema )
+        else
+          validator = Csvlint::Validator.new( source, {}, schema, { lambda: report_lines } )
+        end
 
         if source.class == String
           csv = source
@@ -137,16 +142,37 @@ module Csvlint
           csv = "CSV"
         end
 
-        if $stdout.tty?
-          puts "\r\n#{csv} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+        if json === true
+          json = {
+            validation: {
+              state: validator.valid? ? "valid" : "invalid",
+              errors: validator.errors.map { |v| hashify(v) },
+              warnings: validator.warnings.map { |v| hashify(v) },
+              info: validator.info_messages.map { |v| hashify(v) },
+            }
+          }.to_json
+          print json
         else
-          puts "\r\n#{csv} is #{validator.valid? ? "VALID" : "INVALID"}"
+          if $stdout.tty?
+            puts "\r\n#{csv} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+          else
+            puts "\r\n#{csv} is #{validator.valid? ? "VALID" : "INVALID"}"
+          end
+
+          print_errors(validator.errors, dump)
+          print_errors(validator.warnings, dump)
         end
 
-        print_errors(validator.errors, dump)
-        print_errors(validator.warnings, dump)
-
         return validator.valid?
+      end
+
+      def hashify(error)
+        {
+          type: error.type,
+          category: error.category,
+          row: error.row,
+          col: error.column,
+        }
       end
 
       def report_lines

@@ -65,6 +65,20 @@ Feature: CSVlint CLI
     Then the output should contain "http://example.com/example1.csv is INVALID"
     And the output should contain "whitespace"
 
+  Scenario: Invalid CSV from url with JSON
+    Given I have a CSV with the following content:
+    """
+    "Foo",	"Bar"	,	"Baz"
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    When I run `csvlint http://example.com/example1.csv --json`
+    Then the output should contain JSON
+    And the JSON should have a state of "invalid"
+    And the JSON should have 1 error
+    And that error should have the "type" "whitespace"
+    And that error should have the "category" "structure"
+    And that error should have the "row" "1"
+
   Scenario: Specify schema
     Given I have a CSV with the following content:
     """
