@@ -27,8 +27,7 @@ after_success:
 - '[ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ] && curl
   -v -X POST -d ''{"ref":"refs/tags/''$GEM_VERSION''","sha":"''$TRAVIS_COMMIT''"}''  --header
   "Content-Type:application/json" -u $GITHUB_USER:$GITHUB_PASSWORD "https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs"'
-- gem install henry
-- henry deploy
+- bundle exec henry deploy
 env:
   global:
   - secure: hM8Pv/EAZoB4fGGEUwKQQ/2+mgKbUac+PH2cwud25l2MJ64eoKEMZzfy4TF6+XMIzXhlWpsg4s51y6K3+W8pUyRAuwo2MsN5Iee7HnLz+LlYTiT0//iQdAmxQ0JlOyh8vd2SEFBcVfwpp/iZFIHAfbBO73ZDXhtGMEieMk025I0=

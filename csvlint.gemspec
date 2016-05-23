@@ -44,5 +44,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "aruba"
   spec.add_development_dependency "rdf"
   spec.add_development_dependency "rdf-turtle"
+  spec.add_development_dependency "henry"
 
 end
