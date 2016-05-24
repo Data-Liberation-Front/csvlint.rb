@@ -123,6 +123,32 @@ Feature: CSVlint CLI
     And the output should contain "1. Id: min_length. Row: 2,2. 5"
     And the output should contain "1. malformed_header. Row: 1. Bob,1234,bob@example.org"
 
+  Scenario: Schema errors with JSON
+    Given I have a CSV with the following content:
+    """
+"Bob","1234","bob@example.org"
+"Alice","5","alice@example.com"
+    """
+    And it is stored at the url "http://example.com/example1.csv"
+    And I have a schema with the following content:
+    """
+{
+  "fields": [
+          { "name": "Name", "constraints": { "required": true } },
+          { "name": "Id", "constraints": { "required": true, "minLength": 3 } },
+          { "name": "Email", "constraints": { "required": true } }
+    ]
+}
+    """
+    And the schema is stored at the url "http://example.com/schema.json"
+    When I run `csvlint http://example.com/example1.csv --schema http://example.com/schema.json --json`
+    Then the output should contain JSON
+    And the JSON should have a state of "invalid"
+    And the JSON should have 1 error
+    And error 1 should have the "type" "min_length"
+    And error 1 should have the "header" "Id"
+    And error 1 should have the "min_length" "3"
+
   Scenario: Invalid schema
     Given I have a CSV with the following content:
     """
