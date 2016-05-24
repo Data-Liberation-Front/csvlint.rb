@@ -147,7 +147,7 @@ Feature: CSVlint CLI
     And the JSON should have 1 error
     And error 1 should have the "type" "min_length"
     And error 1 should have the "header" "Id"
-    And error 1 should have the "min_length" "3"
+    And error 1 should have the constraint "min_length" "3"
 
   Scenario: Invalid schema
     Given I have a CSV with the following content:

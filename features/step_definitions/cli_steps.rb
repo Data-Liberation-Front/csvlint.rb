@@ -31,3 +31,7 @@ end
 Then(/^error (\d+) should have the "(.*?)" "(.*?)"$/) do |index, k, v|
   expect(@json['validation']['errors'][index.to_i - 1][k].to_s).to eq(v)
 end
+
+Then(/^error (\d+) should have the constraint "(.*?)" "(.*?)"$/) do |index, k, v|
+  expect(@json['validation']['errors'][index.to_i - 1]['constraints'][k].to_s).to eq(v)
+end
