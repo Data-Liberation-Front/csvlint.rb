@@ -4,6 +4,8 @@ require 'json'
 require 'pp'
 require 'thor'
 
+require 'active_support/inflector'
+
 module Csvlint
   class Cli < Thor
 
@@ -93,7 +95,9 @@ module Csvlint
         end
         output_string = "#{index+1}. "
         if error.column && @schema && @schema.class == Csvlint::Schema
-          output_string += "#{@schema.fields[error.column - 1].name}: "
+          if @schema.fields[error.column - 1] != nil
+            output_string += "#{@schema.fields[error.column - 1].name}: "
+          end
         end
         output_string += "#{error.type}"
         output_string += ". #{location}" unless location.empty?
@@ -167,12 +171,20 @@ module Csvlint
       end
 
       def hashify(error)
-        {
+        h = {
           type: error.type,
           category: error.category,
           row: error.row,
-          col: error.column,
+          col: error.column
         }
+
+        if error.column && @schema && @schema.class == Csvlint::Schema && @schema.fields[error.column - 1] != nil
+          field = @schema.fields[error.column - 1]
+          h[:header] = field.name
+          h[:constraints] = Hash[field.constraints.map {|k,v| [k.underscore, v] }]
+        end
+
+        h
       end
 
       def report_lines
