@@ -38,6 +38,9 @@ module Csvlint
           else
             return Schema.from_json_table(uri,json)
           end
+        rescue TypeError => e
+          # NO IDEA what this was even trying to do - SP 20160526
+
         rescue Csvlint::Csvw::MetadataError => e
           raise e
         rescue OpenURI::HTTPError, Errno::ENOENT => e
