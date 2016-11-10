@@ -123,6 +123,7 @@ module Csvlint
         validate_metadata
       end
       request.on_body do |chunk|
+        chunk.force_encoding(Encoding::UTF_8) if chunk.encoding == Encoding::ASCII_8BIT
         io = StringIO.new(chunk)
         io.each_line do |line|
           break if line_limit_reached?
