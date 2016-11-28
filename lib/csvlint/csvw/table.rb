@@ -107,9 +107,9 @@ module Csvlint
         colnum = if foreign_key["referencing_columns"].length == 1 then foreign_key["referencing_columns"][0].number else nil end
         remote.each_with_index do |r,i|
           if local[r]
-            build_errors(:multiple_matched_rows, :schema, i+1, colnum, r, context) if local[r].length > 1
+            build_errors(:multiple_matched_rows, :schema, nil, colnum, r, context) if local[r].length > 1
           else
-            build_errors(:unmatched_foreign_key_reference, :schema, i+1, colnum, r, context)
+            build_errors(:unmatched_foreign_key_reference, :schema, nil, colnum, r, context)
           end
         end
         return valid?
