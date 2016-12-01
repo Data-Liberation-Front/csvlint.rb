@@ -91,6 +91,7 @@ module Csvlint
         reset
         @foreign_keys.each do |foreign_key|
           local = @foreign_key_values[foreign_key]
+          next if local.nil?
           remote_table = foreign_key["referenced_table"]
           remote_table.validate_foreign_key_references(foreign_key, @url, local)
           @errors += remote_table.errors unless remote_table == self
