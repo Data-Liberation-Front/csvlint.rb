@@ -61,13 +61,24 @@ describe Csvlint::Validator do
 
     it ".each() -> `parse_contents` parses malformed CSV and catches unclosed quote" do
       # doesn't build warnings because check_consistency isn't invoked
-      # TODO below is trailing whitespace but is interpreted as an unclosed quote
-      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1")
 
       validator = Csvlint::Validator.new(data)
 
       expect(validator.valid?).to eql(false)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
+      expect(validator.errors.count).to eql(1)
+    end
+
+     it ".each() -> `parse_contents` parses malformed CSV and catches stray quote" do
+      # doesn't build warnings because check_consistency isn't invoked
+      # TODO below is trailing whitespace but is interpreted as a stray quote
+      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+
+      validator = Csvlint::Validator.new(data)
+
+      expect(validator.valid?).to eql(false)
+      expect(validator.errors.first.type).to eql(:stray_quote)
       expect(validator.errors.count).to eql(1)
     end
 
