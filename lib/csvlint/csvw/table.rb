@@ -63,7 +63,7 @@ module Csvlint
           unless @primary_key.nil?
             key = @primary_key.map { |column| column.validate(values[column.number - 1], row) }
             colnum = if primary_key.length == 1 then primary_key[0].number else nil end
-            build_errors(:duplicate_key, :schema, row, colnum, key.join(","), @primary_key_values[key]) if @primary_key_values.include?(key)
+            build_errors(:duplicate_key, :schema, row, colnum, key, @primary_key_values[key]) if @primary_key_values.include?(key)
             @primary_key_values[key] = row
           end
           # build a record of the unique values that are referenced by foreign keys from other tables
