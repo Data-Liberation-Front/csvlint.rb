@@ -10,8 +10,8 @@ A ruby gem to support validating CSV files to check their syntax and contents. Y
 
 ## Summary of features
 
-* Validation of a delimiter-separated values (dsv) file accesible via URL, File, or an IO-style object (e.g. StringIO)
 * Validation that checks the structural formatting of a CSV file  
+* Validation of a delimiter-separated values (dsv) file accesible via URL, File, or an IO-style object (e.g. StringIO)
 * Validation against [CSV dialects](http://dataprotocols.org/csv-dialect/)  
 * Validation against multiple schema standards; [JSON Table Schema](https://github.com/theodi/csvlint.rb/blob/master/README.md#json-table-schema-support) and [CSV on the Web](https://github.com/theodi/csvlint.rb/blob/master/README.md#csv-on-the-web-validation-support) 
 
