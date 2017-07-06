@@ -6,15 +6,20 @@
 
 # CSV Lint
 
-A ruby gem to support validating CSV files to check their syntax and contents.
+A ruby gem to support validating CSV files to check their syntax and contents. You can either use this gem within your own Ruby code, or as a standolone command line application
 
 ## Summary of features
 
+* Validation of a delimiter-separated values (dsv) file accesible via URL, File, or an IO-style object (e.g. StringIO)
+* Validation that checks the structural formatting of a CSV file  
+* Validation against [CSV dialects](http://dataprotocols.org/csv-dialect/)  
+* Validation against multiple schema standards; [JSON Table Schema](https://github.com/theodi/csvlint.rb/blob/master/README.md#json-table-schema-support) and [CSV on the Web](https://github.com/theodi/csvlint.rb/blob/master/README.md#csv-on-the-web-validation-support) 
+
 ## Development
 
-ruby version
+`ruby version 2.1.4`
 
-### Testing
+### Tests
 
 The codebase includes both rspec and cucumber tests, which can be run together using:
 
@@ -299,7 +304,7 @@ Schema validation provides some additional types of error and warning messages:
 * `:below_minimum` (error) -- a column with a `minimum` constraint contains a value that is below the minimum
 * `:above_maximum` (error) -- a column with a `maximum` constraint contains a value that is above the maximum
 
-## Other validation options
+### Other validation options
 
 You can also provide an optional options hash as the fourth argument to Validator#new. Supported options are:
 
@@ -315,13 +320,13 @@ validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, opt
 * :lambda -- Pass a block of code to be called when each line is validated, this will give you access to the `Validator` object. For example, this will return the current line number for every line validated:
 
 ```
-options = {
-  lambda: ->(validator) { puts validator.current_line }
-}
-validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
-=> 1
-2
-3
-4
-.....
+    options = {
+      lambda: ->(validator) { puts validator.current_line }
+    }
+    validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+    => 1
+    2
+    3
+    4
+    .....
 ```
