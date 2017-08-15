@@ -18,16 +18,18 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  spec.required_ruby_version = ['~> 2.0']
+
   spec.add_dependency "mime-types"
   spec.add_dependency "colorize"
   spec.add_dependency "open_uri_redirections"
-  spec.add_dependency "activesupport", "< 5.0"
+  spec.add_dependency "activesupport"
   spec.add_dependency "addressable"
   spec.add_dependency "typhoeus"
   spec.add_dependency "escape_utils"
   spec.add_dependency "uri_template"
   spec.add_dependency "thor"
-  spec.add_dependency "rack", "< 2.0"
+  spec.add_dependency "rack"
   spec.add_dependency "net-http-persistent", "< 3.0"
 
   spec.add_development_dependency "bundler", "~> 1.3"
