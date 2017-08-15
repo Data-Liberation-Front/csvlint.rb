@@ -1,7 +1,7 @@
 # Contributing to CSVlint.rb
 
-The CSVlint library is open source, and contributions are gratefully accepted! 
-Details on how to contribute are below. By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/theodi/csvlint.rb/blob/master/.github/CODE_OF_CONDUCT.md).
+The CSVlint library is open source, and contributions are gratefully accepted!
+Details on how to contribute are below. By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/theodi/csvlint.rb/blob/CODE_OF_CONDUCT.md).
 
 Before you start coding, please reach out to us either on our [gitter channel](https://gitter.im/theodi/toolbox) or by tagging a repository administrator on the issue ticket you are interested in contributing towards to indicate your interest in helping.
 
@@ -11,13 +11,13 @@ Consult our [Getting Started Guide](https://github.com/theodi/toolbox/wiki/Devel
 
 Ensure that the [tests](https://github.com/theodi/csvlint.rb/blob/master/README.md#tests) pass before working on your contribution
 
-## Code Review Process 
+## Code Review Process
 
 All contributions to the codebase - whether fork or pull request - will be reviewed per the below criteria.
 To increase your chances of your push being accepted please be aware of the following
 - Write [well formed commit messages](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html)
 - Follow our [style guide recommendations](https://github.com/theodi/toolbox/blob/README.md#code-style-guide)
-- Write tests for all changes (additions or refactors of existing code). 
+- Write tests for all changes (additions or refactors of existing code).
 - Of the github integrations we use two will be utilised to check appraise your contribution. In order of priority these are
     - Travis ensures that all tests (existing and additions) pass
     - Travis/Coveralls ensures that overall test coverage for lines of code meets a certain threshold. If this metric dips below what it previously was for the repository you’re pushing to then your PR will be rejected
