@@ -28,6 +28,12 @@ describe Csvlint::Validator do
     expect(validator.data.size).to eql(3)
   end
 
+  it "should validate from a file path including whitespace" do
+    validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','white space in filename.csv')))
+
+    expect(validator.valid?).to eql(true)
+  end
+
   context "multi line CSV validation with included schema" do
 
   end
