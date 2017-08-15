@@ -4,6 +4,7 @@
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.3...0.4.0)
 
 - Support for Ruby 2.4
+  - Ruby 2.4 improves detections of unclosed quotes
 - Support Rails ~> 5.0
 
 ## [0.3.3](https://github.com/theodi/csvlint.rb/tree/0.3.3) (2016-11-10)
