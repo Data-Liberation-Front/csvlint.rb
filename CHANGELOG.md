@@ -6,6 +6,7 @@
 - Support for Ruby 2.4
   - Ruby 2.4 improves detections of unclosed quotes
 - Support Rails ~> 5.0
+- Added `--werror` flag to command line, to treat warnings as errors
 
 ## [0.3.3](https://github.com/theodi/csvlint.rb/tree/0.3.3) (2016-11-10)
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.2...0.3.3)
