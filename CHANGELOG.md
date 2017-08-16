@@ -6,6 +6,7 @@
 - Support for Ruby 2.4
   - Ruby 2.4 improves detections of unclosed quotes
 - Support Rails ~> 5.0
+- Added `--werror` flag to command line, to treat warnings as errors
 
 **Closed issues:**
 
