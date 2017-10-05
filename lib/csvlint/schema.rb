@@ -16,6 +16,8 @@ module Csvlint
 
     class << self
 
+      extend Gem::Deprecate
+
       def from_json_table(uri, json)
         fields = []
         json["fields"].each do |field_desc|
@@ -29,7 +31,13 @@ module Csvlint
         return Csvlint::Csvw::TableGroup.from_json(uri, json)
       end
 
+      # Deprecated method signature
       def load_from_json(uri, output_errors = true)
+        load_from_uri(uri, output_errors)
+      end
+      deprecate :load_from_json, :load_from_uri, 2018, 1
+
+      def load_from_uri(uri, output_errors = true)
         begin
           json = JSON.parse( open(uri).read )
           if json["@context"]
