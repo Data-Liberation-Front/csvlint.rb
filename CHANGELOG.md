@@ -7,6 +7,8 @@
   - Ruby 2.4 improves detections of unclosed quotes
 - Support Rails ~> 5.0
 - Added `--werror` flag to command line, to treat warnings as errors
+- Deprecated `Schema#load_from_json` and replaced with `Schema#load_from_uri`. Method will be removed in 1.0.0.
+- Added `Schema#load_from_string` to load from a string instead of reading a URI
 
 **Closed issues:**
 
