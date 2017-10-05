@@ -38,8 +38,14 @@ module Csvlint
       deprecate :load_from_json, :load_from_uri, 2018, 1
 
       def load_from_uri(uri, output_errors = true)
+        load_from_string(uri, open(uri).read, output_errors)
+      rescue OpenURI::HTTPError, Errno::ENOENT => e
+        raise e
+      end
+
+      def load_from_string(uri, string, output_errors = true)
         begin
-          json = JSON.parse( open(uri).read )
+          json = JSON.parse( string )
           if json["@context"]
             uri = "file:#{File.expand_path(uri)}" unless uri.to_s =~ /^http(s)?/
             return Schema.from_csvw_metadata(uri,json)
@@ -50,8 +56,6 @@ module Csvlint
           # NO IDEA what this was even trying to do - SP 20160526
 
         rescue Csvlint::Csvw::MetadataError => e
-          raise e
-        rescue OpenURI::HTTPError, Errno::ENOENT => e
           raise e
         rescue => e
           if output_errors === true
