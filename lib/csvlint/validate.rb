@@ -434,7 +434,7 @@ module Csvlint
         when StringIO
           return
         when File
-          @source_url = "file:#{File.expand_path(@source)}"
+          @source_url = "file:#{URI.encode(File.expand_path(@source))}"
         else
           @source_url = @source
       end

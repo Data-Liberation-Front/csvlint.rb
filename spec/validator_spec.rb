@@ -28,6 +28,12 @@ describe Csvlint::Validator do
     expect(validator.data.size).to eql(3)
   end
 
+  it "should validate from a file path including whitespace" do
+    validator = Csvlint::Validator.new(File.new(File.join(File.dirname(__FILE__),'..','features','fixtures','white space in filename.csv')))
+
+    expect(validator.valid?).to eql(true)
+  end
+
   context "multi line CSV validation with included schema" do
 
   end
@@ -46,7 +52,7 @@ describe Csvlint::Validator do
 
     it ".each() -> parse_contents method validates a well formed CSV" do
       # when invoking parse contents
-      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
+      data = StringIO.new(%Q{"Foo","Bar","Baz"\r\n"1","2","3"\r\n"1","2","3"\r\n"3","2","1"})
 
       validator = Csvlint::Validator.new(data)
 
@@ -61,20 +67,32 @@ describe Csvlint::Validator do
 
     it ".each() -> `parse_contents` parses malformed CSV and catches unclosed quote" do
       # doesn't build warnings because check_consistency isn't invoked
-      # TODO below is trailing whitespace but is interpreted as an unclosed quote
-      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+      data = StringIO.new(%Q{"Foo","Bar","Baz"\r\n"1","2","3"\r\n"1","2","3"\r\n"3","2","1})
 
       validator = Csvlint::Validator.new(data)
 
       expect(validator.valid?).to eql(false)
+      expect(validator.errors.count).to eql(1)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
+    end
+
+     it ".each() -> `parse_contents` parses malformed CSV and catches stray quote" do
+      pending "cannot make Ruby generate a stray quote error"
+      # doesn't build warnings because check_consistency isn't invoked
+      # TODO below is trailing whitespace but is interpreted as a stray quote
+      data = StringIO.new(%Q{"Foo","Bar","Baz"\r\n"1","2","3"\r\n"1","2","3"\r\n"3","2","1""})
+
+      validator = Csvlint::Validator.new(data)
+
+      expect(validator.valid?).to eql(false)
+      expect(validator.errors.first.type).to eql(:stray_quote)
       expect(validator.errors.count).to eql(1)
     end
 
     it ".each() -> `parse_contents` parses malformed CSV and catches whitespace and edge case" do
       # when this data gets passed the header it rescues a whitespace error, resulting in the header row being discarded
       # TODO - check if this is an edge case, currently passing because it requires advice on how to specify
-      data = StringIO.new(" \"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"Foo\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\" ")
+      data = StringIO.new(%Q{ "Foo","Bar","Baz"\r\n"1","2","3"\r\n"1","2","3"\r\n"3","2","1" })
 
       validator = Csvlint::Validator.new(data)
 
@@ -84,13 +102,13 @@ describe Csvlint::Validator do
     end
 
     it "handles line breaks within a cell" do
-      data = StringIO.new("\"a\",\"b\",\"c\"\r\n\"d\",\"e\",\"this is\r\nvalid\"\r\n\"a\",\"b\",\"c\"")
+      data = StringIO.new(%Q{"a","b","c"\r\n"d","e","this is\r\nvalid"\r\n"a","b","c"})
       validator = Csvlint::Validator.new(data)
       expect(validator.valid?).to eql(true)
     end
 
     it "handles multiple line breaks within a cell" do
-      data = StringIO.new("\"a\",\"b\",\"c\"\r\n\"d\",\"this is\r\n valid\",\"as is this\r\n too\"")
+      data = StringIO.new(%Q{"a","b","c"\r\n"d","this is\r\n valid","as is this\r\n too"})
       validator = Csvlint::Validator.new(data)
       expect(validator.valid?).to eql(true)
     end
@@ -125,7 +143,7 @@ describe Csvlint::Validator do
 
     it ".each() -> `validate` to pass input in streaming fashion" do
       # warnings are built when validate is used to call all three methods
-      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"3\",\"2\",\"1\"")
+      data = StringIO.new(%Q{"Foo","Bar","Baz"\r\n"1","2","3"\r\n"1","2","3"\r\n"3","2","1"})
       validator = Csvlint::Validator.new(data)
 
       expect(validator.valid?).to eql(true)
@@ -136,7 +154,7 @@ describe Csvlint::Validator do
     end
 
     it ".each() -> `validate` parses malformed CSV, populates errors, warnings & info_msgs,invokes finish()" do
-      data = StringIO.new("\"Foo\",\"Bar\",\"Baz\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"2\",\"3\"\r\n\"1\",\"two\",\"3\"\r\n\"3\",\"2\",   \"1\"")
+      data = StringIO.new(%Q{"Foo","Bar","Baz"\r\n"1","2","3"\r\n"1","2","3"\r\n"1","two","3"\r\n"3","2",   "1"})
 
       validator = Csvlint::Validator.new(data)
 

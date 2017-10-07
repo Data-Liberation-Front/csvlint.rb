@@ -1,5 +1,19 @@
 # Change Log
 
+## [0.4.0](https://github.com/theodi/csvlint.rb/tree/0.4.0) (2017-xx-xx)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.3...0.4.0)
+
+- Support for Ruby 2.4
+  - Ruby 2.4 improves detections of unclosed quotes
+- Support Rails ~> 5.0
+- Added `--werror` flag to command line, to treat warnings as errors
+- Deprecated `Schema#load_from_json` and replaced with `Schema#load_from_uri`. Method will be removed in 1.0.0.
+- Added `Schema#load_from_string` to load from a string instead of reading a URI
+
+**Closed issues:**
+
+-  CLI doesn't handle filenames with spaces [\#182](https://github.com/theodi/csvlint.rb/issues/182)
+
 ## [0.3.3](https://github.com/theodi/csvlint.rb/tree/0.3.3) (2016-11-10)
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.2...0.3.3)
 
