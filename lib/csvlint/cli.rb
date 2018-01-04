@@ -1,5 +1,5 @@
 require 'csvlint'
-require 'colorize'
+require 'rainbow/refinement'
 require 'json'
 require 'pp'
 require 'thor'
@@ -8,6 +8,7 @@ require 'active_support/inflector'
 
 module Csvlint
   class Cli < Thor
+    using Rainbow
 
     desc "myfile.csv OR csvlint http://example.com/myfile.csv", "Supports validating CSV files to check their syntax and contents"
 
@@ -20,6 +21,8 @@ module Csvlint
       source = read_source(source)
       @schema = get_schema(options[:schema]) if options[:schema]
       fetch_schema_tables(@schema, options) if source.nil?
+
+      Rainbow.enabled = $stdout.tty?
 
       valid = validate_csv(source, @schema, options[:dump_errors], options[:json], options[:werror])
       exit 1 unless valid
@@ -106,11 +109,7 @@ module Csvlint
         output_string += ". #{location}" unless location.empty?
         output_string += ". #{error.content}" if error.content
 
-        if $stdout.tty?
-          puts output_string.colorize(color)
-        else
-          puts output_string
-        end
+        puts output_string.color(color)
 
         if dump
           pp error
@@ -124,11 +123,7 @@ module Csvlint
       end
 
       def return_error(message)
-        if $stdout.tty?
-          puts message.colorize(:red)
-        else
-          puts message
-        end
+        puts message.red
         exit 1
       end
 
@@ -160,15 +155,11 @@ module Csvlint
           }.to_json
           print json
         else
-          if $stdout.tty?
-            puts "\r\n#{csv} is #{validator.valid? ? "VALID".green : "INVALID".red}"
-          else
-            puts "\r\n#{csv} is #{validator.valid? ? "VALID" : "INVALID"}"
-          end
+          puts "\r\n#{csv} is #{validator.valid? ? "VALID".green : "INVALID".red}"
           print_errors(validator.errors,   dump)
           print_errors(validator.warnings, dump)
         end
-        
+
         return false if werror && validator.warnings.size > 0
         return validator.valid?
       end
