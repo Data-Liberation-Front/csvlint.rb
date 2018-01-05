@@ -1,5 +1,5 @@
 require 'csvlint'
-require 'rainbow/refinement'
+require 'rainbow'
 require 'json'
 require 'pp'
 require 'thor'
@@ -8,7 +8,6 @@ require 'active_support/inflector'
 
 module Csvlint
   class Cli < Thor
-    using Rainbow
 
     desc "myfile.csv OR csvlint http://example.com/myfile.csv", "Supports validating CSV files to check their syntax and contents"
 
@@ -109,7 +108,7 @@ module Csvlint
         output_string += ". #{location}" unless location.empty?
         output_string += ". #{error.content}" if error.content
 
-        puts output_string.color(color)
+        puts Rainbow(output_string).color(color)
 
         if dump
           pp error
@@ -123,7 +122,7 @@ module Csvlint
       end
 
       def return_error(message)
-        puts message.red
+        puts Rainbow(message).red
         exit 1
       end
 
@@ -155,7 +154,7 @@ module Csvlint
           }.to_json
           print json
         else
-          puts "\r\n#{csv} is #{validator.valid? ? "VALID".green : "INVALID".red}"
+          puts "\r\n#{csv} is #{validator.valid? ? Rainbow("VALID").green : Rainbow("INVALID").red}"
           print_errors(validator.errors,   dump)
           print_errors(validator.warnings, dump)
         end
@@ -185,9 +184,9 @@ module Csvlint
         lambda do |row|
           new_errors = row.errors.count
           if new_errors > @error_count
-            print "!".red
+            print Rainbow("!").red
           else
-            print ".".green
+            print Rainbow(".").green
           end
           @error_count = new_errors
         end
