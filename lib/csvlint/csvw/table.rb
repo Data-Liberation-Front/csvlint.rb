@@ -70,7 +70,7 @@ module Csvlint
           # so that later we can check whether those foreign keys reference these values
           @foreign_key_references.each do |foreign_key|
             referenced_columns = foreign_key["referenced_columns"]
-            key = referenced_columns.map{ |column| column.validate(values[column.number - 1], row) }
+            key = referenced_columns.map{ |column| values[column.number - 1] }
             known_values = @foreign_key_reference_values[foreign_key] ||= {}
             (known_values[key] ||= []) << row
           end
@@ -79,7 +79,7 @@ module Csvlint
           # we might not have parsed those other tables
           @foreign_keys.each do |foreign_key|
             referencing_columns = foreign_key["referencing_columns"]
-            key = referencing_columns.map{ |column| column.validate(values[column.number - 1], row) }
+            key = referencing_columns.map{ |column| values[column.number - 1] }
             known_values = @foreign_key_values[foreign_key] ||= {}
             (known_values[key] ||= []) << row
           end
