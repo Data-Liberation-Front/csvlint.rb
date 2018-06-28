@@ -88,8 +88,10 @@ module Csvlint
               #     [ [ "5", "7", "9" ] ]
               # We want it like this:
               #     [ ["5"], ["7"], ["9"] ]
-              key[0].each do |subkey|
-                (known_values[ [subkey] ] ||= []) << row
+              if key[0] != nil
+                key[0].each do |subkey|
+                  (known_values[ [subkey] ] ||= []) << row
+                end
               end
             else
               (known_values[key] ||= []) << row
