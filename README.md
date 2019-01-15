@@ -71,6 +71,9 @@ After installing the gem, you can validate a CSV on the command line like so:
 
 	csvlint myfile.csv
 
+You may need to add the gem exectuable directory to your path, by adding '/usr/local/lib/ruby/gems/2.6.0/bin' 
+or whatever your version is, to your .bash_profile PATH entry. [like so](https://stackoverflow.com/questions/2392293/ruby-gems-returns-command-not-found)
+
 You will then see the validation result, together with any warnings or errors e.g.
 
 ```
