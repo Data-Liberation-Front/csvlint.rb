@@ -5,6 +5,8 @@ rvm:
 - 2.2.7
 - 2.3.4
 - 2.4.1
+- 2.5.3
+- 2.6.1
 sudo: false
 cache: bundler
 notifications:
