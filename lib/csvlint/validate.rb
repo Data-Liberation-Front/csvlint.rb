@@ -253,7 +253,7 @@ module Csvlint
         if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
           begin
             url = URI.join(@source_url, uri)
-            schema = Schema.load_from_json(url)
+            schema = Schema.load_from_uri(url)
             if schema.instance_of? Csvlint::Csvw::TableGroup
               if schema.tables[@source_url]
                 @schema = schema
@@ -463,7 +463,7 @@ module Csvlint
           path = template.expand('url' => @source_url)
           url = URI.join(@source_url, path)
           url = File.new(url.to_s.sub(/^file:/, "")) if url.to_s =~ /^file:/
-          schema = Schema.load_from_json(url)
+          schema = Schema.load_from_uri(url)
           if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
               @schema = schema
