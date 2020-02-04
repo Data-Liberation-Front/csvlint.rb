@@ -6,7 +6,7 @@
 
 # CSV Lint
 
-A ruby gem to support validating CSV files to check their syntax and contents. You can either use this gem within your own Ruby code, or as a standolone command line application
+A ruby gem to support validating CSV files to check their syntax and contents. You can either use this gem within your own Ruby code, or as a standalone command line application
 
 ## Summary of features
 
@@ -63,13 +63,16 @@ Or install it yourself as:
 
 ## Usage
 
-You can either use this gem within your own Ruby code, or as a standolone command line application
+You can either use this gem within your own Ruby code, or as a standalone command line application
 
 ## On the command line
 
 After installing the gem, you can validate a CSV on the command line like so:
 
 	csvlint myfile.csv
+
+You may need to add the gem exectuable directory to your path, by adding '/usr/local/lib/ruby/gems/2.6.0/bin' 
+or whatever your version is, to your .bash_profile PATH entry. [like so](https://stackoverflow.com/questions/2392293/ruby-gems-returns-command-not-found)
 
 You will then see the validation result, together with any warnings or errors e.g.
 
