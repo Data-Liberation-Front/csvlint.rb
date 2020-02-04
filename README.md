@@ -6,7 +6,7 @@
 
 # CSV Lint
 
-A ruby gem to support validating CSV files to check their syntax and contents. You can either use this gem within your own Ruby code, or as a standolone command line application
+A ruby gem to support validating CSV files to check their syntax and contents. You can either use this gem within your own Ruby code, or as a standalone command line application
 
 ## Summary of features
 
@@ -63,7 +63,7 @@ Or install it yourself as:
 
 ## Usage
 
-You can either use this gem within your own Ruby code, or as a standolone command line application
+You can either use this gem within your own Ruby code, or as a standalone command line application
 
 ## On the command line
 
