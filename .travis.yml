@@ -1,6 +1,5 @@
 ---
 rvm:
-- 2.3.8
 - 2.4.9
 sudo: false
 cache: bundler
