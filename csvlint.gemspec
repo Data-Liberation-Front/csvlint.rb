@@ -23,10 +23,9 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = ['~> 2.0']
-
-  spec.add_dependency "mime-types"
-  spec.add_dependency "colorize"
+  spec.required_ruby_version = ['~> 2.4', '< 2.6']
+  
+  spec.add_dependency "rainbow"
   spec.add_dependency "open_uri_redirections"
   spec.add_dependency "activesupport"
   spec.add_dependency "addressable"
@@ -35,7 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "uri_template"
   spec.add_dependency "thor"
   spec.add_dependency "rack"
-  spec.add_dependency "net-http-persistent", "< 3.0"
+  spec.add_dependency "net-http-persistent"
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake"
@@ -51,7 +50,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry"
   spec.add_development_dependency "github_changelog_generator"
   spec.add_development_dependency "aruba"
-  spec.add_development_dependency "rdf", "< 2.0"
+  spec.add_development_dependency "rdf", "< 4.0"
   spec.add_development_dependency "rdf-turtle"
   spec.add_development_dependency "henry"
 
