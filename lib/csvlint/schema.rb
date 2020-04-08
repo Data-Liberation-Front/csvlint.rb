@@ -4,7 +4,7 @@ module Csvlint
 
     include Csvlint::ErrorCollector
 
-    attr_reader :uri, :fields, :title, :description
+    attr_reader :uri, :fields, :fields_by_index, :title, :description
 
     def initialize(uri, fields=[], title=nil, description=nil)
       @uri = uri
@@ -77,11 +77,28 @@ module Csvlint
       if found_header != expected_header
         build_warnings(:malformed_header, :schema, 1, nil, found_header, "expectedHeader" => expected_header)
       end
+
+      @fields_by_index = {}
+      header.each_with_index do |name,i|
+        field = fields.find { |field| field.name == name }
+        if field
+          fields_by_index[i] = field
+          build_warnings(:different_index_header, :schema, nil, i+1, name) if fields[i].name != name
+        else
+          build_warnings(:extra_header, :schema, nil, i+1, name)
+        end
+      end
+
+      (fields - fields_by_index.values).each do |field|
+        build_warnings(:missing_header, :schema, nil, fields.index(field)+1, field.name)
+      end
+
       return valid?
     end
 
     def validate_row(values, row=nil, all_errors=[], source_url=nil, validate=true)
       reset
+
       if values.length < fields.length
         fields[values.size..-1].each_with_index do |field, i|
           build_warnings(:missing_column, :schema, row, values.size+i+1)
@@ -102,6 +119,5 @@ module Csvlint
 
       return valid?
     end
-
   end
 end
