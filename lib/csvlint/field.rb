@@ -48,7 +48,7 @@ module Csvlint
           begin
             Regexp.new(pattern)
             build_errors(:pattern, :schema, row, column, value,
-            { "pattern" => constraints["pattern"] } ) if !value.nil? && !value.match( constraints["pattern"] )
+            { "pattern" => constraints["pattern"] } ) unless value.match( constraints["pattern"] )
           rescue RegexpError
             build_regex_error(value, row, column, pattern, all_errors)
           end
@@ -63,6 +63,8 @@ module Csvlint
       end
 
       def validate_values(value, row, column)
+        return if constraints["required"] == true && (value.nil? || value.length == 0)
+
         # If a pattern exists, raise an invalid regex error if it is not in
         # valid regex form, else, if the value of the relevant field in the csv
         # does not match the given regex pattern in the schema, raise a
