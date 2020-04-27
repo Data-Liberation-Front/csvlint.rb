@@ -48,7 +48,7 @@ module Csvlint
           begin
             Regexp.new(pattern)
             build_errors(:pattern, :schema, row, column, value,
-            { "pattern" => constraints["pattern"] } ) unless value.match( constraints["pattern"] )
+            { "pattern" => constraints["pattern"] } ) if !value.nil? && !value.match( constraints["pattern"] )
           rescue RegexpError
             build_regex_error(value, row, column, pattern, all_errors)
           end

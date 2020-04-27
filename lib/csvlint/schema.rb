@@ -78,20 +78,20 @@ module Csvlint
         build_warnings(:malformed_header, :schema, 1, nil, found_header, "expectedHeader" => expected_header)
       end
 
-      @fields_by_index = {}
-      header.each_with_index do |name,i|
-        field = fields.find { |field| field.name == name.downcase }
-        if field
-          fields_by_index[i] = field
-          build_warnings(:different_index_header, :schema, nil, i+1, name) if fields[i].try(:name) != name
-        else
-          build_warnings(:extra_header, :schema, nil, i+1, name)
-        end
-      end
+      # @fields_by_index = {}
+      # header.each_with_index do |name,i|
+      #   field = fields.find { |field| field.name == name.downcase }
+      #   if field
+      #     fields_by_index[i] = field
+      #     build_warnings(:different_index_header, :schema, nil, i+1, name) if fields[i].try(:name) != name
+      #   else
+      #     build_warnings(:extra_header, :schema, nil, i+1, name)
+      #   end
+      # end
 
-      (fields - fields_by_index.values).each do |field|
-        build_warnings(:missing_header, :schema, nil, fields.index(field)+1, field.name)
-      end
+      # (fields - fields_by_index.values).each do |field|
+      #   build_warnings(:missing_header, :schema, nil, fields.index(field)+1, field.name)
+      # end
 
       return valid?
     end
