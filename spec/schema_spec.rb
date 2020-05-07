@@ -174,7 +174,7 @@ describe Csvlint::Schema do
     end
 
     it "should create a schema from a JSON Table URL" do
-      schema = Csvlint::Schema.load_from_json("http://example.com/example.json")
+      schema = Csvlint::Schema.load_from_uri("http://example.com/example.json")
       expect( schema.uri ).to eql("http://example.com/example.json")
       expect( schema.fields.length ).to eql(3)
       expect( schema.fields[0].name ).to eql("ID")
@@ -203,7 +203,7 @@ describe Csvlint::Schema do
     end
 
     it "should create a table group from a CSVW metadata URL" do
-      schema = Csvlint::Schema.load_from_json("http://example.com/metadata.json")
+      schema = Csvlint::Schema.load_from_uri("http://example.com/metadata.json")
       expect( schema.class ).to eq(Csvlint::Csvw::TableGroup)
     end
   end
