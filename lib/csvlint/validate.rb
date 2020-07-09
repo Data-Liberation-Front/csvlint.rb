@@ -162,7 +162,7 @@ module Csvlint
     def validate_line(input = nil, index = nil)
       @input = input
       single_col = false
-      line = index.present? ? index : 0
+      line = index.nil? ? 0 : index
       @encoding = input.encoding.to_s
       report_line_breaks(line)
       parse_contents(input, line)
@@ -175,7 +175,7 @@ module Csvlint
     # analyses the provided csv and builds errors, warnings and info messages
     def parse_contents(stream, line = nil)
       # parse_contents will parse one line and apply headers, formats methods and error handle as appropriate
-      current_line = line.present? ? line : 1
+      current_line = line.nil? ? 1 : line
       all_errors = []
 
       @csv_options[:encoding] = @encoding
@@ -192,10 +192,11 @@ module Csvlint
           row = row.reject { |col| col.nil? || col.empty? }
           validate_header(row)
           @col_counts << row.size
+          @expected_columns = row.size if @expected_columns == 0
         else
           build_formats(row)
           @col_counts << row.reject { |col| col.nil? || col.empty? }.size
-          @expected_columns = row.size unless @expected_columns != 0
+          @expected_columns = row.size if @expected_columns == 0
           build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
           # Builds errors and warnings related to the provided schema file
           if @schema
@@ -229,7 +230,7 @@ module Csvlint
       unless @headers.empty?
         if @headers["content-type"] =~ /text\/csv/
           @csv_header = @csv_header && true
-          assumed_header = @assumed_header.present?
+          assumed_header = !@assumed_header.nil?
         end
         if @headers["content-type"] =~ /header=(present|absent)/
           @csv_header = true if $1 == "present"
@@ -552,7 +553,9 @@ module Csvlint
     end
 
     def line_limit_reached?
-      @limit_lines.present? && @current_line > @limit_lines
+      unless @limit_lines.nil?
+        @current_line > @limit_lines
+      end
     end
 
     def get_line_break(line)
