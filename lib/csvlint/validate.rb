@@ -553,9 +553,8 @@ module Csvlint
     end
 
     def line_limit_reached?
-      unless @limit_lines.nil?
-        @current_line > @limit_lines
-      end
+      return false if @limit_lines.nil?
+      @current_line > @limit_lines
     end
 
     def get_line_break(line)
