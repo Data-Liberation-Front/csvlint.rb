@@ -1,17 +1,13 @@
 ---
 rvm:
-- 2.4.9
-- 2.5.7
+- 2.4.10
+- 2.5.8
+- 2.6.6
+- 2.7.1
 sudo: false
 cache: bundler
-notifications:
-  irc:
-    channels:
-    - irc.freenode.net#theodi
-    template:
-    - "%{repository} %{branch} - %{message} %{build_url}"
-    on_success: change
-    on_failure: always
+before_install:
+  - gem install bundler -v "~> 2.1"
 deploy:
   provider: rubygems
   api_key:
