@@ -146,6 +146,7 @@ module Csvlint
           "dd" => /(?<day>0[1-9]|[12][0-9]|3[01])/,
           "d" => /(?<day>0?[1-9]|[12]?[0-9]|3[01])/,
           "HH" => /(?<hour>[01][0-9]|2[0-3])/,
+          "H" => /(?<hour>0?[0-9]|1[0-9]|2[0-3])/,
           "mm" => /(?<minute>[0-5][0-9])/,
           "ss" => /([0-6][0-9])/,
           "X" => /(?<timezone>Z|[-+]((0[0-9]|1[0-3])([0-5][0-9])?|14(00)?))/,
@@ -178,6 +179,7 @@ module Csvlint
           "HH:mm:ss" => Regexp.new("^#{FIELDS["HH"]}:#{FIELDS["mm"]}:(?<second>#{FIELDS["ss"]})$"),
           "HHmmss" => Regexp.new("^#{FIELDS["HH"]}#{FIELDS["mm"]}(?<second>#{FIELDS["ss"]})$"),
           "HH:mm" => Regexp.new("^#{FIELDS["HH"]}:#{FIELDS["mm"]}$"),
+          "H:mm" => Regexp.new("^#{FIELDS["H"]}:#{FIELDS["mm"]}$"),
           "HHmm" => Regexp.new("^#{FIELDS["HH"]}#{FIELDS["mm"]}$")
         }
 
