@@ -7,6 +7,7 @@ require 'typhoeus'
 
 require 'active_support/core_ext/date/conversions'
 require 'active_support/core_ext/time/conversions'
+require 'active_support/core_ext/object'
 require 'open_uri_redirections'
 require 'uri_template'
 
