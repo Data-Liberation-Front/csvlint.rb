@@ -433,13 +433,14 @@ module Csvlint
 
     def locate_schema
 
+
       @source_url = nil
       warn_if_unsuccessful = false
       case @source
         when StringIO
           return
         when File
-          @source_url = "file:#{URI.encode(File.expand_path(@source))}"
+          @source_url = FileUrl.url(@source)
         else
           @source_url = @source
       end
@@ -464,7 +465,7 @@ module Csvlint
           template = URITemplate.new(template)
           path = template.expand('url' => @source_url)
           url = URI.join(@source_url, path)
-          url = File.new(url.to_s.sub(/^file:/, "")) if url.to_s =~ /^file:/
+          url = File.new(FileUrl.path(url)) if url.to_s =~ /^file:/
           schema = Schema.load_from_uri(url)
           if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
