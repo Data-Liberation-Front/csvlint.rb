@@ -465,7 +465,7 @@ module Csvlint
           template = URITemplate.new(template)
           path = template.expand('url' => @source_url)
           url = URI.join(@source_url, path)
-          url = File.new(FileUrl.path(url)) if url.to_s =~ /^file:/
+          url = FileUrl.file(url)
           schema = Schema.load_from_uri(url)
           if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
