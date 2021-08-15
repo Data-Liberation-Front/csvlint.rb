@@ -22,7 +22,7 @@ module Csvlint
 
       def validate_header(header, table_url, strict)
         reset
-        table_url = Csvlint::FileUrl::url(table_url) if table_url.instance_of? File
+        table_url = FileUrl::url(table_url) if table_url.instance_of? File
         @validated_tables[table_url] = true
         table = tables[table_url]
         table.validate_header(header, strict)
@@ -33,7 +33,7 @@ module Csvlint
 
       def validate_row(values, row=nil, all_errors=[], table_url, validate)
         reset
-        table_url = Csvlint::FileUrl::url(table_url) if table_url.instance_of? File
+        table_url = FileUrl::url(table_url) if table_url.instance_of? File
         @validated_tables[table_url] = true
         table = tables[table_url]
         table.validate_row(values, row, validate)
