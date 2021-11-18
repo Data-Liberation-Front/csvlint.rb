@@ -181,7 +181,7 @@ module Csvlint
       @csv_options[:encoding] = @encoding
 
       begin
-        row = LineCSV.parse_line(stream, @csv_options)
+        row = LineCSV.parse_line(stream, **@csv_options)
       rescue LineCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line)
       end
@@ -451,7 +451,7 @@ module Csvlint
       if @source_url =~ /^http(s)?/
         begin
           well_known_uri = URI.join(@source_url, "/.well-known/csvm")
-          paths = open(well_known_uri).read.split("\n")
+          paths = open(well_known_uri.to_s).read.split("\n")
         rescue OpenURI::HTTPError, URI::BadURIError
         end
       end
