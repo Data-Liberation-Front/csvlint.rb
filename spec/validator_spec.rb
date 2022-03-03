@@ -77,7 +77,6 @@ describe Csvlint::Validator do
     end
 
      it ".each() -> `parse_contents` parses malformed CSV and catches stray quote" do
-      pending "cannot make Ruby generate a stray quote error"
       # doesn't build warnings because check_consistency isn't invoked
       # TODO below is trailing whitespace but is interpreted as a stray quote
       data = StringIO.new(%Q{"Foo","Bar","Baz"\r\n"1","2","3"\r\n"1","2","3"\r\n"3","2","1""})
@@ -85,7 +84,7 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new(data)
 
       expect(validator.valid?).to eql(false)
-      expect(validator.errors.first.type).to eql(:stray_quote)
+      expect(validator.errors.first.type).to eql(:unclosed_quote)
       expect(validator.errors.count).to eql(1)
     end
 
@@ -240,7 +239,7 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new(StringIO.new(stream))
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
-      expect(validator.errors.first.type).to eql(:unclosed_quote)
+      expect(validator.errors.first.type).to eql(:stray_quote)
     end
 
 
