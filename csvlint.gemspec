@@ -40,6 +40,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.11"
   spec.add_development_dependency "rspec-pride", "~> 3.2"
   spec.add_development_dependency "rspec-expectations", "~> 3.11"
+  spec.add_development_dependency "rspec-pending_for", "~> 0.1"
   spec.add_development_dependency "coveralls", "~> 0.7"
   spec.add_development_dependency "pry", "~> 0.14"
   spec.add_development_dependency "github_changelog_generator", "~> 1.16"

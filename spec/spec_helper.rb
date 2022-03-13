@@ -4,6 +4,7 @@ Coveralls.wear_merged!('test_frameworks')
 require 'csvlint'
 require 'pry'
 require 'webmock/rspec'
+require 'rspec/pending_for'
 
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
