@@ -12,7 +12,7 @@ jobs:
         ruby-version: ['2.5', '2.6', '2.7']
     steps:
       - uses: actions/checkout@v2
-      - uses: ruby/setup-ruby@V1
+      - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
           ruby-version: ${{ matrix.ruby-version }}
