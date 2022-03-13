@@ -1,0 +1,22 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ['2.5.9', '2.6.9', '2.7.5']
+    steps:
+      - uses: ruby/setup-ruby
+        with:
+          bundler-cache: true
+          ruby-version: ${{ matrix.ruby-version }}
+      - uses: actions/checkout@v1
+      - name: Install dependencies
+        run: bundle install
+      - name: Run the tests
+        run: bundle exec rake
