@@ -236,7 +236,7 @@ describe Csvlint::Validator do
   context "it returns the correct error from ERROR_MATCHES" do
 
     it "checks for unclosed quotes" do
-      pending_for(:versions => "2.5", :reason => "Ruby 2.5 handles unclosed quotes differently")
+      pending_for(:versions => 2.5, :reason => "Ruby 2.5 handles unclosed quotes differently")
       stream = "\"a,\"b\",\"c\"\n"
       validator = Csvlint::Validator.new(StringIO.new(stream))
       expect(validator.valid?).to eql(false)
