@@ -38,13 +38,15 @@ module Csvlint
         ESCAPE_RE[@re_chars][@re_esc][str]
       end
 
-      # Optimization: Disable the CSV library's converters feature.
-      # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2100
-      def init_converters(options, field_name = :converters)
-        @converters = []
-        @header_converters = []
-        options.delete(:unconverted_fields)
-        options.delete(field_name)
+      if RUBY_VERSION < '2.5'
+        # Optimization: Disable the CSV library's converters feature.
+        # @see https://github.com/ruby/ruby/blob/v2_2_3/lib/csv.rb#L2100
+        def init_converters(options, field_name = :converters)
+          @converters = []
+          @header_converters = []
+          options.delete(:unconverted_fields)
+          options.delete(field_name)
+        end
       end
     end
 
@@ -250,7 +252,7 @@ module Csvlint
         if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
           begin
             url = URI.join(@source_url, uri)
-            schema = Schema.load_from_json(url)
+            schema = Schema.load_from_uri(url)
             if schema.instance_of? Csvlint::Csvw::TableGroup
               if schema.tables[@source_url]
                 @schema = schema
@@ -460,7 +462,7 @@ module Csvlint
           path = template.expand('url' => @source_url)
           url = URI.join(@source_url, path)
           url = File.new(url.to_s.sub(/^file:/, "")) if url.to_s =~ /^file:/
-          schema = Schema.load_from_json(url)
+          schema = Schema.load_from_uri(url)
           if schema.instance_of? Csvlint::Csvw::TableGroup
             if schema.tables[@source_url]
               @schema = schema
