@@ -455,7 +455,7 @@ module Csvlint
               schema_url = URI.join(base_url, value).to_s
               schema_base_url = schema_url
               schema_ref = schema_url.start_with?("file:") ? File.new(schema_url[5..-1]) : schema_url
-              schema = JSON.parse( open(schema_ref).read )
+              schema = JSON.parse( URI.open(schema_ref).read )
               schema["@id"] = schema["@id"] ? URI.join(schema_url, schema["@id"]).to_s : schema_url
               if schema["@context"]
                 if schema["@context"].instance_of?(Array) && schema["@context"].length > 1

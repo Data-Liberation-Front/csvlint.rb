@@ -23,7 +23,7 @@ def cache_file(filename)
 		end
 		STDERR.puts("storing #{file} locally")
 		File.open(file, 'wb') do |f|
-			f.puts open(uri, 'rb').read
+      f.puts URI.open(uri, 'rb').read
 		end
 	end
 	return uri, file
@@ -31,7 +31,7 @@ end
 
 File.open(SCRIPT_FILE_PATH, 'w') do |file|
 	File.chmod(0755, SCRIPT_FILE_PATH)
-	manifest = JSON.parse( open("#{BASE_URI}manifest-validation.jsonld").read )
+  manifest = JSON.parse( URI.open("#{BASE_URI}manifest-validation.jsonld").read )
 	manifest["entries"].each do |entry|
 		type = "valid"
 		case entry["type"]
@@ -57,7 +57,7 @@ File.open(VALIDATION_FEATURE_FILE_PATH, 'w') do |file|
 	file.puts "# Auto-generated file based on standard validation CSVW tests from #{BASE_URI}manifest-validation.jsonld"
 	file.puts ""
 
-	manifest = JSON.parse( open("#{BASE_URI}manifest-validation.jsonld").read )
+  manifest = JSON.parse( URI.open("#{BASE_URI}manifest-validation.jsonld").read )
 
 	file.puts "Feature: #{manifest["label"]}"
 	file.puts ""
