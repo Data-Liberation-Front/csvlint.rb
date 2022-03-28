@@ -38,7 +38,7 @@ module Csvlint
       deprecate :load_from_json, :load_from_uri, 2018, 1
 
       def load_from_uri(uri, output_errors = true)
-        load_from_string(uri, open(uri).read, output_errors)
+        load_from_string(uri, URI.open(uri).read, output_errors)
       rescue OpenURI::HTTPError, Errno::ENOENT => e
         raise e
       end
