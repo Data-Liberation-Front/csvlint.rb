@@ -10,14 +10,14 @@ A ruby gem to support validating CSV files to check their syntax and contents. Y
 
 ## Summary of features
 
-* Validation that checks the structural formatting of a CSV file  
+* Validation that checks the structural formatting of a CSV file
 * Validation of a delimiter-separated values (dsv) file accesible via URL, File, or an IO-style object (e.g. StringIO)
-* Validation against [CSV dialects](http://dataprotocols.org/csv-dialect/)  
-* Validation against multiple schema standards; [JSON Table Schema](https://github.com/theodi/csvlint.rb/blob/master/README.md#json-table-schema-support) and [CSV on the Web](https://github.com/theodi/csvlint.rb/blob/master/README.md#csv-on-the-web-validation-support) 
+* Validation against [CSV dialects](http://dataprotocols.org/csv-dialect/)
+* Validation against multiple schema standards; [JSON Table Schema](https://github.com/theodi/csvlint.rb/blob/master/README.md#json-table-schema-support) and [CSV on the Web](https://github.com/theodi/csvlint.rb/blob/master/README.md#csv-on-the-web-validation-support)
 
 ## Development
 
-`ruby version 2.1.4`
+`ruby version 2.6.9`
 
 ### Tests
 
@@ -71,7 +71,7 @@ After installing the gem, you can validate a CSV on the command line like so:
 
 	csvlint myfile.csv
 
-You may need to add the gem exectuable directory to your path, by adding '/usr/local/lib/ruby/gems/2.6.0/bin' 
+You may need to add the gem exectuable directory to your path, by adding '/usr/local/lib/ruby/gems/2.6.0/bin'
 or whatever your version is, to your .bash_profile PATH entry. [like so](https://stackoverflow.com/questions/2392293/ruby-gems-returns-command-not-found)
 
 You will then see the validation result, together with any warnings or errors e.g.
@@ -213,7 +213,7 @@ An example JSON Table Schema schema file is:
 				"name": "price",
 				"constraints": {
 					"required": true,
-					"minLength": 1 
+					"minLength": 1
 				}
 			},
 			{
