@@ -235,10 +235,12 @@ describe Csvlint::Validator do
   context "it returns the correct error from ERROR_MATCHES" do
 
     it "checks for unclosed quotes" do
-      stream = "\"a,\"b\",\"c\"\n"
+      stream = %("a,"b","c"\n)
       validator = Csvlint::Validator.new(StringIO.new(stream))
       expect(validator.valid?).to eql(false)
       expect(validator.errors.count).to eq(1)
+      expect(validator.errors.first.type).to eql(:unclosed_quote)
+    end
       expect(validator.errors.first.type).to eql(:stray_quote)
     end
 
