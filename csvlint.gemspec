@@ -18,8 +18,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = ['>= 2.4']
-
+  spec.required_ruby_version = ['~> 2.4', '< 2.8']
   spec.add_dependency "rainbow"
   spec.add_dependency "open_uri_redirections"
   spec.add_dependency "activesupport"
