@@ -1,5 +1,4 @@
 require 'aruba'
-require 'aruba/in_process'
 require 'aruba/cucumber'
 
 require 'csvlint/cli'
@@ -52,5 +51,7 @@ module Csvlint
   end
 end
 
-Aruba.process = Aruba::Processes::InProcess
-Aruba.process.main_class = Csvlint::CliRunner
+Aruba.configure do |config|
+  config.command_launcher = :in_process
+  config.main_class = Csvlint::CliRunner
+end
