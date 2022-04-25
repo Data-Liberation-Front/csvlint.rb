@@ -241,8 +241,6 @@ describe Csvlint::Validator do
       expect(validator.errors.count).to eq(1)
       expect(validator.errors.first.type).to eql(:unclosed_quote)
     end
-      expect(validator.errors.first.type).to eql(:stray_quote)
-    end
 
 
     # TODO stray quotes is not covered in any spec in this library
