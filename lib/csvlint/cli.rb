@@ -80,8 +80,7 @@ module Csvlint
         end
         schema.tables.keys.each do |source|
           begin
-            source = source.sub("file:","")
-            source = File.new( source )
+            source = FileUrl.file(source)
           rescue Errno::ENOENT
             return_error "#{source} not found"
           end unless source =~ /^http(s)?/

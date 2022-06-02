@@ -13,6 +13,7 @@ require 'uri_template'
 
 require 'csvlint/error_message'
 require 'csvlint/error_collector'
+require 'csvlint/file_url'
 require 'csvlint/validate'
 require 'csvlint/field'
 
