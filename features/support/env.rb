@@ -6,7 +6,7 @@ $:.unshift File.join( File.dirname(__FILE__), "..", "..", "lib")
 require 'rspec/expectations'
 require 'cucumber/rspec/doubles'
 require 'csvlint'
-require 'pry'
+require 'byebug'
 
 require 'spork'
 

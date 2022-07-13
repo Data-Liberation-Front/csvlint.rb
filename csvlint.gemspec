@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = ['~> 2.4', '< 2.6']
+  spec.required_ruby_version = ['~> 2.4', '< 2.7']
 
   spec.add_dependency "rainbow"
   spec.add_dependency "open_uri_redirections"
@@ -42,7 +42,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-pride"
   spec.add_development_dependency "rspec-expectations"
   spec.add_development_dependency "coveralls"
-  spec.add_development_dependency "pry"
+  spec.add_development_dependency "byebug"
   spec.add_development_dependency "github_changelog_generator"
   spec.add_development_dependency "aruba"
   spec.add_development_dependency "rdf", "< 4.0"

@@ -26,3 +26,4 @@ features/fixtures/csvw
 bin/run-csvw-tests
 
 csvlint-earl.ttl
+.byebug_history

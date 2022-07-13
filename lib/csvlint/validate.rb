@@ -58,6 +58,7 @@ module Csvlint
         "Missing or stray quote" => :stray_quote,
         "Illegal quoting" => :whitespace,
         "Unclosed quoted field" => :unclosed_quote,
+        "Any value after quoted field isn't allowed" => :unclosed_quote,
         "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
@@ -183,7 +184,7 @@ module Csvlint
       begin
         row = LineCSV.parse_line(stream, @csv_options)
       rescue LineCSV::MalformedCSVError => e
-        build_exception_messages(e, stream, current_line)
+        build_exception_messages(e, stream, current_line) unless e.message.include?("UTF") && @reported_invalid_encoding
       end
 
       if row
