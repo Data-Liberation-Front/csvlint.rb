@@ -60,7 +60,6 @@ module Csvlint
         "Unclosed quoted field" => :unclosed_quote,
         "Any value after quoted field isn't allowed" => :unclosed_quote,
         "Unquoted fields do not allow \\r or \\n" => :line_breaks,
-        "Any value after quoted field isn't allowed" => :stray_quote
     }
 
     def initialize(source, dialect = {}, schema = nil, options = {})
