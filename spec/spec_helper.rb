@@ -2,7 +2,7 @@ require 'coveralls'
 Coveralls.wear_merged!('test_frameworks')
 
 require 'csvlint'
-require 'pry'
+require 'byebug'
 require 'webmock/rspec'
 
 RSpec.configure do |config|
