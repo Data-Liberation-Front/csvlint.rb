@@ -182,7 +182,7 @@ module Csvlint
       @csv_options[:encoding] = @encoding
 
       begin
-        row = LineCSV.parse_line(stream, @csv_options)
+        row = LineCSV.parse_line(stream, **@csv_options)
       rescue LineCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line) unless e.message.include?("UTF") && @reported_invalid_encoding
       end
@@ -437,7 +437,8 @@ module Csvlint
         when StringIO
           return
         when File
-          @source_url = "file:#{URI.encode(File.expand_path(@source))}"
+          uri_parser = URI::Parser.new
+          @source_url = "file:#{uri_parser.escape(File.expand_path(@source))}"
         else
           @source_url = @source
       end
@@ -452,7 +453,7 @@ module Csvlint
       if @source_url =~ /^http(s)?/
         begin
           well_known_uri = URI.join(@source_url, "/.well-known/csvm")
-          paths = open(well_known_uri).read.split("\n")
+          paths = URI.open(well_known_uri.to_s).read.split("\n")
         rescue OpenURI::HTTPError, URI::BadURIError
         end
       end
