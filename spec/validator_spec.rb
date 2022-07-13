@@ -76,19 +76,6 @@ describe Csvlint::Validator do
       expect(validator.errors.first.type).to eql(:unclosed_quote)
     end
 
-     it ".each() -> `parse_contents` parses malformed CSV and catches stray quote" do
-      pending "cannot make Ruby generate a stray quote error"
-      # doesn't build warnings because check_consistency isn't invoked
-      # TODO below is trailing whitespace but is interpreted as a stray quote
-      data = StringIO.new(%Q{"Foo","Bar","Baz"\r\n"1","2","3"\r\n"1","2","3"\r\n"3","2","1""})
-
-      validator = Csvlint::Validator.new(data)
-
-      expect(validator.valid?).to eql(false)
-      expect(validator.errors.first.type).to eql(:stray_quote)
-      expect(validator.errors.count).to eql(1)
-    end
-
     it ".each() -> `parse_contents` parses malformed CSV and catches whitespace and edge case" do
       # when this data gets passed the header it rescues a whitespace error, resulting in the header row being discarded
       # TODO - check if this is an edge case, currently passing because it requires advice on how to specify
