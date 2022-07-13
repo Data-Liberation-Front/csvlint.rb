@@ -184,7 +184,7 @@ module Csvlint
       begin
         row = LineCSV.parse_line(stream, @csv_options)
       rescue LineCSV::MalformedCSVError => e
-        build_exception_messages(e, stream, current_line)
+        build_exception_messages(e, stream, current_line) unless e.message.include?("UTF") && @reported_invalid_encoding
       end
 
       if row
