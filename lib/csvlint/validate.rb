@@ -58,6 +58,7 @@ module Csvlint
         "Missing or stray quote" => :stray_quote,
         "Illegal quoting" => :whitespace,
         "Unclosed quoted field" => :unclosed_quote,
+        "Any value after quoted field isn't allowed" => :unclosed_quote,
         "Unquoted fields do not allow \\r or \\n" => :line_breaks,
     }
 
