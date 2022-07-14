@@ -6,7 +6,7 @@ require "csvlint/cli"
 module Csvlint
   class CliRunner
     # Allow everything fun to be injected from the outside while defaulting to normal implementations.
-    def initialize(argv, stdin = STDIN, stdout = STDOUT, stderr = STDERR, kernel = Kernel)
+    def initialize(argv, stdin = $stdin, stdout = $stdout, stderr = $stderr, kernel = Kernel)
       @argv, @stdin, @stdout, @stderr, @kernel = argv, stdin, stdout, stderr, kernel
     end
 

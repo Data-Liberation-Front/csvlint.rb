@@ -40,7 +40,7 @@ module Csvlint
         # If no source is present, try reading from stdin
         if !$stdin.tty?
           source = begin
-            StringIO.new(STDIN.read)
+            StringIO.new($stdin.read)
           rescue
             nil
           end

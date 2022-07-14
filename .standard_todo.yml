@@ -2,19 +2,14 @@
 # Remove from this list as you refactor files.
 ---
 ignore:
-- features/step_definitions/cli_steps.rb:
-  - Style/GlobalStdStream
 - features/step_definitions/validation_errors_steps.rb:
   - Lint/Void
-- features/support/aruba.rb:
-  - Style/GlobalStdStream
 - features/support/load_tests.rb:
   - Style/For
   - Security/Open
   - Lint/UselessAssignment
   - Style/SafeNavigation
 - lib/csvlint/cli.rb:
-  - Style/GlobalStdStream
   - Style/NonNilCheck
 - lib/csvlint/csvw/column.rb:
   - Style/TernaryParentheses
