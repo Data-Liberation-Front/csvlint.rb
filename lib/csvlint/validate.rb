@@ -170,7 +170,7 @@ module Csvlint
       @encoding = input.encoding.to_s
       report_line_breaks(line)
       parse_contents(input, line)
-      @lambda.call(self) unless @lambda.nil?
+      @lambda&.call(self)
     rescue ArgumentError => ae
       build_errors(:invalid_encoding, :structure, @current_line, nil, index) unless @reported_invalid_encoding
       @reported_invalid_encoding = true
@@ -251,39 +251,37 @@ module Csvlint
       rescue
         nil
       end
-      if @link_headers
-        @link_headers.each do |link_header|
-          match = LINK_HEADER_REGEXP.match(link_header)
-          uri = begin
-            match["uri"].gsub(/(^<|>$)/, "")
-          rescue
-            nil
-          end
-          rel = begin
-            match["rel-relationship"].gsub(/(^"|"$)/, "")
-          rescue
-            nil
-          end
-          param = match["param"]
-          param_value = begin
-            match["param-value"].gsub(/(^"|"$)/, "")
-          rescue
-            nil
-          end
-          if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
-            begin
-              url = URI.join(@source_url, uri)
-              schema = Schema.load_from_uri(url)
-              if schema.instance_of? Csvlint::Csvw::TableGroup
-                if schema.tables[@source_url]
-                  @schema = schema
-                else
-                  warn_if_unsuccessful = true
-                  build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
-                end
+      @link_headers&.each do |link_header|
+        match = LINK_HEADER_REGEXP.match(link_header)
+        uri = begin
+          match["uri"].gsub(/(^<|>$)/, "")
+        rescue
+          nil
+        end
+        rel = begin
+          match["rel-relationship"].gsub(/(^"|"$)/, "")
+        rescue
+          nil
+        end
+        param = match["param"]
+        param_value = begin
+          match["param-value"].gsub(/(^"|"$)/, "")
+        rescue
+          nil
+        end
+        if rel == "describedby" && param == "type" && ["application/csvm+json", "application/ld+json", "application/json"].include?(param_value)
+          begin
+            url = URI.join(@source_url, uri)
+            schema = Schema.load_from_uri(url)
+            if schema.instance_of? Csvlint::Csvw::TableGroup
+              if schema.tables[@source_url]
+                @schema = schema
+              else
+                warn_if_unsuccessful = true
+                build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
               end
-            rescue OpenURI::HTTPError
             end
+          rescue OpenURI::HTTPError
           end
         end
       end

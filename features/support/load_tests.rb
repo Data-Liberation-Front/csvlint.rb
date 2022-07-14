@@ -97,13 +97,11 @@ unless File.exist? VALIDATION_FEATURE_FILE_PATH
         missing_files << "#{action_uri}-metadata.json"
         missing_files << URI.join(action_uri, "csv-metadata.json").to_s
       end
-      if entry["implicit"]
-        entry["implicit"].each do |implicit|
-          implicit_uri, implicit_file = cache_file(implicit)
-          provided_files << implicit_uri.to_s
-          unless implicit_uri == metadata
-            file.puts "\t\tAnd I have a file called \"csvw/#{implicit}\" at the url \"#{implicit_uri}\""
-          end
+      entry["implicit"]&.each do |implicit|
+        implicit_uri, implicit_file = cache_file(implicit)
+        provided_files << implicit_uri.to_s
+        unless implicit_uri == metadata
+          file.puts "\t\tAnd I have a file called \"csvw/#{implicit}\" at the url \"#{implicit_uri}\""
         end
       end
       missing_files.each do |uri|

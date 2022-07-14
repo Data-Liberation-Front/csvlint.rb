@@ -144,7 +144,6 @@ module Csvlint
         table_schema = table_properties["tableSchema"] || inherited_properties["tableSchema"]
         column_names = []
         foreign_keys = []
-        primary_key = nil
         if table_schema
           unless table_schema["columns"].instance_of? Array
             table_schema["columns"] = []
@@ -171,42 +170,35 @@ module Csvlint
             end
           end
 
-          primary_key = table_schema["primaryKey"]
           primary_key_columns = []
           primary_key_valid = true
-          if primary_key
-            primary_key.each do |reference|
-              i = column_names.index(reference)
-              if i
-                primary_key_columns << columns[i]
-              else
-                warnings << Csvlint::ErrorMessage.new(:invalid_column_reference, :metadata, nil, nil, "primaryKey: #{reference}", nil)
-                primary_key_valid = false
-              end
+          table_schema["primaryKey"]&.each do |reference|
+            i = column_names.index(reference)
+            if i
+              primary_key_columns << columns[i]
+            else
+              warnings << Csvlint::ErrorMessage.new(:invalid_column_reference, :metadata, nil, nil, "primaryKey: #{reference}", nil)
+              primary_key_valid = false
             end
           end
 
           foreign_keys = table_schema["foreignKeys"]
-          if foreign_keys
-            foreign_keys.each_with_index do |foreign_key, i|
-              foreign_key_columns = []
-              foreign_key["columnReference"].each do |reference|
-                i = column_names.index(reference)
-                raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.foreignKeys[#{i}].columnReference"), "foreignKey references non-existant column" unless i
-                foreign_key_columns << columns[i]
-              end
-              foreign_key["referencing_columns"] = foreign_key_columns
+          foreign_keys&.each_with_index do |foreign_key, i|
+            foreign_key_columns = []
+            foreign_key["columnReference"].each do |reference|
+              i = column_names.index(reference)
+              raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.foreignKeys[#{i}].columnReference"), "foreignKey references non-existant column" unless i
+              foreign_key_columns << columns[i]
             end
+            foreign_key["referencing_columns"] = foreign_key_columns
           end
 
           row_titles = table_schema["rowTitles"]
           row_title_columns = []
-          if row_titles
-            row_titles.each do |row_title|
-              i = column_names.index(row_title)
-              raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.rowTitles[#{i}]"), "rowTitles references non-existant column" unless i
-              row_title_columns << columns[i]
-            end
+          row_titles&.each do |row_title|
+            i = column_names.index(row_title)
+            raise Csvlint::Csvw::MetadataError.new("$.tables[?(@.url = '#{table_desc["url"]}')].tableSchema.rowTitles[#{i}]"), "rowTitles references non-existant column" unless i
+            row_title_columns << columns[i]
           end
 
         end
