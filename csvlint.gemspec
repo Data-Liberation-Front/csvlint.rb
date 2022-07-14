@@ -48,5 +48,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rdf", "< 4.0"
   spec.add_development_dependency "rdf-turtle"
   spec.add_development_dependency "henry"
-
+  spec.add_development_dependency "standardrb"
 end
