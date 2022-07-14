@@ -1,7 +1,7 @@
-require 'aruba'
-require 'aruba/cucumber'
+require "aruba"
+require "aruba/cucumber"
 
-require 'csvlint/cli'
+require "csvlint/cli"
 
 module Csvlint
   class CliRunner
@@ -22,11 +22,11 @@ module Csvlint
 
         # Thor::Base#start does not have a return value, assume success if no exception is raised.
         0
-      rescue StandardError => e
+      rescue => e
         # The ruby interpreter would pipe this to STDERR and exit 1 in the case of an unhandled exception
         b = e.backtrace
         @stderr.puts("#{b.shift}: #{e.message} (#{e.class})")
-        @stderr.puts(b.map{|s| "\tfrom #{s}"}.join("\n"))
+        @stderr.puts(b.map { |s| "\tfrom #{s}" }.join("\n"))
         1
       rescue SystemExit => e
         e.status
