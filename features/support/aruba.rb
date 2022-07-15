@@ -1,13 +1,12 @@
-require 'aruba'
-require 'aruba/in_process'
-require 'aruba/cucumber'
+require "aruba"
+require "aruba/cucumber"
 
-require 'csvlint/cli'
+require "csvlint/cli"
 
 module Csvlint
   class CliRunner
     # Allow everything fun to be injected from the outside while defaulting to normal implementations.
-    def initialize(argv, stdin = STDIN, stdout = STDOUT, stderr = STDERR, kernel = Kernel)
+    def initialize(argv, stdin = $stdin, stdout = $stdout, stderr = $stderr, kernel = Kernel)
       @argv, @stdin, @stdout, @stderr, @kernel = argv, stdin, stdout, stderr, kernel
     end
 
@@ -23,11 +22,11 @@ module Csvlint
 
         # Thor::Base#start does not have a return value, assume success if no exception is raised.
         0
-      rescue StandardError => e
+      rescue => e
         # The ruby interpreter would pipe this to STDERR and exit 1 in the case of an unhandled exception
         b = e.backtrace
         @stderr.puts("#{b.shift}: #{e.message} (#{e.class})")
-        @stderr.puts(b.map{|s| "\tfrom #{s}"}.join("\n"))
+        @stderr.puts(b.map { |s| "\tfrom #{s}" }.join("\n"))
         1
       rescue SystemExit => e
         e.status
@@ -52,5 +51,7 @@ module Csvlint
   end
 end
 
-Aruba.process = Aruba::Processes::InProcess
-Aruba.process.main_class = Csvlint::CliRunner
+Aruba.configure do |config|
+  config.command_launcher = :in_process
+  config.main_class = Csvlint::CliRunner
+end

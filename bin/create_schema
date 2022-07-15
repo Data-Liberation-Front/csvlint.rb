@@ -5,7 +5,7 @@ require 'csvlint'
 
 begin
   puts ARGV[0]
-	csv = CSV.new( open(ARGV[0]) )
+  csv = CSV.new( URI.open(ARGV[0]) )
 	headers = csv.shift
 	
 	name = File.basename( ARGV[0] )

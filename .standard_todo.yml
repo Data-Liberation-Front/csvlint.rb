@@ -1,0 +1,43 @@
+# Auto generated files with errors to ignore.
+# Remove from this list as you refactor files.
+---
+ignore:
+- features/step_definitions/validation_errors_steps.rb:
+  - Lint/Void
+- features/support/load_tests.rb:
+  - Style/For
+  - Security/Open
+  - Lint/UselessAssignment
+- lib/csvlint/cli.rb:
+  - Style/NonNilCheck
+- lib/csvlint/csvw/column.rb:
+  - Style/TernaryParentheses
+- lib/csvlint/csvw/date_format.rb:
+  - Lint/MixedRegexpCaptureTypes
+- lib/csvlint/csvw/number_format.rb:
+  - Style/SlicingWithRange
+  - Style/IdenticalConditionalBranches
+- lib/csvlint/csvw/property_checker.rb:
+  - Performance/InefficientHashSearch
+  - Lint/UselessAssignment
+  - Naming/VariableName
+  - Style/SlicingWithRange
+  - Security/Open
+  - Lint/BooleanSymbol
+- lib/csvlint/csvw/table_group.rb:
+  - Style/OptionalArguments
+- lib/csvlint/field.rb:
+  - Naming/VariableName
+- lib/csvlint/schema.rb:
+  - Security/Open
+  - Lint/UselessAssignment
+  - Style/SlicingWithRange
+- lib/csvlint/validate.rb:
+  - Lint/UselessAssignment
+  - Performance/Count
+  - Lint/BooleanSymbol
+  - Naming/VariableName
+  - Security/Open
+  - Lint/NonLocalExitFromIterator
+- spec/validator_spec.rb:
+  - Lint/UselessAssignment

@@ -1,5 +1,43 @@
 # Change Log
 
+## [v1.0.0](https://github.com/Data-Liberation-Front/csvlint.rb/tree/v1.0.0) (2022-07-13)
+[Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.4.0...v1.0.0)
+
+Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major version bump. That and this has been around long enough that it really shouldn't be on a zero version any more :)
+
+## What's Changed
+* Don't patch CSV#init_converters for ruby 2.5 compatibility by @rbmrclo in https://github.com/Data-Liberation-Front/csvlint.rb/pull/217
+* correct typos in README by @erikj in https://github.com/Data-Liberation-Front/csvlint.rb/pull/216
+* add info about your PATH by @ftrotter in https://github.com/Data-Liberation-Front/csvlint.rb/pull/222
+* Remove tests on deprecated ruby versions < 2.3 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/234
+* Drop mime-types gem dependency by @ohbarye in https://github.com/Data-Liberation-Front/csvlint.rb/pull/221
+* remove specific version of net-http-persistent in gemspec by @kotaro0522 in https://github.com/Data-Liberation-Front/csvlint.rb/pull/219
+* Replace colorize with rainbow to make licensing consistent. by @cobbr2 in https://github.com/Data-Liberation-Front/csvlint.rb/pull/215
+* Update rdf requirement from < 2.0 to < 4.0 by @dependabot-preview in https://github.com/Data-Liberation-Front/csvlint.rb/pull/231
+* Test on Ruby 2.5 and 2.6 by @Domon in https://github.com/Data-Liberation-Front/csvlint.rb/pull/223
+* Fix load_from_json deprecation warnings. by @jezhiggins in https://github.com/Data-Liberation-Front/csvlint.rb/pull/237
+* Fix csvw tests by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/239
+* Test on Ruby 2.6 and 2.7 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/240
+* Create Dependabot config file by @dependabot-preview in https://github.com/Data-Liberation-Front/csvlint.rb/pull/245
+* Include active_support/object to ensure this works in ruby 2.6 by @mseverini in https://github.com/Data-Liberation-Front/csvlint.rb/pull/246
+* add CI workflow for github actions by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/255
+* Enable and fix tests for Ruby 2.5 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/259
+* Support Ruby 2.6 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/262
+* Ruby 2.7 support by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/263
+* Drop support for Ruby 2.4 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/265
+* Ruby 3.0 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/264
+
+## New Contributors
+* @rbmrclo made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/217
+* @erikj made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/216
+* @ftrotter made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/222
+* @ohbarye made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/221
+* @kotaro0522 made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/219
+* @cobbr2 made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/215
+* @dependabot-preview made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/231
+* @Domon made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/223
+* @mseverini made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/246
+
 ## [0.4.0](https://github.com/theodi/csvlint.rb/tree/0.4.0) (2017-xx-xx)
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.3...0.4.0)
 
