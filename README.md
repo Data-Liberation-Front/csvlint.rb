@@ -1,6 +1,6 @@
 [![Build Status](https://img.shields.io/github/workflow/status/Data-Liberation-Front/csvlint.rb/CI/main)](https://travis-ci.org/theodi/csvlint.rb)
 [![Dependency Status](https://img.shields.io/librariesio/github/Data-Liberation-Front/csvlint.rb)](https://libraries.io/github/Data-Liberation-Front/csvlint.rb)
-[![Coverage Status](http://img.shields.io/coveralls/theodi/csvlint.rb.svg)](https://coveralls.io/r/theodi/csvlint.rb)
+[![Coverage Status](http://img.shields.io/coveralls/Data-Liberation-Front/csvlint.rb.svg)](https://coveralls.io/r/Data-Liberation-Front/csvlint.rb)
 [![License](http://img.shields.io/:license-mit-blue.svg)](http://theodi.mit-license.org)
 [![Badges](http://img.shields.io/:badges-5/5-ff6799.svg)](https://github.com/pikesley/badger)
 
