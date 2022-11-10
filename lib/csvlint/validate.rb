@@ -189,19 +189,23 @@ module Csvlint
       rescue LineCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line) unless e.message.include?("UTF") && @reported_invalid_encoding
       end
-
+      
+      if row != nil
+        row = row.map { |r| r == nil ? "" : r }
+      end
+      
       if row
         if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
-          row = row.reject { |col| col.nil? || col.empty? }
+          row = row.reject { |col| col.nil? }
           validate_header(row)
           @col_counts << row.size
         else
           build_formats(row)
-          @col_counts << row.reject { |col| col.nil? || col.empty? }.size
+          @col_counts << row.reject { |col| col.nil? }.size
           @expected_columns = row.size unless @expected_columns != 0
           unless @csv_options[:skip_blanks]
-            build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
+            build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? }.size == 0
           end
           # Builds errors and warnings related to the provided schema file
           if @schema
@@ -418,7 +422,7 @@ module Csvlint
 
     def build_formats(row)
       row.each_with_index do |col, i|
-        next if col.nil? || col.empty?
+        next if col.nil?
         @formats[i] ||= Hash.new(0)
 
         format =
