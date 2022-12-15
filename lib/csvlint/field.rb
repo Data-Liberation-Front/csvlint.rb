@@ -10,6 +10,7 @@ module Csvlint
       @uniques = Set.new
       @title = title
       @description = description
+      @regex = nil
       reset
     end
 
@@ -52,7 +53,7 @@ module Csvlint
       pattern = constraints["pattern"]
       if pattern
         begin
-          if !value.nil? && !value.match(Regexp.new(pattern))
+          if !value.nil? && !value.match(@regex ||= Regexp.new(pattern))
             build_errors(:pattern, :schema, row, column, value,
               {"pattern" => constraints["pattern"]})
           end
