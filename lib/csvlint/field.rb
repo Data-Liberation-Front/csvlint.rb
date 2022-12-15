@@ -52,8 +52,7 @@ module Csvlint
       pattern = constraints["pattern"]
       if pattern
         begin
-          Regexp.new(pattern)
-          if !value.nil? && !value.match(constraints["pattern"])
+          if !value.nil? && !value.match(Regexp.new(pattern))
             build_errors(:pattern, :schema, row, column, value,
               {"pattern" => constraints["pattern"]})
           end
