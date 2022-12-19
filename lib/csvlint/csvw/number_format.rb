@@ -78,7 +78,7 @@ module Csvlint
             secondary_groups = "([0-9]{#{@secondary_grouping_size}}#{Regexp.escape(@grouping_separator)})*"
             if min_integer_digits > @primary_grouping_size
               remaining_req_digits = min_integer_digits - @primary_grouping_size
-              req_secondary_groups = remaining_req_digits / @secondary_grouping_size > 0 ? "([0-9]{#{@secondary_grouping_size}}#{Regexp.escape(@grouping_separator)}){#{remaining_req_digits / @secondary_grouping_size}}" : ""
+              req_secondary_groups = (remaining_req_digits / @secondary_grouping_size > 0) ? "([0-9]{#{@secondary_grouping_size}}#{Regexp.escape(@grouping_separator)}){#{remaining_req_digits / @secondary_grouping_size}}" : ""
               if remaining_req_digits % @secondary_grouping_size > 0
                 final_req_digits = "[0-9]{#{@secondary_grouping_size - (remaining_req_digits % @secondary_grouping_size)}}"
                 final_opt_digits = "[0-9]{0,#{@secondary_grouping_size - (remaining_req_digits % @secondary_grouping_size)}}"
@@ -87,8 +87,8 @@ module Csvlint
                 integer_regexp = "(#{leading_regexp}#{secondary_groups})?#{req_secondary_groups}[0-9]{#{@primary_grouping_size}}"
               end
             else
-              final_req_digits = @primary_grouping_size > min_integer_digits ? "[0-9]{#{@primary_grouping_size - min_integer_digits}}" : ""
-              final_opt_digits = @primary_grouping_size > min_integer_digits ? "[0-9]{0,#{@primary_grouping_size - min_integer_digits}}" : ""
+              final_req_digits = (@primary_grouping_size > min_integer_digits) ? "[0-9]{#{@primary_grouping_size - min_integer_digits}}" : ""
+              final_opt_digits = (@primary_grouping_size > min_integer_digits) ? "[0-9]{0,#{@primary_grouping_size - min_integer_digits}}" : ""
               integer_regexp = "((#{leading_regexp}#{secondary_groups}#{final_req_digits})|#{final_opt_digits})[0-9]{#{min_integer_digits}}"
             end
           end

@@ -34,7 +34,7 @@ module Csvlint
             regexp = regexp.sub("mm", FIELDS["mm"].to_s)
             if /ss\.S+/.match?(@pattern)
               max_fractional_seconds = @pattern.split(".")[-1].length
-              regexp = regexp.sub(/ss\.S+$/, "(?<second>#{FIELDS["ss"]}(\.[0-9]{1,#{max_fractional_seconds}})?)")
+              regexp = regexp.sub(/ss\.S+$/, "(?<second>#{FIELDS["ss"]}(.[0-9]{1,#{max_fractional_seconds}})?)")
             else
               regexp = regexp.sub("ss", "(?<second>#{FIELDS["ss"]})")
             end
@@ -95,7 +95,7 @@ module Csvlint
           end
         when "http://www.w3.org/2001/XMLSchema#dateTime"
           begin
-            value[:dateTime] = DateTime.new(match["year"].to_i, match["month"].to_i, match["day"].to_i, match["hour"].to_i, match["minute"].to_i, (match.names.include?("second") ? match["second"].to_f : 0), match.names.include?("timezone") && match["timezone"] ? match["timezone"] : "")
+            value[:dateTime] = DateTime.new(match["year"].to_i, match["month"].to_i, match["day"].to_i, match["hour"].to_i, match["minute"].to_i, (match.names.include?("second") ? match["second"].to_f : 0), (match.names.include?("timezone") && match["timezone"]) ? match["timezone"] : "")
           rescue ArgumentError
             return nil
           end
@@ -189,9 +189,9 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#date" =>
           Regexp.new("^#{FIELDS["yyyy"]}-#{FIELDS["MM"]}-#{FIELDS["dd"]}#{FIELDS["XXX"]}?$"),
         "http://www.w3.org/2001/XMLSchema#dateTime" =>
-          Regexp.new("^#{FIELDS["yyyy"]}-#{FIELDS["MM"]}-#{FIELDS["dd"]}T#{FIELDS["HH"]}:#{FIELDS["mm"]}:(?<second>#{FIELDS["ss"]}(\.[0-9]+)?)#{FIELDS["XXX"]}?$"),
+          Regexp.new("^#{FIELDS["yyyy"]}-#{FIELDS["MM"]}-#{FIELDS["dd"]}T#{FIELDS["HH"]}:#{FIELDS["mm"]}:(?<second>#{FIELDS["ss"]}(.[0-9]+)?)#{FIELDS["XXX"]}?$"),
         "http://www.w3.org/2001/XMLSchema#dateTimeStamp" =>
-          Regexp.new("^#{FIELDS["yyyy"]}-#{FIELDS["MM"]}-#{FIELDS["dd"]}T#{FIELDS["HH"]}:#{FIELDS["mm"]}:(?<second>#{FIELDS["ss"]}(\.[0-9]+)?)#{FIELDS["XXX"]}$"),
+          Regexp.new("^#{FIELDS["yyyy"]}-#{FIELDS["MM"]}-#{FIELDS["dd"]}T#{FIELDS["HH"]}:#{FIELDS["mm"]}:(?<second>#{FIELDS["ss"]}(.[0-9]+)?)#{FIELDS["XXX"]}$"),
         "http://www.w3.org/2001/XMLSchema#gDay" =>
           Regexp.new("^---#{FIELDS["dd"]}#{FIELDS["XXX"]}?$"),
         "http://www.w3.org/2001/XMLSchema#gMonth" =>
@@ -203,7 +203,7 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#gYearMonth" =>
           Regexp.new("^#{FIELDS["yyyy"]}-#{FIELDS["MM"]}#{FIELDS["XXX"]}?$"),
         "http://www.w3.org/2001/XMLSchema#time" =>
-          Regexp.new("^#{FIELDS["HH"]}:#{FIELDS["mm"]}:(?<second>#{FIELDS["ss"]}(\.[0-9]+)?)#{FIELDS["XXX"]}?$")
+          Regexp.new("^#{FIELDS["HH"]}:#{FIELDS["mm"]}:(?<second>#{FIELDS["ss"]}(.[0-9]+)?)#{FIELDS["XXX"]}?$")
       }
     end
 

@@ -612,7 +612,7 @@ module Csvlint
     ANCHOR_REGEXP = Regexp.new("(?<anchor>\\s*anchor\\s*=\\s*\\<#{URI_REGEXP}\\>)")
     LINK_EXTENSION_REGEXP = Regexp.new("(?<link-extension>(?<param>#{TOKEN_REGEXP})(\\s*=\\s*(?<param-value>#{TOKEN_REGEXP}|#{QUOTED_STRING_REGEXP}))?)")
     LINK_PARAM_REGEXP = Regexp.new("(#{REL_REGEXP}|#{REV_REGEXP}|#{TITLE_REGEXP}|#{ANCHOR_REGEXP}|#{LINK_EXTENSION_REGEXP})")
-    LINK_HEADER_REGEXP = Regexp.new("\<#{URI_REGEXP}\>(\\s*;\\s*#{LINK_PARAM_REGEXP})*")
+    LINK_HEADER_REGEXP = Regexp.new("<#{URI_REGEXP}>(\\s*;\\s*#{LINK_PARAM_REGEXP})*")
     POSSIBLE_DATE_REGEXP = Regexp.new("\\A(\\d|\\s\\d#{Date::ABBR_MONTHNAMES.join("|")}#{Date::MONTHNAMES.join("|")})")
   end
 end
