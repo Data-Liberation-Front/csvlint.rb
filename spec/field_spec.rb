@@ -34,15 +34,15 @@ describe Csvlint::Field do
   end
 
   it "should validate against regex" do
-    field = Csvlint::Field.new("test", {"pattern" => "\{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\}"})
+    field = Csvlint::Field.new("test", {"pattern" => "{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}}"})
     expect(field.validate_column("abc")).to be(false)
     expect(field.validate_column("{3B0DA29C-C89A-4FAA-918A-0000074FA0E0}")).to be(true)
   end
 
   it "should apply combinations of constraints" do
-    field = Csvlint::Field.new("test", {"required" => true, "pattern" => "\{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\}"})
+    field = Csvlint::Field.new("test", {"required" => true, "pattern" => "{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}}"})
     expect(field.validate_column("abc")).to be(false)
-    expect(field.errors.first.constraints).to eql({"pattern" => "\{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\}"})
+    expect(field.errors.first.constraints).to eql({"pattern" => "{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}}"})
 
     expect(field.validate_column(nil)).to be(false)
     expect(field.errors.first.constraints).to eql({"required" => true})

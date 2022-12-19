@@ -2,7 +2,6 @@ require "csvlint"
 require "rainbow"
 require "active_support/json"
 require "json"
-require "pp"
 require "thor"
 
 require "active_support/inflector"

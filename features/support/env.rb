@@ -16,8 +16,7 @@ end
 
 class CustomWorld
   def default_csv_options
-    {
-    }
+    {}
   end
 end
 

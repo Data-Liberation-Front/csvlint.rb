@@ -63,7 +63,7 @@ module Csvlint
         if validate
           unless @primary_key.nil?
             key = @primary_key.map { |column| column.validate(values[column.number - 1], row) }
-            colnum = primary_key.length == 1 ? primary_key[0].number : nil
+            colnum = (primary_key.length == 1) ? primary_key[0].number : nil
             build_errors(:duplicate_key, :schema, row, colnum, key.join(","), @primary_key_values[key]) if @primary_key_values.include?(key)
             @primary_key_values[key] = row
           end
@@ -105,7 +105,7 @@ module Csvlint
         reset
         local = @foreign_key_reference_values[foreign_key]
         context = {"from" => {"url" => remote_url.to_s.split("/")[-1], "columns" => foreign_key["columnReference"]}, "to" => {"url" => @url.to_s.split("/")[-1], "columns" => foreign_key["reference"]["columnReference"]}}
-        colnum = foreign_key["referencing_columns"].length == 1 ? foreign_key["referencing_columns"][0].number : nil
+        colnum = (foreign_key["referencing_columns"].length == 1) ? foreign_key["referencing_columns"][0].number : nil
         remote.each_with_index do |r, i|
           if local[r]
             build_errors(:multiple_matched_rows, :schema, i + 1, colnum, r, context) if local[r].length > 1
@@ -209,7 +209,7 @@ module Csvlint
           dialect: table_properties["dialect"],
           foreign_keys: foreign_keys || [],
           notes: table_properties["notes"] || [],
-          primary_key: primary_key_valid && !primary_key_columns.empty? ? primary_key_columns : nil,
+          primary_key: (primary_key_valid && !primary_key_columns.empty?) ? primary_key_columns : nil,
           row_title_columns: row_title_columns,
           schema: table_schema ? table_schema["@id"] : nil,
           suppress_output: table_properties["suppressOutput"] || false,
