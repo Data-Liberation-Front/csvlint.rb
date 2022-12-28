@@ -1,7 +1,6 @@
 require "csv"
 require "date"
 require "open-uri"
-require "set"
 require "tempfile"
 require "typhoeus"
 

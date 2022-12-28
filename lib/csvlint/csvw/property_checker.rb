@@ -38,7 +38,7 @@ module Csvlint
               when "@type"
                 if value["@value"] && BUILT_IN_DATATYPES.include?(v)
                 elsif !value["@value"] && BUILT_IN_TYPES.include?(v)
-                elsif v =~ /^([a-z]+):/ && NAMESPACES.include?(v.split(":")[0])
+                elsif ((v.is_a? String) && (v =~ /^([a-z]+):/)) && NAMESPACES.include?(v.split(":")[0])
                 else
                   # must be an absolute URI
                   begin
@@ -60,7 +60,7 @@ module Csvlint
                 raise Csvlint::Csvw::MetadataError.new, "common property with @value has properties other than @language or @type" unless value.except("@type").except("@language").except("@value").empty?
               when "@language"
                 raise Csvlint::Csvw::MetadataError.new, "common property with @language lacks a @value" unless value["@value"]
-                raise Csvlint::Csvw::MetadataError.new, "common property has invalid @language (#{v})" unless v =~ BCP47_LANGUAGE_REGEXP || v.nil?
+                raise Csvlint::Csvw::MetadataError.new, "common property has invalid @language (#{v})" unless ((v.is_a? String) && (v =~ BCP47_LANGUAGE_REGEXP)) || v.nil?
               else
                 if p[0] == "@"
                   raise Csvlint::Csvw::MetadataError.new, "common property has property other than @id, @type, @value or @language beginning with @ (#{p})"
