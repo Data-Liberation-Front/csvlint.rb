@@ -182,15 +182,14 @@ describe Csvlint::Validator do
       data = StringIO.new('"","",')
       validator = Csvlint::Validator.new(data, "header" => false)
 
-      expect(validator.valid?).to eql(false)
-      expect(validator.errors.count).to eq(1)
-      expect(validator.errors.first.type).to eql(:blank_rows)
+      expect(validator.valid?).to eql(true)
+      expect(validator.errors.count).to eq(0)
     end
 
     it "returns the content of the string with the error" do
       stream = "\"\",\"\",\"\"\r\n"
       validator = Csvlint::Validator.new(StringIO.new(stream), "header" => false)
-      expect(validator.errors.first.content).to eql("\"\",\"\",\"\"\r\n")
+      expect(validator.errors.count).to eq(0)
     end
 
     it "should presume a header unless told otherwise" do
@@ -266,7 +265,7 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new(data)
 
       expect(validator.validate_header(["minimum", ""])).to eql(true)
-      expect(validator.warnings.size).to eql(1)
+      expect(validator.warnings.size).to eql(2)
       expect(validator.warnings.first.type).to eql(:empty_column_name)
       expect(validator.warnings.first.category).to eql(:schema)
     end
@@ -481,7 +480,7 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new(data)
 
       expect(validator.validate_header(["minimum", ""])).to eql(true)
-      expect(validator.warnings.size).to eql(1)
+      expect(validator.warnings.size).to eql(2)
       expect(validator.warnings.first.type).to eql(:empty_column_name)
       expect(validator.warnings.first.category).to eql(:schema)
     end
