@@ -1,0 +1,12 @@
+version: 2
+jobs:
+  build:
+      parameters:
+        ruby-version:
+          type: string
+      docker:
+        - image: cimg/ruby:3.2
+      steps:
+        - checkout
+        - run: bundle install
+        - run: bundle exec rake spec
