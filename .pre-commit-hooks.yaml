@@ -1,0 +1,8 @@
+- id: csvlint
+  name: csvlint
+  entry: csvlint
+  language: ruby
+  require_serial: true
+  always_run: true
+  files: *.csv
+
