@@ -100,6 +100,13 @@ repos: # `pre-commit autoupdate` to get latest available tags
       - id: csvlint
 ```
 
+`pre-commit install` to enable it on your repository.
+
+To force a manual run of [pre-commit](https://pre-commit.com/) use the command :
+
+```
+pre-commit run -a
+```
 
 ## In your own Ruby code
 
