@@ -1,44 +1,82 @@
 # Change Log
 
+## [v1.2.0](https://github.com/data-liberation-front/csvlint.rb/tree/v1.2.0) (2023-02-27)
+
+[Full Changelog](https://github.com/data-liberation-front/csvlint.rb/compare/v1.1.0...v1.2.0)
+
+**Closed issues:**
+
+- Pre-commit integration [\#275](https://github.com/Data-Liberation-Front/csvlint.rb/issues/275)
+
+**Merged pull requests:**
+
+- Pre commit hook [\#276](https://github.com/Data-Liberation-Front/csvlint.rb/pull/276) ([jrottenberg](https://github.com/jrottenberg))
+
+## [v1.1.0](https://github.com/data-liberation-front/csvlint.rb/tree/v1.1.0) (2022-12-28)
+
+[Full Changelog](https://github.com/data-liberation-front/csvlint.rb/compare/v1.0.0...v1.1.0)
+
+**Closed issues:**
+
+- Requires ruby \< 3.2 [\#272](https://github.com/Data-Liberation-Front/csvlint.rb/issues/272)
+- Release a new version [\#244](https://github.com/Data-Liberation-Front/csvlint.rb/issues/244)
+
+**Merged pull requests:**
+
+- bump version to 1.1.0 [\#274](https://github.com/Data-Liberation-Front/csvlint.rb/pull/274) ([Floppy](https://github.com/Floppy))
+- Add support for Ruby 3.2 [\#273](https://github.com/Data-Liberation-Front/csvlint.rb/pull/273) ([Floppy](https://github.com/Floppy))
+- fix lint error [\#271](https://github.com/Data-Liberation-Front/csvlint.rb/pull/271) ([youpy](https://github.com/youpy))
+- optimize validation with regular expression [\#270](https://github.com/Data-Liberation-Front/csvlint.rb/pull/270) ([youpy](https://github.com/youpy))
+- Bump actions/checkout from 2 to 3 [\#269](https://github.com/Data-Liberation-Front/csvlint.rb/pull/269) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Add GitHub Actions to Dependabot [\#267](https://github.com/Data-Liberation-Front/csvlint.rb/pull/267) ([petergoldstein](https://github.com/petergoldstein))
+- Lint with standardrb [\#266](https://github.com/Data-Liberation-Front/csvlint.rb/pull/266) ([Floppy](https://github.com/Floppy))
+- Add Dockerfile and notes for usage on MS Windows. [\#243](https://github.com/Data-Liberation-Front/csvlint.rb/pull/243) ([jespertp-systematic](https://github.com/jespertp-systematic))
+
 ## [v1.0.0](https://github.com/Data-Liberation-Front/csvlint.rb/tree/v1.0.0) (2022-07-13)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.4.0...v1.0.0)
 
 Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major version bump. That and this has been around long enough that it really shouldn't be on a zero version any more :)
 
 ## What's Changed
-* Don't patch CSV#init_converters for ruby 2.5 compatibility by @rbmrclo in https://github.com/Data-Liberation-Front/csvlint.rb/pull/217
-* correct typos in README by @erikj in https://github.com/Data-Liberation-Front/csvlint.rb/pull/216
-* add info about your PATH by @ftrotter in https://github.com/Data-Liberation-Front/csvlint.rb/pull/222
-* Remove tests on deprecated ruby versions < 2.3 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/234
-* Drop mime-types gem dependency by @ohbarye in https://github.com/Data-Liberation-Front/csvlint.rb/pull/221
-* remove specific version of net-http-persistent in gemspec by @kotaro0522 in https://github.com/Data-Liberation-Front/csvlint.rb/pull/219
-* Replace colorize with rainbow to make licensing consistent. by @cobbr2 in https://github.com/Data-Liberation-Front/csvlint.rb/pull/215
-* Update rdf requirement from < 2.0 to < 4.0 by @dependabot-preview in https://github.com/Data-Liberation-Front/csvlint.rb/pull/231
-* Test on Ruby 2.5 and 2.6 by @Domon in https://github.com/Data-Liberation-Front/csvlint.rb/pull/223
-* Fix load_from_json deprecation warnings. by @jezhiggins in https://github.com/Data-Liberation-Front/csvlint.rb/pull/237
-* Fix csvw tests by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/239
-* Test on Ruby 2.6 and 2.7 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/240
-* Create Dependabot config file by @dependabot-preview in https://github.com/Data-Liberation-Front/csvlint.rb/pull/245
-* Include active_support/object to ensure this works in ruby 2.6 by @mseverini in https://github.com/Data-Liberation-Front/csvlint.rb/pull/246
-* add CI workflow for github actions by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/255
-* Enable and fix tests for Ruby 2.5 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/259
-* Support Ruby 2.6 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/262
-* Ruby 2.7 support by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/263
-* Drop support for Ruby 2.4 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/265
-* Ruby 3.0 by @Floppy in https://github.com/Data-Liberation-Front/csvlint.rb/pull/264
+
+- Don't patch CSV#init_converters for ruby 2.5 compatibility by @rbmrclo in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/217>
+
+- correct typos in README by @erikj in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/216>
+- add info about your PATH by @ftrotter in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/222>
+- Remove tests on deprecated ruby versions < 2.3 by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/234>
+- Drop mime-types gem dependency by @ohbarye in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/221>
+- remove specific version of net-http-persistent in gemspec by @kotaro0522 in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/219>
+- Replace colorize with rainbow to make licensing consistent. by @cobbr2 in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/215>
+- Update rdf requirement from < 2.0 to < 4.0 by @dependabot-preview in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/231>
+- Test on Ruby 2.5 and 2.6 by @Domon in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/223>
+- Fix load_from_json deprecation warnings. by @jezhiggins in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/237>
+- Fix csvw tests by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/239>
+- Test on Ruby 2.6 and 2.7 by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/240>
+- Create Dependabot config file by @dependabot-preview in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/245>
+- Include active_support/object to ensure this works in ruby 2.6 by @mseverini in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/246>
+- add CI workflow for github actions by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/255>
+- Enable and fix tests for Ruby 2.5 by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/259>
+- Support Ruby 2.6 by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/262>
+- Ruby 2.7 support by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/263>
+- Drop support for Ruby 2.4 by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/265>
+- Ruby 3.0 by @Floppy in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/264>
 
 ## New Contributors
-* @rbmrclo made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/217
-* @erikj made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/216
-* @ftrotter made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/222
-* @ohbarye made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/221
-* @kotaro0522 made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/219
-* @cobbr2 made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/215
-* @dependabot-preview made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/231
-* @Domon made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/223
-* @mseverini made their first contribution in https://github.com/Data-Liberation-Front/csvlint.rb/pull/246
+
+- @rbmrclo made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/217>
+
+- @erikj made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/216>
+- @ftrotter made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/222>
+- @ohbarye made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/221>
+- @kotaro0522 made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/219>
+- @cobbr2 made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/215>
+- @dependabot-preview made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/231>
+- @Domon made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/223>
+- @mseverini made their first contribution in <https://github.com/Data-Liberation-Front/csvlint.rb/pull/246>
 
 ## [0.4.0](https://github.com/theodi/csvlint.rb/tree/0.4.0) (2017-xx-xx)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.3...0.4.0)
 
 - Support for Ruby 2.4
@@ -50,9 +88,10 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 
 **Closed issues:**
 
--  CLI doesn't handle filenames with spaces [\#182](https://github.com/theodi/csvlint.rb/issues/182)
+- CLI doesn't handle filenames with spaces [\#182](https://github.com/theodi/csvlint.rb/issues/182)
 
 ## [0.3.3](https://github.com/theodi/csvlint.rb/tree/0.3.3) (2016-11-10)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.2...0.3.3)
 
 **Closed issues:**
@@ -67,6 +106,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - force UTF-8 if encoding is ASCII-8BIT [\#180](https://github.com/theodi/csvlint.rb/pull/180) ([JeniT](https://github.com/JeniT))
 
 ## [0.3.2](https://github.com/theodi/csvlint.rb/tree/0.3.2) (2016-05-24)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.1...0.3.2)
 
 **Merged pull requests:**
@@ -74,6 +114,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Add schema errors to cli json [\#184](https://github.com/theodi/csvlint.rb/pull/184) ([pezholio](https://github.com/pezholio))
 
 ## [0.3.1](https://github.com/theodi/csvlint.rb/tree/0.3.1) (2016-05-23)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.3.0...0.3.1)
 
 **Closed issues:**
@@ -85,6 +126,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Add CLI option to output JSON [\#183](https://github.com/theodi/csvlint.rb/pull/183) ([pezholio](https://github.com/pezholio))
 
 ## [0.3.0](https://github.com/theodi/csvlint.rb/tree/0.3.0) (2016-01-12)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.6...0.3.0)
 
 **Merged pull requests:**
@@ -93,9 +135,11 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Support for CSV on the Web transformations [\#173](https://github.com/theodi/csvlint.rb/pull/173) ([JeniT](https://github.com/JeniT))
 
 ## [0.2.6](https://github.com/theodi/csvlint.rb/tree/0.2.6) (2015-11-16)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.5...0.2.6)
 
 ## [0.2.5](https://github.com/theodi/csvlint.rb/tree/0.2.5) (2015-11-16)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.4...0.2.5)
 
 **Merged pull requests:**
@@ -103,6 +147,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Use STDIN instead of ARGF [\#169](https://github.com/theodi/csvlint.rb/pull/169) ([pezholio](https://github.com/pezholio))
 
 ## [0.2.4](https://github.com/theodi/csvlint.rb/tree/0.2.4) (2015-10-20)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.3...0.2.4)
 
 **Merged pull requests:**
@@ -110,6 +155,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Fixes for CLI [\#164](https://github.com/theodi/csvlint.rb/pull/164) ([pezholio](https://github.com/pezholio))
 
 ## [0.2.3](https://github.com/theodi/csvlint.rb/tree/0.2.3) (2015-10-20)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.2...0.2.3)
 
 **Closed issues:**
@@ -123,6 +169,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Update schema file example to clarify type [\#162](https://github.com/theodi/csvlint.rb/pull/162) ([wachunga](https://github.com/wachunga))
 
 ## [0.2.2](https://github.com/theodi/csvlint.rb/tree/0.2.2) (2015-10-09)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.1...0.2.2)
 
 **Closed issues:**
@@ -138,6 +185,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Don't pass leading string to parse\_line [\#155](https://github.com/theodi/csvlint.rb/pull/155) ([pezholio](https://github.com/pezholio))
 
 ## [0.2.1](https://github.com/theodi/csvlint.rb/tree/0.2.1) (2015-10-07)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.2.0...0.2.1)
 
 **Implemented enhancements:**
@@ -154,6 +202,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Streaming validation [\#146](https://github.com/theodi/csvlint.rb/pull/146) ([pezholio](https://github.com/pezholio))
 
 ## [0.2.0](https://github.com/theodi/csvlint.rb/tree/0.2.0) (2015-10-05)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.4...0.2.0)
 
 **Closed issues:**
@@ -168,6 +217,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - CSVW-based validation! [\#142](https://github.com/theodi/csvlint.rb/pull/142) ([JeniT](https://github.com/JeniT))
 
 ## [0.1.4](https://github.com/theodi/csvlint.rb/tree/0.1.4) (2015-08-06)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.3...0.1.4)
 
 **Merged pull requests:**
@@ -175,6 +225,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - change made to the constraint parameter in order that it is more cons… [\#140](https://github.com/theodi/csvlint.rb/pull/140) ([quadrophobiac](https://github.com/quadrophobiac))
 
 ## [0.1.3](https://github.com/theodi/csvlint.rb/tree/0.1.3) (2015-07-24)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.2...0.1.3)
 
 **Merged pull requests:**
@@ -184,6 +235,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Invalid schema [\#132](https://github.com/theodi/csvlint.rb/pull/132) ([bcouston](https://github.com/bcouston))
 
 ## [0.1.2](https://github.com/theodi/csvlint.rb/tree/0.1.2) (2015-07-15)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.1...0.1.2)
 
 **Closed issues:**
@@ -196,6 +248,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Emit a warning when the CSV header does not match the supplied schema [\#127](https://github.com/theodi/csvlint.rb/pull/127) ([adamc00](https://github.com/adamc00))
 
 ## [0.1.1](https://github.com/theodi/csvlint.rb/tree/0.1.1) (2015-07-13)
+
 [Full Changelog](https://github.com/theodi/csvlint.rb/compare/0.1.0...0.1.1)
 
 **Closed issues:**
@@ -221,6 +274,7 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Limit lines [\#101](https://github.com/theodi/csvlint.rb/pull/101) ([Hoedic](https://github.com/Hoedic))
 
 ## [0.1.0](https://github.com/theodi/csvlint.rb/tree/0.1.0) (2014-11-27)
+
 **Implemented enhancements:**
 
 - Blank values shouldn't count as inconsistencies [\#90](https://github.com/theodi/csvlint.rb/issues/90)
@@ -324,7 +378,5 @@ Support Ruby 3.x, and DROPPED support for Ruby 2.4 - that's why the major versio
 - Detect blank rows [\#7](https://github.com/theodi/csvlint.rb/pull/7) ([pezholio](https://github.com/pezholio))
 - Detect bad content type [\#3](https://github.com/theodi/csvlint.rb/pull/3) ([pezholio](https://github.com/pezholio))
 - Return information about CSV [\#1](https://github.com/theodi/csvlint.rb/pull/1) ([pezholio](https://github.com/pezholio))
-
-
 
 \* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
