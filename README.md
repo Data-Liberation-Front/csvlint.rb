@@ -87,6 +87,27 @@ You can also optionally pass a schema file like so:
 
 	csvlint myfile.csv --schema=schema.json
 
+## Via pre-commit
+
+Add to your .pre-commit-config.yaml file :
+
+```
+repos: # `pre-commit autoupdate` to get latest available tags
+
+  - repo: https://github.com/Data-Liberation-Front/csvlint.rb
+    rev: v1.2.0
+    hooks:
+      - id: csvlint
+```
+
+`pre-commit install` to enable it on your repository.
+
+To force a manual run of [pre-commit](https://pre-commit.com/) use the command :
+
+```
+pre-commit run -a
+```
+
 ## In your own Ruby code
 
 Currently the gem supports retrieving a CSV accessible from a URL, File, or an IO-style object (e.g. StringIO)

@@ -1,0 +1,5 @@
+- id: csvlint
+  name: csvlint
+  entry: csvlint
+  language: ruby
+  files: \.csv$
