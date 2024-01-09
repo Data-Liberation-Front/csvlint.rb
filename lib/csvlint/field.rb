@@ -16,7 +16,7 @@ module Csvlint
 
     def validate_column(value, row = nil, column = nil, all_errors = [])
       reset
-      unless all_errors.any? { |error| ((error.type == :invalid_regex) && (error.column == column)) }
+      unless all_errors.any? { |error| (error.type == :invalid_regex) && (error.column == column) }
         validate_regex(value, row, column, all_errors)
       end
       validate_length(value, row, column)
