@@ -590,14 +590,14 @@ module Csvlint
       numeric: /\A[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?\z/,
       uri: /\Ahttps?:/,
       date_db: /\A\d{4,}-\d\d-\d\d\z/, # "12345-01-01"
-      date_long: /\A(?:#{Date::MONTHNAMES.join('|')}) [ \d]\d, \d{4,}\z/, # "January  1, 12345"
-      date_rfc822: /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d{4,}\z/, # " 1 Jan 12345"
-      date_short: /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join('|')})\z/, # "1 Jan"
+      date_long: /\A(?:#{Date::MONTHNAMES.join("|")}) [ \d]\d, \d{4,}\z/, # "January  1, 12345"
+      date_rfc822: /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join("|")}) \d{4,}\z/, # " 1 Jan 12345"
+      date_short: /\A[ \d]\d (?:#{Date::ABBR_MONTHNAMES.join("|")})\z/, # "1 Jan"
       dateTime_db: /\A\d{4,}-\d\d-\d\d \d\d:\d\d:\d\d\z/, # "12345-01-01 00:00:00"
       dateTime_hms: /\A\d\d:\d\d:\d\d\z/, # "00:00:00"
       dateTime_iso8601: /\A\d{4,}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/, # "12345-01-01T00:00:00Z"
-      dateTime_long: /\A(?:#{Date::MONTHNAMES.join('|')}) \d\d, \d{4,} \d\d:\d\d\z/, # "January 01, 12345 00:00"
-      dateTime_short: /\A\d\d (?:#{Date::ABBR_MONTHNAMES.join('|')}) \d\d:\d\d\z/, # "01 Jan 00:00"
+      dateTime_long: /\A(?:#{Date::MONTHNAMES.join("|")}) \d\d, \d{4,} \d\d:\d\d\z/, # "January 01, 12345 00:00"
+      dateTime_short: /\A\d\d (?:#{Date::ABBR_MONTHNAMES.join("|")}) \d\d:\d\d\z/, # "01 Jan 00:00"
       dateTime_time: /\A\d\d:\d\d\z/ # "00:00"
     }.freeze
 
