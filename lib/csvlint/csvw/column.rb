@@ -126,14 +126,14 @@ module Csvlint
             format = Csvlint::Csvw::DateFormat.new(nil, type) if format.nil?
             v = format.parse(value)
             return nil, warning if v.nil?
-            return v, nil
+            [v, nil]
           }
         end
 
         def create_regexp_based_parser(regexp, warning)
           lambda { |value, format|
             return nil, warning unless value&.match?(regexp)
-            return value, nil
+            [value, nil]
           }
         end
 
@@ -256,14 +256,14 @@ module Csvlint
         "http://www.w3.org/2001/XMLSchema#time" => NO_ADDITIONAL_VALIDATION
       }
 
-      TRIM_VALUE = lambda { |value, format| return value.strip, nil }
-      ALL_VALUES_VALID = lambda { |value, format| return value, nil }
+      TRIM_VALUE = lambda { |value, format| [value.strip, nil] }
+      ALL_VALUES_VALID = lambda { |value, format| [value, nil] }
 
       NUMERIC_PARSER = lambda { |value, format, integer = false|
         format = Csvlint::Csvw::NumberFormat.new(nil, nil, ".", integer) if format.nil?
         v = format.parse(value)
         return nil, :invalid_number if v.nil?
-        return v, nil
+        [v, nil]
       }
 
       DATATYPE_PARSER = {
@@ -281,7 +281,7 @@ module Csvlint
             return true, nil if value == format[0]
             return false, nil if value == format[1]
           end
-          return value, :invalid_boolean
+          [value, :invalid_boolean]
         },
         "http://www.w3.org/2001/XMLSchema#date" =>
           create_date_parser("http://www.w3.org/2001/XMLSchema#date", :invalid_date),
@@ -291,85 +291,85 @@ module Csvlint
           create_date_parser("http://www.w3.org/2001/XMLSchema#dateTimeStamp", :invalid_date_time_stamp),
         "http://www.w3.org/2001/XMLSchema#decimal" => lambda { |value, format|
           return nil, :invalid_decimal if /(E|e|^(NaN|INF|-INF)$)/.match?(value)
-          return NUMERIC_PARSER.call(value, format)
+          NUMERIC_PARSER.call(value, format)
         },
         "http://www.w3.org/2001/XMLSchema#integer" => lambda { |value, format|
           v, w = NUMERIC_PARSER.call(value, format, true)
           return v, :invalid_integer unless w.nil?
           return nil, :invalid_integer unless v.is_a? Integer
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#long" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
           return v, :invalid_long unless w.nil?
           return nil, :invalid_long unless v <= 9223372036854775807 && v >= -9223372036854775808
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#int" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
           return v, :invalid_int unless w.nil?
           return nil, :invalid_int unless v <= 2147483647 && v >= -2147483648
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#short" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
           return v, :invalid_short unless w.nil?
           return nil, :invalid_short unless v <= 32767 && v >= -32768
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#byte" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
           return v, :invalid_byte unless w.nil?
           return nil, :invalid_byte unless v <= 127 && v >= -128
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#nonNegativeInteger" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
           return v, :invalid_nonNegativeInteger unless w.nil?
           return nil, :invalid_nonNegativeInteger unless v >= 0
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#positiveInteger" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
           return v, :invalid_positiveInteger unless w.nil?
           return nil, :invalid_positiveInteger unless v > 0
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#unsignedLong" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#nonNegativeInteger"].call(value, format)
           return v, :invalid_unsignedLong unless w.nil?
           return nil, :invalid_unsignedLong unless v <= 18446744073709551615
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#unsignedInt" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#nonNegativeInteger"].call(value, format)
           return v, :invalid_unsignedInt unless w.nil?
           return nil, :invalid_unsignedInt unless v <= 4294967295
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#unsignedShort" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#nonNegativeInteger"].call(value, format)
           return v, :invalid_unsignedShort unless w.nil?
           return nil, :invalid_unsignedShort unless v <= 65535
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#unsignedByte" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#nonNegativeInteger"].call(value, format)
           return v, :invalid_unsignedByte unless w.nil?
           return nil, :invalid_unsignedByte unless v <= 255
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#nonPositiveInteger" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
           return v, :invalid_nonPositiveInteger unless w.nil?
           return nil, :invalid_nonPositiveInteger unless v <= 0
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#negativeInteger" => lambda { |value, format|
           v, w = DATATYPE_PARSER["http://www.w3.org/2001/XMLSchema#integer"].call(value, format)
           return v, :invalid_negativeInteger unless w.nil?
           return nil, :invalid_negativeInteger unless v < 0
-          return v, w
+          [v, w]
         },
         "http://www.w3.org/2001/XMLSchema#double" => NUMERIC_PARSER,
         # regular expressions here taken from XML Schema datatypes spec
