@@ -18,6 +18,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = [">= 2.5", "< 3.4"]
 
+  spec.add_dependency "csv"
   spec.add_dependency "rainbow"
   spec.add_dependency "open_uri_redirections"
   spec.add_dependency "activesupport", "< 7.1.0"
