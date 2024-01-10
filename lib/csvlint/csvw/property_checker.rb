@@ -60,7 +60,7 @@ module Csvlint
                 raise Csvlint::Csvw::MetadataError.new, "common property with @value has properties other than @language or @type" unless value.except("@type").except("@language").except("@value").empty?
               when "@language"
                 raise Csvlint::Csvw::MetadataError.new, "common property with @language lacks a @value" unless value["@value"]
-                raise Csvlint::Csvw::MetadataError.new, "common property has invalid @language (#{v})" unless ((v.is_a? String) && (v =~ BCP47_LANGUAGE_REGEXP)) || v.nil?
+                raise Csvlint::Csvw::MetadataError.new, "common property has invalid @language (#{v})" if !((v.is_a? String) && (v =~ BCP47_LANGUAGE_REGEXP)) || !v.nil?
               else
                 if p[0] == "@"
                   raise Csvlint::Csvw::MetadataError.new, "common property has property other than @id, @type, @value or @language beginning with @ (#{p})"
@@ -423,7 +423,7 @@ module Csvlint
                   elsif p == "titles"
                   else
                     v, warning, type = check_property(p, v, base_url, lang)
-                    unless type == :transformation && (warning.nil? || warning.empty?)
+                    if type != :transformation && !(warning.nil? || warning.empty?)
                       value.delete(p)
                       warnings << :invalid_property unless type == :transformation
                       warnings += Array(warning)
