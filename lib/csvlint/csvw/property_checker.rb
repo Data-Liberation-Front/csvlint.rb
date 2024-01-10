@@ -60,7 +60,7 @@ module Csvlint
                 raise Csvlint::Csvw::MetadataError.new, "common property with @value has properties other than @language or @type" unless value.except("@type").except("@language").except("@value").empty?
               when "@language"
                 raise Csvlint::Csvw::MetadataError.new, "common property with @language lacks a @value" unless value["@value"]
-                raise Csvlint::Csvw::MetadataError.new, "common property has invalid @language (#{v})" unless ((v.is_a? String) && (v =~ BCP47_LANGUAGE_REGEXP)) || v.nil?
+                raise Csvlint::Csvw::MetadataError.new, "common property has invalid @language (#{v})" if !((v.is_a? String) && (v =~ BCP47_LANGUAGE_REGEXP)) || !v.nil?
               else
                 if p[0] == "@"
                   raise Csvlint::Csvw::MetadataError.new, "common property has property other than @id, @type, @value or @language beginning with @ (#{p})"
@@ -99,7 +99,7 @@ module Csvlint
               v = format.parse(value[property])
               if v.nil?
                 value.delete(property)
-                return [":invalid_#{property}".to_sym]
+                return [:":invalid_#{property}"]
               else
                 value[property] = v
                 return []
@@ -116,35 +116,35 @@ module Csvlint
         def array_property(type)
           lambda { |value, base_url, lang|
             return value, nil, type if value.instance_of? Array
-            return false, :invalid_value, type
+            [false, :invalid_value, type]
           }
         end
 
         def boolean_property(type)
           lambda { |value, base_url, lang|
             return value, nil, type if value == true || value == false
-            return false, :invalid_value, type
+            [false, :invalid_value, type]
           }
         end
 
         def string_property(type)
           lambda { |value, base_url, lang|
             return value, nil, type if value.instance_of? String
-            return "", :invalid_value, type
+            ["", :invalid_value, type]
           }
         end
 
         def uri_template_property(type)
           lambda { |value, base_url, lang|
             return URITemplate.new(value), nil, type if value.instance_of? String
-            return URITemplate.new(""), :invalid_value, type
+            [URITemplate.new(""), :invalid_value, type]
           }
         end
 
         def numeric_property(type)
           lambda { |value, base_url, lang|
             return value, nil, type if value.is_a?(Integer) && value >= 0
-            return nil, :invalid_value, type
+            [nil, :invalid_value, type]
           }
         end
 
@@ -152,14 +152,14 @@ module Csvlint
           lambda { |value, base_url, lang|
             raise Csvlint::Csvw::MetadataError.new, "URL #{value} starts with _:" if /^_:/.match?(value.to_s)
             return (base_url.nil? ? URI(value) : URI.join(base_url, value)), nil, type if value.instance_of? String
-            return base_url, :invalid_value, type
+            [base_url, :invalid_value, type]
           }
         end
 
         def language_property(type)
           lambda { |value, base_url, lang|
             return value, nil, type if BCP47_REGEXP.match?(value)
-            return nil, :invalid_value, type
+            [nil, :invalid_value, type]
           }
         end
 
@@ -167,7 +167,7 @@ module Csvlint
           lambda { |value, base_url, lang|
             warnings = []
             if value.instance_of? String
-              return {lang => [value]}, nil, type
+              [{lang => [value]}, nil, type]
             elsif value.instance_of? Array
               valid_titles = []
               value.each do |title|
@@ -177,7 +177,7 @@ module Csvlint
                   warnings << :invalid_value
                 end
               end
-              return {lang => valid_titles}, warnings, type
+              [{lang => valid_titles}, warnings, type]
             elsif value.instance_of? Hash
               value = value.clone
               value.each do |l, v|
@@ -197,16 +197,16 @@ module Csvlint
                 end
               end
               warnings << :invalid_value if value.empty?
-              return value, warnings, type
+              [value, warnings, type]
             else
-              return {}, :invalid_value, type
+              [{}, :invalid_value, type]
             end
           }
         end
 
         def column_reference_property(type)
           lambda { |value, base_url, lang|
-            return Array(value), nil, type
+            [Array(value), nil, type]
           }
         end
       end
@@ -226,7 +226,7 @@ module Csvlint
             values << v
             warnings += w
           end
-          return values, warnings, :common
+          [values, warnings, :common]
         },
         "suppressOutput" => boolean_property(:common),
         "dialect" => lambda { |value, base_url, lang|
@@ -249,16 +249,16 @@ module Csvlint
                 end
               end
             end
-            return value, warnings, :common
+            [value, warnings, :common]
           else
-            return {}, :invalid_value, :common
+            [{}, :invalid_value, :common]
           end
         },
         # inherited properties
         "null" => lambda { |value, base_url, lang|
           case value
           when String
-            return [value], nil, :inherited
+            [[value], nil, :inherited]
           when Array
             values = []
             warnings = []
@@ -269,15 +269,15 @@ module Csvlint
                 warnings << :invalid_value
               end
             end
-            return values, warnings, :inherited
+            [values, warnings, :inherited]
           else
-            return [""], :invalid_value, :inherited
+            [[""], :invalid_value, :inherited]
           end
         },
         "default" => string_property(:inherited),
         "separator" => lambda { |value, base_url, lang|
           return value, nil, :inherited if value.instance_of?(String) || value.nil?
-          return nil, :invalid_value, :inherited
+          [nil, :invalid_value, :inherited]
         },
         "lang" => language_property(:inherited),
         "datatype" => lambda { |value, base_url, lang|
@@ -387,7 +387,7 @@ module Csvlint
               end
             end
           end
-          return value, warnings, :inherited
+          [value, warnings, :inherited]
         },
         "required" => boolean_property(:inherited),
         "ordered" => boolean_property(:inherited),
@@ -397,14 +397,14 @@ module Csvlint
         "textDirection" => lambda { |value, base_url, lang|
           value = value.to_sym
           return value, nil, :inherited if [:ltr, :rtl, :auto, :inherit].include? value
-          return :inherit, :invalid_value, :inherited
+          [:inherit, :invalid_value, :inherited]
         },
         # column level properties
         "virtual" => boolean_property(:column),
         "titles" => natural_language_property(:column),
         "name" => lambda { |value, base_url, lang|
           return value, nil, :column if value.instance_of?(String) && value =~ NAME_REGEXP
-          return nil, :invalid_value, :column
+          [nil, :invalid_value, :column]
         },
         # table level properties
         "transformations" => lambda { |value, base_url, lang|
@@ -423,7 +423,7 @@ module Csvlint
                   elsif p == "titles"
                   else
                     v, warning, type = check_property(p, v, base_url, lang)
-                    unless type == :transformation && (warning.nil? || warning.empty?)
+                    if type != :transformation && !(warning.nil? || warning.empty?)
                       value.delete(p)
                       warnings << :invalid_property unless type == :transformation
                       warnings += Array(warning)
@@ -438,12 +438,12 @@ module Csvlint
           else
             warnings << :invalid_value
           end
-          return transformations, warnings, :table
+          [transformations, warnings, :table]
         },
         "tableDirection" => lambda { |value, base_url, lang|
           value = value.to_sym
           return value, nil, :table if [:ltr, :rtl, :auto].include? value
-          return :auto, :invalid_value, :table
+          [:auto, :invalid_value, :table]
         },
         "tableSchema" => lambda { |value, base_url, lang|
           schema_base_url = base_url
@@ -483,7 +483,7 @@ module Csvlint
               end
             end
           end
-          return schema, warnings, :table
+          [schema, warnings, :table]
         },
         "url" => link_property(:table),
         # dialect properties
@@ -492,7 +492,7 @@ module Csvlint
         "doubleQuote" => boolean_property(:dialect),
         "encoding" => lambda { |value, base_url, lang|
           return value, nil, :dialect if VALID_ENCODINGS.include? value
-          return nil, :invalid_value, :dialect
+          [nil, :invalid_value, :dialect]
         },
         "header" => boolean_property(:dialect),
         "headerRowCount" => numeric_property(:dialect),
@@ -508,10 +508,10 @@ module Csvlint
           value = :start if value == "start"
           value = :end if value == "end"
           return value, nil, :dialect if [:true, :false, :start, :end].include? value
-          return true, :invalid_value, :dialect
+          [true, :invalid_value, :dialect]
         },
         # schema properties
-        "columns" => lambda { |value, base_url, lang| return value, nil, :schema },
+        "columns" => lambda { |value, base_url, lang| [value, nil, :schema] },
         "primaryKey" => column_reference_property(:schema),
         "foreignKeys" => lambda { |value, base_url, lang|
           foreign_keys = []
@@ -540,13 +540,13 @@ module Csvlint
           else
             warnings << :invalid_value
           end
-          return foreign_keys, warnings, :schema
+          [foreign_keys, warnings, :schema]
         },
         "rowTitles" => column_reference_property(:schema),
         # transformation properties
-        "targetFormat" => lambda { |value, base_url, lang| return value, nil, :transformation },
-        "scriptFormat" => lambda { |value, base_url, lang| return value, nil, :transformation },
-        "source" => lambda { |value, base_url, lang| return value, nil, :transformation },
+        "targetFormat" => lambda { |value, base_url, lang| [value, nil, :transformation] },
+        "scriptFormat" => lambda { |value, base_url, lang| [value, nil, :transformation] },
+        "source" => lambda { |value, base_url, lang| [value, nil, :transformation] },
         # foreignKey properties
         "columnReference" => column_reference_property(:foreign_key),
         "reference" => lambda { |value, base_url, lang|
@@ -572,15 +572,15 @@ module Csvlint
             raise Csvlint::Csvw::MetadataError.new("foreignKey.reference.columnReference"), "foreignKey reference columnReference is missing" unless value["columnReference"]
             raise Csvlint::Csvw::MetadataError.new("foreignKey.reference"), "foreignKey reference does not have either resource or schemaReference" unless value["resource"] || value["schemaReference"]
             raise Csvlint::Csvw::MetadataError.new("foreignKey.reference"), "foreignKey reference has both resource and schemaReference" if value["resource"] && value["schemaReference"]
-            return value, warnings, :foreign_key
+            [value, warnings, :foreign_key]
           else
             raise Csvlint::Csvw::MetadataError.new("foreignKey.reference"), "foreignKey reference is not an object"
           end
         },
         # foreignKey reference properties
-        "resource" => lambda { |value, base_url, lang| return value, nil, :foreign_key_reference },
+        "resource" => lambda { |value, base_url, lang| [value, nil, :foreign_key_reference] },
         "schemaReference" => lambda { |value, base_url, lang|
-          return URI.join(base_url, value).to_s, nil, :foreign_key_reference
+          [URI.join(base_url, value).to_s, nil, :foreign_key_reference]
         }
       }
 
