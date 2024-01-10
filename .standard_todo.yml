@@ -41,3 +41,7 @@ ignore:
   - Lint/NonLocalExitFromIterator
 - spec/validator_spec.rb:
   - Lint/UselessAssignment
+- lib/csvlint/schema.rb:
+  - Lint/UselessRescue
+- lib/csvlint/validate.rb:
+  -  Lint/UselessRescue
