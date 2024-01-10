@@ -495,6 +495,10 @@ module Csvlint
             build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
           end
         end
+      rescue Errno::ENOENT
+      rescue OpenURI::HTTPError, URI::BadURIError, ArgumentError
+      rescue => e
+        raise e
       end
       build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema) if warn_if_unsuccessful
       @schema = nil
