@@ -4,9 +4,7 @@ require "open-uri"
 require "tempfile"
 require "typhoeus"
 
-require "active_support/core_ext/date/conversions"
-require "active_support/core_ext/time/conversions"
-require "active_support/core_ext/object"
+require "active_support"
 require "open_uri_redirections"
 require "uri_template"
 
