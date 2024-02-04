@@ -2,7 +2,7 @@ PATH
   remote: ..
   specs:
     csvlint (1.3.0)
-      activesupport (< 7.1.0)
+      activesupport
       addressable
       csv
       escape_utils
