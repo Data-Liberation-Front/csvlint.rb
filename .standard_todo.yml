@@ -43,5 +43,3 @@ ignore:
   - Lint/UselessAssignment
 - lib/csvlint/schema.rb:
   - Lint/UselessRescue
-- lib/csvlint/validate.rb:
-  -  Lint/UselessRescue
