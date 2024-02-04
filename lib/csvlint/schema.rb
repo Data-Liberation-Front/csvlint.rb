@@ -36,8 +36,6 @@ module Csvlint
 
       def load_from_uri(uri, output_errors = true)
         load_from_string(uri, URI.open(uri).read, output_errors)
-      rescue OpenURI::HTTPError, Errno::ENOENT => e
-        raise e
       end
 
       def load_from_string(uri, string, output_errors = true)
@@ -48,7 +46,7 @@ module Csvlint
         else
           Schema.from_json_table(uri, json)
         end
-      rescue TypeError => e
+      rescue TypeError
         # NO IDEA what this was even trying to do - SP 20160526
       rescue Csvlint::Csvw::MetadataError => e
         raise e
@@ -76,19 +74,19 @@ module Csvlint
     def validate_row(values, row = nil, all_errors = [], source_url = nil, validate = true)
       reset
       if values.length < fields.length
-        fields[values.size..-1].each_with_index do |field, i|
+        fields[values.size..].each_with_index do |field, i|
           build_warnings(:missing_column, :schema, row, values.size + i + 1)
         end
       end
       if values.length > fields.length
-        values[fields.size..-1].each_with_index do |data_column, i|
+        values[fields.size..].each_with_index do |data_column, i|
           build_warnings(:extra_column, :schema, row, fields.size + i + 1)
         end
       end
 
       fields.each_with_index do |field, i|
         value = values[i] || ""
-        result = field.validate_column(value, row, i + 1, all_errors)
+        field.validate_column(value, row, i + 1, all_errors)
         @errors += fields[i].errors
         @warnings += fields[i].warnings
       end
