@@ -27,3 +27,5 @@ bin/run-csvw-tests
 
 csvlint-earl.ttl
 .byebug_history
+
+gemfiles/*.lock
