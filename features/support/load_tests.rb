@@ -16,7 +16,7 @@ def cache_file(filename)
   unless File.exist?(file)
     if filename.include? "/"
       levels = filename.split("/")[0..-2]
-      for i in 0..levels.length
+      (0..levels.length).each do |i|
         dir = File.join(BASE_PATH, levels[0..i].join("/"))
         Dir.mkdir(dir) unless Dir.exist?(dir)
       end

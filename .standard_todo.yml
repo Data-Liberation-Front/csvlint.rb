@@ -3,7 +3,6 @@
 ---
 ignore:
 - features/support/load_tests.rb:
-  - Style/For
   - Security/Open
 - lib/csvlint/cli.rb:
   - Style/NonNilCheck
