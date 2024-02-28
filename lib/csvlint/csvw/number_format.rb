@@ -41,7 +41,7 @@ module Csvlint
 
           if ["+", "-"].include?(integer_part[0])
             numeric_part_regexp = "\\#{integer_part[0]}"
-            integer_part = integer_part[1..]
+            integer_part = integer_part[1..-1]
           else
             numeric_part_regexp = "[-+]?"
           end
@@ -52,7 +52,7 @@ module Csvlint
           min_exponent_digits = exponent_part.delete("#").length
           max_exponent_digits = exponent_part.length
 
-          integer_parts = integer_part.split(@grouping_separator)[1..]
+          integer_parts = integer_part.split(@grouping_separator)[1..-1]
           @primary_grouping_size = begin
             integer_parts[-1].length
           rescue
