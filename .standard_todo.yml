@@ -9,7 +9,6 @@ ignore:
 - lib/csvlint/csvw/date_format.rb:
   - Lint/MixedRegexpCaptureTypes
 - lib/csvlint/csvw/number_format.rb:
-  - Style/SlicingWithRange
   - Style/IdenticalConditionalBranches
 - lib/csvlint/csvw/property_checker.rb:
   - Performance/InefficientHashSearch
