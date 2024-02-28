@@ -4,8 +4,6 @@
 ignore:
 - features/support/load_tests.rb:
   - Security/Open
-- lib/csvlint/cli.rb:
-  - Style/NonNilCheck
 - lib/csvlint/csvw/column.rb:
   - Style/TernaryParentheses
 - lib/csvlint/csvw/date_format.rb:
