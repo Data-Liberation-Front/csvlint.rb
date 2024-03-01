@@ -105,7 +105,7 @@ module Csvlint
       end
       output_string = "#{index + 1}. "
       if error.column && @schema && @schema.instance_of?(Csvlint::Schema)
-        if @schema.fields[error.column - 1] != nil
+        unless @schema.fields[error.column - 1].nil?
           output_string += "#{@schema.fields[error.column - 1].name}: "
         end
       end
@@ -176,7 +176,7 @@ module Csvlint
         col: error.column
       }
 
-      if error.column && @schema && @schema.instance_of?(Csvlint::Schema) && @schema.fields[error.column - 1] != nil
+      if error.column && @schema && @schema.instance_of?(Csvlint::Schema) && !@schema.fields[error.column - 1].nil?
         field = @schema.fields[error.column - 1]
         h[:header] = field.name
         h[:constraints] = field.constraints.map { |k, v| [k.underscore, v] }.to_h

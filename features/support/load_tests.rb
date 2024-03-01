@@ -16,7 +16,7 @@ def cache_file(filename)
   unless File.exist?(file)
     if filename.include? "/"
       levels = filename.split("/")[0..-2]
-      for i in 0..levels.length
+      (0..levels.length).each do |i|
         dir = File.join(BASE_PATH, levels[0..i].join("/"))
         Dir.mkdir(dir) unless Dir.exist?(dir)
       end
@@ -26,7 +26,7 @@ def cache_file(filename)
       f.puts URI.open(uri, "rb").read
     end
   end
-  [uri, file]
+  uri
 end
 
 unless File.exist? SCRIPT_FILE_PATH
@@ -66,7 +66,7 @@ unless File.exist? VALIDATION_FEATURE_FILE_PATH
     file.puts ""
 
     manifest["entries"].each do |entry|
-      action_uri, action_file = cache_file(entry["action"])
+      action_uri = cache_file(entry["action"])
       metadata = nil
       provided_files = []
       missing_files = []
@@ -98,7 +98,7 @@ unless File.exist? VALIDATION_FEATURE_FILE_PATH
         missing_files << URI.join(action_uri, "csv-metadata.json").to_s
       end
       entry["implicit"]&.each do |implicit|
-        implicit_uri, implicit_file = cache_file(implicit)
+        implicit_uri = cache_file(implicit)
         provided_files << implicit_uri.to_s
         unless implicit_uri == metadata
           file.puts "\t\tAnd I have a file called \"csvw/#{implicit}\" at the url \"#{implicit_uri}\""
