@@ -185,15 +185,18 @@ module Csvlint
       @csv_options[:encoding] = @encoding
 
       begin
-        row = LineCSV.parse_line(stream, **@csv_options)
-      rescue LineCSV::MalformedCSVError => e
+        row = nil
+        FastCSV.raw_parse(stream, @csv_options) do |raw_row|
+          row = raw_row
+        end
+      rescue FastCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line) unless e.message.include?("UTF") && @reported_invalid_encoding
       end
-      
+
       if row != nil
         row = row.map { |r| r == nil ? "" : r }
       end
-      
+
       if row
         if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
