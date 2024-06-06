@@ -1,6 +1,6 @@
 module Csvlint
   class Validator
-    class LineCSV < CSV
+    class LineCSV < FastCSV
       ENCODE_RE = Hash.new do |h, str|
         h[str] = Regexp.new(str)
       end
@@ -186,7 +186,7 @@ module Csvlint
 
       begin
         row = nil
-        FastCSV.raw_parse(stream, @csv_options) do |raw_row|
+        LineCSV.raw_parse(stream, @csv_options) do |raw_row|
           row = raw_row
         end
       rescue FastCSV::MalformedCSVError => e
