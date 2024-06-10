@@ -429,15 +429,15 @@ module Csvlint
         @formats[i] ||= Hash.new(0)
 
         format =
-          if col.strip[FORMATS[:numeric]]
-            :numeric
-          elsif uri?(col)
-            :uri
-          elsif possible_date?(col)
-            date_formats(col)
-          else
+          #if col.strip[FORMATS[:numeric]]
+          #  :numeric
+          #elsif uri?(col)
+          #  :uri
+          #elsif possible_date?(col)
+          #  date_formats(col)
+          #else
             :string
-          end
+          #end
 
         @formats[i][format] += 1
       end
