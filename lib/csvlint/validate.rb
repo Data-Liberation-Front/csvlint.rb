@@ -89,7 +89,6 @@ module Csvlint
 
     def validate
       if /.xls(x)?/.match?(@extension)
-        #build_warnings(:excel, :context)
         return
       end
       locate_schema unless @schema.instance_of?(Csvlint::Schema)
@@ -324,17 +323,6 @@ module Csvlint
 
       @csv_header &&= @dialect["header"]
       @csv_options = dialect_to_csv_options(@dialect)
-    end
-
-    def validate_encoding
-      if @headers["content-type"]
-        if !/charset=/.match?(@headers["content-type"])
-          build_warnings(:no_encoding, :context)
-        elsif !/charset=utf-8/i.match?(@headers["content-type"])
-          build_warnings(:encoding, :context)
-        end
-      end
-      build_warnings(:encoding, :context) if @encoding != "UTF-8"
     end
 
     def check_mixed_linebreaks
