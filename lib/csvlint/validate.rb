@@ -222,13 +222,6 @@ module Csvlint
     end
 
     def finish
-      #sum = @col_counts.inject(:+)
-      #unless sum.nil?
-        #build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
-      #end
-      # return expected_columns to calling class
-      #build_warnings(:check_options, :structure) if @expected_columns == 1
-      #check_consistency
       check_foreign_keys if @validate
       check_mixed_linebreaks
     end
@@ -245,7 +238,6 @@ module Csvlint
           @csv_header = false if $1 == "absent"
           assumed_header = false
         end
-        #build_warnings(:no_content_type, :context) if @content_type.nil?
         build_errors(:wrong_content_type, :context) unless @content_type && @content_type =~ /text\/csv/
       end
       @header_processed = true
@@ -283,7 +275,6 @@ module Csvlint
                 @schema = schema
               else
                 warn_if_unsuccessful = true
-                #build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
               end
             end
           rescue OpenURI::HTTPError
@@ -381,10 +372,7 @@ module Csvlint
       names = Set.new
       header.map { |h| h.strip! } if @dialect["trim"] == :true
       header.each_with_index do |name, i|
-        #build_warnings(:empty_column_name, :schema, nil, i + 1) if name == ""
-        if names.include?(name)
-          #build_warnings(:duplicate_column_name, :schema, nil, i + 1)
-        else
+        if !names.include?(name)
           names << name
         end
       end
@@ -424,29 +412,9 @@ module Csvlint
         next if col.nil?
         @formats[i] ||= Hash.new(0)
 
-        format =
-          #if col.strip[FORMATS[:numeric]]
-          #  :numeric
-          #elsif uri?(col)
-          #  :uri
-          #elsif possible_date?(col)
-          #  date_formats(col)
-          #else
-            :string
-          #end
+        format = :string
 
         @formats[i][format] += 1
-      end
-    end
-
-    def check_consistency
-      @formats.each_with_index do |format, i|
-        if format
-          total = format.values.reduce(:+).to_f
-          if format.none? { |_, count| count / total >= 0.9 }
-            #build_warnings(:inconsistent_values, :schema, nil, i + 1)
-          end
-        end
       end
     end
 
@@ -498,7 +466,6 @@ module Csvlint
             return
           else
             warn_if_unsuccessful = true
-            #build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
           end
         end
       rescue Errno::ENOENT
@@ -506,7 +473,6 @@ module Csvlint
       rescue => e
         raise e
       end
-      #build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema) if warn_if_unsuccessful
       @schema = nil
     end
 
