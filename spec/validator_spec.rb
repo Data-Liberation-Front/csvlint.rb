@@ -142,8 +142,6 @@ describe Csvlint::Validator do
       expect(validator.info_messages.count).to eql(1)
       expect(validator.errors.count).to eql(1)
       expect(validator.errors.first.type).to eql(:whitespace)
-      ##expect(validator.warnings.count).to eql(1)
-      ##expect(validator.warnings.first.type).to eql(:inconsistent_values)
     end
 
     it "File.open.each_line -> `validate` passes a valid csv" do
@@ -250,9 +248,6 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new(data)
       validator.reset
       expect(validator.validate_header(["minimum", "minimum"])).to eql(true)
-      #expect(validator.warnings.size).to eql(1)
-      #expect(validator.warnings.first.type).to eql(:duplicate_column_name)
-      #expect(validator.warnings.first.category).to eql(:schema)
     end
 
     it "should warn if column names are blank" do
@@ -260,9 +255,6 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new(data)
 
       expect(validator.validate_header(["minimum", ""])).to eql(true)
-      #expect(validator.warnings.size).to eql(2)
-      #expect(validator.warnings.first.type).to eql(:empty_column_name)
-      #expect(validator.warnings.first.category).to eql(:schema)
     end
 
     it "should include info message about missing header when we have assumed a header" do
@@ -460,9 +452,6 @@ describe Csvlint::Validator do
     it "should warn if column names aren't unique" do
       data = StringIO.new("minimum, minimum")
       validator = Csvlint::Validator.new(data)
-      #expect(validator.warnings.size).to eql(1)
-      #expect(validator.warnings.first.type).to eql(:duplicate_column_name)
-      #expect(validator.warnings.first.category).to eql(:schema)
     end
 
     it "should warn if column names are blank" do
@@ -470,9 +459,6 @@ describe Csvlint::Validator do
       validator = Csvlint::Validator.new(data)
 
       expect(validator.validate_header(["minimum", ""])).to eql(true)
-      #expect(validator.warnings.size).to eql(2)
-      #expect(validator.warnings.first.type).to eql(:empty_column_name)
-      #expect(validator.warnings.first.category).to eql(:schema)
     end
 
     it "should include info message about missing header when we have assumed a header" do
