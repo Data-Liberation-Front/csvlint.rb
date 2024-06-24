@@ -5,7 +5,7 @@ jobs:
         ruby-version:
           type: string
       docker:
-        - image: cimg/ruby:3.2
+        - image: cimg/ruby:3.2.0
       steps:
         - checkout
         - run: bundle install
