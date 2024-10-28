@@ -17,6 +17,7 @@ jobs:
           - activesupport_6.1
           - activesupport_7.0
           - activesupport_7.1
+          - activesupport_7.2
         exclude:
           - ruby-version: '2.5'
             activesupport-version: activesupport_7.0
@@ -26,6 +27,14 @@ jobs:
             activesupport-version: activesupport_7.1
           - ruby-version: '2.6'
             activesupport-version: activesupport_7.1
+          - ruby-version: '2.5'
+            activesupport-version: activesupport_7.2
+          - ruby-version: '2.6'
+            activesupport-version: activesupport_7.2
+          - ruby-version: '2.7'
+            activesupport-version: activesupport_7.2
+          - ruby-version: '3.0'
+            activesupport-version: activesupport_7.2
       fail-fast: false
 
     env:
