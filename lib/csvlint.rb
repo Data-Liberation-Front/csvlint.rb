@@ -4,7 +4,7 @@ require "open-uri"
 require "tempfile"
 require "typhoeus"
 
-require "active_support"
+require "active_support/all"
 require "open_uri_redirections"
 require "uri_template"
 
