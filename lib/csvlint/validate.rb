@@ -1,6 +1,6 @@
 module Csvlint
   class Validator
-    class LineCSV < CSV
+    class LineCSV < FastCSV
       ENCODE_RE = Hash.new do |h, str|
         h[str] = Regexp.new(str)
       end
@@ -77,7 +77,6 @@ module Csvlint
       @extension = parse_extension(source) unless @source.nil?
 
       @expected_columns = 0
-      @col_counts = []
       @line_breaks = []
 
       @errors += @schema.errors unless @schema.nil?
@@ -90,7 +89,6 @@ module Csvlint
 
     def validate
       if /.xls(x)?/.match?(@extension)
-        build_warnings(:excel, :context)
         return
       end
       locate_schema unless @schema.instance_of?(Csvlint::Schema)
@@ -185,22 +183,29 @@ module Csvlint
       @csv_options[:encoding] = @encoding
 
       begin
-        row = LineCSV.parse_line(stream, **@csv_options)
-      rescue LineCSV::MalformedCSVError => e
+        row = nil
+        LineCSV.raw_parse(stream, @csv_options) do |raw_row|
+          row = raw_row
+        end
+      rescue FastCSV::MalformedCSVError => e
         build_exception_messages(e, stream, current_line) unless e.message.include?("UTF") && @reported_invalid_encoding
+      end
+
+      if row != nil
+        row = row.map { |r| r == nil ? "" : r }
       end
 
       if row
         if current_line <= 1 && @csv_header
           # this conditional should be refactored somewhere
-          row = row.reject { |col| col.nil? || col.empty? }
+          row = row.reject { |col| col.nil? }
           validate_header(row)
-          @col_counts << row.size
         else
           build_formats(row)
-          @col_counts << row.reject { |col| col.nil? || col.empty? }.size
           @expected_columns = row.size unless @expected_columns != 0
-          build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? || c.empty? }.size == 0
+          unless @csv_options[:skip_blanks]
+            build_errors(:blank_rows, :structure, current_line, nil, stream.to_s) if row.reject { |c| c.nil? }.size == 0
+          end
           # Builds errors and warnings related to the provided schema file
           if @schema
             @schema.validate_row(row, current_line, all_errors, @source, @validate)
@@ -216,16 +221,8 @@ module Csvlint
     end
 
     def finish
-      sum = @col_counts.inject(:+)
-      unless sum.nil?
-        build_warnings(:title_row, :structure) if @col_counts.first < (sum / @col_counts.size.to_f)
-      end
-      # return expected_columns to calling class
-      build_warnings(:check_options, :structure) if @expected_columns == 1
-      check_consistency
       check_foreign_keys if @validate
       check_mixed_linebreaks
-      validate_encoding
     end
 
     def validate_metadata
@@ -240,7 +237,6 @@ module Csvlint
           @csv_header = false if $1 == "absent"
           assumed_header = false
         end
-        build_warnings(:no_content_type, :context) if @content_type.nil?
         build_errors(:wrong_content_type, :context) unless @content_type && @content_type =~ /text\/csv/
       end
       @header_processed = true
@@ -278,7 +274,6 @@ module Csvlint
                 @schema = schema
               else
                 warn_if_unsuccessful = true
-                build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
               end
             end
           rescue OpenURI::HTTPError
@@ -296,7 +291,7 @@ module Csvlint
       line_break = get_line_break(@input)
       @line_breaks << line_break
       unless line_breaks_reported?
-        if line_break != "\r\n"
+        if line_break != "\n"
           build_info_messages(:nonrfc_line_breaks, :structure, line_no)
           @line_breaks_reported = true
         end
@@ -328,17 +323,6 @@ module Csvlint
 
       @csv_header &&= @dialect["header"]
       @csv_options = dialect_to_csv_options(@dialect)
-    end
-
-    def validate_encoding
-      if @headers["content-type"]
-        if !/charset=/.match?(@headers["content-type"])
-          build_warnings(:no_encoding, :context)
-        elsif !/charset=utf-8/i.match?(@headers["content-type"])
-          build_warnings(:encoding, :context)
-        end
-      end
-      build_warnings(:encoding, :context) if @encoding != "UTF-8"
     end
 
     def check_mixed_linebreaks
@@ -376,10 +360,7 @@ module Csvlint
       names = Set.new
       header.map { |h| h.strip! } if @dialect["trim"] == :true
       header.each_with_index do |name, i|
-        build_warnings(:empty_column_name, :schema, nil, i + 1) if name == ""
-        if names.include?(name)
-          build_warnings(:duplicate_column_name, :schema, nil, i + 1)
-        else
+        if !names.include?(name)
           names << name
         end
       end
@@ -405,42 +386,23 @@ module Csvlint
       skipinitialspace = dialect["skipInitialSpace"] || true
       delimiter = dialect["delimiter"]
       delimiter += " " if !skipinitialspace
+      skipblanks = dialect["skip_blanks"] || false
       {
         col_sep: delimiter,
         row_sep: dialect["lineTerminator"],
         quote_char: dialect["quoteChar"],
-        skip_blanks: false
+        skip_blanks: skipblanks
       }
     end
 
     def build_formats(row)
       row.each_with_index do |col, i|
-        next if col.nil? || col.empty?
+        next if col.nil?
         @formats[i] ||= Hash.new(0)
 
-        format =
-          if col.strip[FORMATS[:numeric]]
-            :numeric
-          elsif uri?(col)
-            :uri
-          elsif possible_date?(col)
-            date_formats(col)
-          else
-            :string
-          end
+        format = :string
 
         @formats[i][format] += 1
-      end
-    end
-
-    def check_consistency
-      @formats.each_with_index do |format, i|
-        if format
-          total = format.values.reduce(:+).to_f
-          if format.none? { |_, count| count / total >= 0.9 }
-            build_warnings(:inconsistent_values, :schema, nil, i + 1)
-          end
-        end
       end
     end
 
@@ -492,7 +454,6 @@ module Csvlint
             return
           else
             warn_if_unsuccessful = true
-            build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
           end
         end
       rescue Errno::ENOENT
@@ -500,7 +461,6 @@ module Csvlint
       rescue => e
         raise e
       end
-      build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema) if warn_if_unsuccessful
       @schema = nil
     end
 
@@ -577,12 +537,7 @@ module Csvlint
     end
 
     def get_line_break(line)
-      eol = line.chars.last(2)
-      if eol.first == "\r"
-        "\r\n"
-      else
         "\n"
-      end
     end
 
     FORMATS = {

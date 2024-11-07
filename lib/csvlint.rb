@@ -1,4 +1,4 @@
-require "csv"
+require "fastcsv"
 require "date"
 require "open-uri"
 require "tempfile"
