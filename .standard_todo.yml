@@ -38,3 +38,5 @@ ignore:
   - Lint/UselessRescue
 - lib/csvlint/validate.rb:
   -  Lint/UselessRescue
+- lib/csvlint/cli.rb:
+  - Style/SafeNavigation
