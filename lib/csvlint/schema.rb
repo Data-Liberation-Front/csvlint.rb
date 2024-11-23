@@ -76,12 +76,12 @@ module Csvlint
     def validate_row(values, row = nil, all_errors = [], source_url = nil, validate = true)
       reset
       if values.length < fields.length
-        fields[values.size..-1].each_with_index do |field, i|
+        fields[values.size..].each_with_index do |field, i|
           build_warnings(:missing_column, :schema, row, values.size + i + 1)
         end
       end
       if values.length > fields.length
-        values[fields.size..-1].each_with_index do |data_column, i|
+        values[fields.size..].each_with_index do |data_column, i|
           build_warnings(:extra_column, :schema, row, fields.size + i + 1)
         end
       end
