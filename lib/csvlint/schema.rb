@@ -48,7 +48,7 @@ module Csvlint
         else
           Schema.from_json_table(uri, json)
         end
-      rescue TypeError => e
+      rescue TypeError
         # NO IDEA what this was even trying to do - SP 20160526
       rescue Csvlint::Csvw::MetadataError => e
         raise e
@@ -88,7 +88,7 @@ module Csvlint
 
       fields.each_with_index do |field, i|
         value = values[i] || ""
-        result = field.validate_column(value, row, i + 1, all_errors)
+        field.validate_column(value, row, i + 1, all_errors)
         @errors += fields[i].errors
         @warnings += fields[i].warnings
       end
