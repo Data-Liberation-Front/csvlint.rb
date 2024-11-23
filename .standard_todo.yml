@@ -12,7 +12,6 @@ ignore:
   - Style/SlicingWithRange
   - Style/IdenticalConditionalBranches
 - lib/csvlint/csvw/property_checker.rb:
-  - Performance/InefficientHashSearch
   - Lint/UselessAssignment
   - Naming/VariableName
   - Style/SlicingWithRange
