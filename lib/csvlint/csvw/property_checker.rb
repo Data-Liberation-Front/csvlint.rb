@@ -285,7 +285,7 @@ module Csvlint
           warnings = []
           if value.instance_of? Hash
             if value["@id"]
-              raise Csvlint::Csvw::MetadataError.new("datatype.@id"), "datatype @id must not be the id of a built-in datatype (#{value["@id"]})" if BUILT_IN_DATATYPES.values.include?(value["@id"])
+              raise Csvlint::Csvw::MetadataError.new("datatype.@id"), "datatype @id must not be the id of a built-in datatype (#{value["@id"]})" if BUILT_IN_DATATYPES.value?(value["@id"])
               _, w, _ = PROPERTIES["@id"].call(value["@id"], base_url, lang)
               unless w.nil?
                 warnings << w
