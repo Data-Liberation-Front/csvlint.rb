@@ -82,6 +82,12 @@ module Csvlint
           @uniques << value
         end
       end
+
+      if constraints["enum"]
+        unless constraints["enum"].include?(value)
+          build_errors(:invalid_enum_value, :schema, row, column, value, { "enum" => constraints["enum"] })
+        end
+      end
     end
 
     def validate_type(value, row, column)
