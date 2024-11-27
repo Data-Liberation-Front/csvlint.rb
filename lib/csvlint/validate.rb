@@ -157,7 +157,7 @@ module Csvlint
         # If it's not a full line, then prepare to add it to the beginning of the next chunk
         @leading = line
       end
-    rescue ArgumentError => ae
+    rescue ArgumentError
       build_errors(:invalid_encoding, :structure, @current_line, nil, @current_line) unless @reported_invalid_encoding
       @current_line += 1
       @reported_invalid_encoding = true
@@ -165,13 +165,12 @@ module Csvlint
 
     def validate_line(input = nil, index = nil)
       @input = input
-      single_col = false
       line = index.present? ? index : 0
       @encoding = input.encoding.to_s
       report_line_breaks(line)
       parse_contents(input, line)
       @lambda&.call(self)
-    rescue ArgumentError => ae
+    rescue ArgumentError
       build_errors(:invalid_encoding, :structure, @current_line, nil, index) unless @reported_invalid_encoding
       @reported_invalid_encoding = true
     end
@@ -205,7 +204,7 @@ module Csvlint
           if @schema
             @schema.validate_row(row, current_line, all_errors, @source, @validate)
             @errors += @schema.errors
-            all_errors += @schema.errors
+            @schema.errors
             @warnings += @schema.warnings
           elsif !row.empty? && row.size != @expected_columns
             build_errors(:ragged_rows, :structure, current_line, nil, stream.to_s)
@@ -277,7 +276,6 @@ module Csvlint
               if schema.tables[@source_url]
                 @schema = schema
               else
-                warn_if_unsuccessful = true
                 build_warnings(:schema_mismatch, :context, nil, nil, @source_url, schema)
               end
             end

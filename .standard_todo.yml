@@ -13,7 +13,6 @@ ignore:
   - Style/IdenticalConditionalBranches
 - lib/csvlint/csvw/property_checker.rb:
   - Performance/InefficientHashSearch
-  - Lint/UselessAssignment
   - Naming/VariableName
   - Style/SlicingWithRange
   - Security/Open
@@ -24,18 +23,16 @@ ignore:
   - Naming/VariableName
 - lib/csvlint/schema.rb:
   - Security/Open
-  - Lint/UselessAssignment
   - Style/SlicingWithRange
 - lib/csvlint/validate.rb:
-  - Lint/UselessAssignment
   - Performance/Count
   - Lint/BooleanSymbol
   - Naming/VariableName
   - Security/Open
   - Lint/NonLocalExitFromIterator
-- spec/validator_spec.rb:
-  - Lint/UselessAssignment
 - lib/csvlint/schema.rb:
   - Lint/UselessRescue
 - lib/csvlint/validate.rb:
   -  Lint/UselessRescue
+- lib/csvlint/cli.rb:
+  - Style/SafeNavigation
