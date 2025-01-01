@@ -285,8 +285,8 @@ module Csvlint
           warnings = []
           if value.instance_of? Hash
             if value["@id"]
-              raise Csvlint::Csvw::MetadataError.new("datatype.@id"), "datatype @id must not be the id of a built-in datatype (#{value["@id"]})" if BUILT_IN_DATATYPES.values.include?(value["@id"])
-              v, w, t = PROPERTIES["@id"].call(value["@id"], base_url, lang)
+              raise Csvlint::Csvw::MetadataError.new("datatype.@id"), "datatype @id must not be the id of a built-in datatype (#{value["@id"]})" if BUILT_IN_DATATYPES.value?(value["@id"])
+              _, w, _ = PROPERTIES["@id"].call(value["@id"], base_url, lang)
               unless w.nil?
                 warnings << w
                 value.delete("@id")
@@ -422,7 +422,7 @@ module Csvlint
                   elsif p == "url"
                   elsif p == "titles"
                   else
-                    v, warning, type = check_property(p, v, base_url, lang)
+                    _, warning, type = check_property(p, v, base_url, lang)
                     if type != :transformation && !(warning.nil? || warning.empty?)
                       value.delete(p)
                       warnings << :invalid_property unless type == :transformation
@@ -555,7 +555,7 @@ module Csvlint
             warnings = []
             value.each do |p, v|
               if ["resource", "schemaReference", "columnReference"].include? p
-                v, warning, type = check_property(p, v, base_url, lang)
+                v, warning, _ = check_property(p, v, base_url, lang)
                 if warning.nil? || warning.empty?
                   value[p] = v
                 else
