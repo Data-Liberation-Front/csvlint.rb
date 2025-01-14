@@ -85,7 +85,7 @@ module Csvlint
 
       if constraints["enum"]
         unless constraints["enum"].include?(value)
-          build_errors(:invalid_enum_value, :schema, row, column, value, { "enum" => constraints["enum"] })
+          build_errors(:invalid_enum_value, :schema, row, column, value, {"enum" => constraints["enum"]})
         end
       end
     end
