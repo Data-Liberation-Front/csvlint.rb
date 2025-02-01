@@ -396,6 +396,16 @@ module Csvlint
       rescue
         nil
       end
+
+      if message.match(/^Unquoted fields do not allow new line/i)
+        return :line_breaks
+      end
+
+      if message.match(/^New line must be/i)
+        return :inconsistent_line_breaks
+      end
+
+
       ERROR_MATCHERS.fetch(message, :unknown_error)
     end
 
