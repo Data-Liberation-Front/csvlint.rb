@@ -227,7 +227,7 @@ An example JSON Table Schema schema file is:
 				"name": "id",
 				"constraints": {
 					"required": true,
-					"type": "http://www.w3.org/TR/xmlschema-2/#integer"
+					"type": "http://www.w3.org/2001/XMLSchema#integer"
 				}
 			},
 			{
@@ -275,7 +275,7 @@ An equivalent CSV on the Web Metadata file is:
 Parsing and validating with a schema (of either kind):
 
 	schema = Csvlint::Schema.load_from_json(uri)
-	validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, schema )
+	validator = Csvlint::Validator.new( "http://example.org/data.csv", {}, schema )
 
 ### CSV on the Web Validation Support
 
@@ -338,7 +338,7 @@ You can also provide an optional options hash as the fourth argument to Validato
 options = {
   limit_lines: 100
 }
-validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+validator = Csvlint::Validator.new( "http://example.org/data.csv", {}, nil, options )
 ```
 
 * :lambda -- Pass a block of code to be called when each line is validated, this will give you access to the `Validator` object. For example, this will return the current line number for every line validated:
@@ -347,7 +347,7 @@ validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, opt
     options = {
       lambda: ->(validator) { puts validator.current_line }
     }
-    validator = Csvlint::Validator.new( "http://example.org/data.csv", nil, nil, options )
+    validator = Csvlint::Validator.new( "http://example.org/data.csv", {}, nil, options )
     => 1
     2
     3
