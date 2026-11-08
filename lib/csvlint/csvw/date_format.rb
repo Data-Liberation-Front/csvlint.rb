@@ -60,7 +60,7 @@ module Csvlint
       end
 
       def match(value)
-        value&.match?(@regexp) ? true : false
+        value&.match?(@regexp) || false
       end
 
       def parse(value)
