@@ -6,11 +6,14 @@ ignore:
   - Security/Open
 - lib/csvlint/csvw/column.rb:
   - Style/TernaryParentheses
+  - Lint/UselessConstantScoping
 - lib/csvlint/csvw/date_format.rb:
   - Lint/MixedRegexpCaptureTypes
+  - Lint/UselessConstantScoping
 - lib/csvlint/csvw/number_format.rb:
   - Style/SlicingWithRange
   - Style/IdenticalConditionalBranches
+  - Lint/UselessConstantScoping
 - lib/csvlint/csvw/property_checker.rb:
   - Performance/InefficientHashSearch
   - Naming/VariableName
@@ -19,8 +22,10 @@ ignore:
   - Lint/BooleanSymbol
 - lib/csvlint/csvw/table_group.rb:
   - Style/OptionalArguments
+  - Lint/UselessConstantScoping
 - lib/csvlint/field.rb:
   - Naming/VariableName
+  - Lint/UselessConstantScoping
 - lib/csvlint/schema.rb:
   - Security/Open
   - Style/SlicingWithRange
@@ -30,9 +35,11 @@ ignore:
   - Naming/VariableName
   - Security/Open
   - Lint/NonLocalExitFromIterator
+  - Lint/UselessConstantScoping
 - lib/csvlint/schema.rb:
   - Lint/UselessRescue
 - lib/csvlint/validate.rb:
   -  Lint/UselessRescue
+  - Lint/UselessConstantScoping
 - lib/csvlint/cli.rb:
   - Style/SafeNavigation

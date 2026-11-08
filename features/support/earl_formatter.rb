@@ -58,8 +58,6 @@ class EarlFormatter
     end
   end
 
-  private
-
   EARL = RDF::Vocabulary.new("http://www.w3.org/ns/earl#")
   ODI = RDF::Resource.new("https://theodi.org/")
   CSVLINT = RDF::Resource.new("https://github.com/theodi/csvlint.rb")
