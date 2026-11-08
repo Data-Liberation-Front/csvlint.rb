@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rack"
   spec.add_dependency "net-http-persistent"
   spec.add_dependency "mutex_m" # For Ruby 3.4+
+  spec.add_dependency "ostruct" # For Ruby 4.0+
 
   spec.add_development_dependency "bundler", ">= 1.3"
   spec.add_development_dependency "rake"
