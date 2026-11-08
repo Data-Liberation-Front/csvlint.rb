@@ -1,5 +1,7 @@
 # Change Log
 
+See [github releases](https://github.com/Data-Liberation-Front/csvlint.rb/releases) for more recent changelogs.
+
 ## [v1.2.0](https://github.com/data-liberation-front/csvlint.rb/tree/v1.2.0) (2023-02-27)
 
 [Full Changelog](https://github.com/data-liberation-front/csvlint.rb/compare/v1.1.0...v1.2.0)
